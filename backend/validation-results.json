@@ -1,0 +1,4076 @@
+{
+  "generated_at": "2026-10-26T10:37:03.793494+00:00",
+  "exit_status": 0,
+  "n_methods_validated": 87,
+  "n_total_checks": 295,
+  "methods": [
+    {
+      "method": "2PL model (MML)",
+      "endpoint": "/api/irt/two-pl",
+      "checks": [
+        {
+          "statistic": "a1",
+          "observed": 0.9875444764788119,
+          "expected": 0.9875459,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        },
+        {
+          "statistic": "b1",
+          "observed": -1.879261501226495,
+          "expected": -1.87926014,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        },
+        {
+          "statistic": "a2",
+          "observed": 1.0808372679097062,
+          "expected": 1.08083714,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        },
+        {
+          "statistic": "b2",
+          "observed": -0.747540525936356,
+          "expected": -0.74754055,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        },
+        {
+          "statistic": "a3",
+          "observed": 1.7074802968971337,
+          "expected": 1.70747766,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        },
+        {
+          "statistic": "b3",
+          "observed": -1.0572350111707587,
+          "expected": -1.05723562,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        },
+        {
+          "statistic": "a4",
+          "observed": 0.764988839860142,
+          "expected": 0.76498988,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        },
+        {
+          "statistic": "b4",
+          "observed": -0.6353031898658449,
+          "expected": -0.63530226,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        },
+        {
+          "statistic": "a5",
+          "observed": 0.7356724914903323,
+          "expected": 0.73567272,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        },
+        {
+          "statistic": "b5",
+          "observed": -2.520765452838813,
+          "expected": -2.52076438,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        },
+        {
+          "statistic": "SE(a1)",
+          "observed": 0.17719396465643597,
+          "expected": 0.17719483,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        },
+        {
+          "statistic": "SE(b1)",
+          "observed": 0.2639668466668905,
+          "expected": 0.26396738,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        },
+        {
+          "statistic": "log-likelihood",
+          "observed": -2658.805113552619,
+          "expected": -2658.80511363,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        },
+        {
+          "statistic": "empirical reliability",
+          "observed": 0.4523050233600914,
+          "expected": 0.45230498,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_2pl_matches_mirt"
+        }
+      ],
+      "references": [
+        "mirt 1.48 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "LSAT7"
+      ],
+      "n_checks": 14
+    },
+    {
+      "method": "3PL model (MML, Beta prior)",
+      "endpoint": "/api/irt/three-pl",
+      "checks": [
+        {
+          "statistic": "log-likelihood at mirt estimates",
+          "observed": -2659.2951968803354,
+          "expected": -2659.29519692,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_3pl_likelihood_and_posterior_mode"
+        },
+        {
+          "statistic": "log posterior (must be >= mirt's)",
+          "observed": -2651.614233170768,
+          "expected": -2651.687466,
+          "tolerance_abs": 0.0,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_3pl_likelihood_and_posterior_mode"
+        }
+      ],
+      "references": [
+        "mirt 1.48 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "LSAT7"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Begg & Mazumdar rank test",
+      "endpoint": "/api/meta-analysis/publication-bias",
+      "checks": [
+        {
+          "statistic": "Kendall tau",
+          "observed": 0.025641,
+          "expected": 0.0256410256,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_publication_bias"
+        },
+        {
+          "statistic": "p",
+          "observed": 0.95236191,
+          "expected": 0.952361908,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_publication_bias"
+        }
+      ],
+      "references": [
+        "metafor 5.2.1 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "BCG vaccine trials (dat.bcg), log risk ratios"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Cognitive Lab: N-Back d\u2032 (log-linear)",
+      "endpoint": "/api/cognitive/nback",
+      "checks": [
+        {
+          "statistic": "d_prime",
+          "observed": 1.6725553330823537,
+          "expected": 1.6725553330823537,
+          "tolerance_abs": 1e-12,
+          "tolerance_rel": null,
+          "dataset": "9/12 hits, 4/30 false alarms",
+          "test_id": "tests/test_cognitive.py::test_nback_dprime_log_linear"
+        }
+      ],
+      "references": [
+        "Hautus (1995) log-linear correction, closed form"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "9/12 hits, 4/30 false alarms"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Cognitive Lab: flanker RT effect (Welch t)",
+      "endpoint": "/api/cognitive/flanker",
+      "checks": [
+        {
+          "statistic": "t",
+          "observed": 5.726368960534534,
+          "expected": 5.726368960534534,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-09,
+          "dataset": "simulated ex-Gaussian RTs, 40 trials per condition",
+          "test_id": "tests/test_cognitive.py::test_rt_effect_uses_correct_trials_and_welch[flanker-flanker_effect_ms]"
+        }
+      ],
+      "references": [
+        "statsmodels CompareMeans.ttest_ind(usevar='unequal') on correct trials"
+      ],
+      "reference_kinds": [
+        "scipy-ref"
+      ],
+      "datasets": [
+        "simulated ex-Gaussian RTs, 40 trials per condition"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Cognitive Lab: stroop RT effect (Welch t)",
+      "endpoint": "/api/cognitive/stroop",
+      "checks": [
+        {
+          "statistic": "t",
+          "observed": 5.726368960534534,
+          "expected": 5.726368960534534,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-09,
+          "dataset": "simulated ex-Gaussian RTs, 40 trials per condition",
+          "test_id": "tests/test_cognitive.py::test_rt_effect_uses_correct_trials_and_welch[stroop-interference_ms]"
+        }
+      ],
+      "references": [
+        "statsmodels CompareMeans.ttest_ind(usevar='unequal') on correct trials"
+      ],
+      "reference_kinds": [
+        "scipy-ref"
+      ],
+      "datasets": [
+        "simulated ex-Gaussian RTs, 40 trials per condition"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Cronbach's alpha",
+      "endpoint": "/api/psychometrics/reliability",
+      "checks": [
+        {
+          "statistic": "raw alpha",
+          "observed": 0.935064935064935,
+          "expected": 0.9350649351,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "10 x 4 Likert example",
+          "test_id": "tests/test_psychometrics.py::test_alpha_matches_psych"
+        },
+        {
+          "statistic": "standardized alpha",
+          "observed": 0.936110312583174,
+          "expected": 0.9361103126,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "10 x 4 Likert example",
+          "test_id": "tests/test_psychometrics.py::test_alpha_matches_psych"
+        },
+        {
+          "statistic": "Feldt 95% CI lower",
+          "observed": 0.829165221563454,
+          "expected": 0.83,
+          "tolerance_abs": 0.005,
+          "tolerance_rel": null,
+          "dataset": "10 x 4 Likert example",
+          "test_id": "tests/test_psychometrics.py::test_alpha_matches_psych"
+        },
+        {
+          "statistic": "Feldt 95% CI upper",
+          "observed": 0.981884243425451,
+          "expected": 0.98,
+          "tolerance_abs": 0.005,
+          "tolerance_rel": null,
+          "dataset": "10 x 4 Likert example",
+          "test_id": "tests/test_psychometrics.py::test_alpha_matches_psych"
+        },
+        {
+          "statistic": "r.drop item 1",
+          "observed": 0.8983407143792469,
+          "expected": 0.8983407144,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "10 x 4 Likert example",
+          "test_id": "tests/test_psychometrics.py::test_alpha_matches_psych"
+        },
+        {
+          "statistic": "alpha if dropped item 1",
+          "observed": 0.8988549618320612,
+          "expected": 0.8988549618,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "10 x 4 Likert example",
+          "test_id": "tests/test_psychometrics.py::test_alpha_matches_psych"
+        },
+        {
+          "statistic": "r.drop item 2",
+          "observed": 0.7064942184889859,
+          "expected": 0.7064942185,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "10 x 4 Likert example",
+          "test_id": "tests/test_psychometrics.py::test_alpha_matches_psych"
+        },
+        {
+          "statistic": "alpha if dropped item 2",
+          "observed": 0.9575471698113207,
+          "expected": 0.9575471698,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "10 x 4 Likert example",
+          "test_id": "tests/test_psychometrics.py::test_alpha_matches_psych"
+        },
+        {
+          "statistic": "r.drop item 3",
+          "observed": 0.908477575036308,
+          "expected": 0.908477575,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "10 x 4 Likert example",
+          "test_id": "tests/test_psychometrics.py::test_alpha_matches_psych"
+        },
+        {
+          "statistic": "alpha if dropped item 3",
+          "observed": 0.8944444444444445,
+          "expected": 0.8944444444,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "10 x 4 Likert example",
+          "test_id": "tests/test_psychometrics.py::test_alpha_matches_psych"
+        },
+        {
+          "statistic": "r.drop item 4",
+          "observed": 0.8952329535057936,
+          "expected": 0.8952329535,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "10 x 4 Likert example",
+          "test_id": "tests/test_psychometrics.py::test_alpha_matches_psych"
+        },
+        {
+          "statistic": "alpha if dropped item 4",
+          "observed": 0.9034941763727122,
+          "expected": 0.9034941764,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "10 x 4 Likert example",
+          "test_id": "tests/test_psychometrics.py::test_alpha_matches_psych"
+        },
+        {
+          "statistic": "raw alpha",
+          "observed": 0.6261175745303516,
+          "expected": 0.6261175745,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford x1-x3",
+          "test_id": "tests/test_psychometrics.py::test_alpha_matches_psych"
+        }
+      ],
+      "references": [
+        "psych 2.6.9 (R 4.5.2)",
+        "psych 2.6.9 (R 4.5.2), alpha.ci (2 d.p.)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "10 x 4 Likert example",
+        "Holzinger-Swineford x1-x3"
+      ],
+      "n_checks": 13
+    },
+    {
+      "method": "Diagnostic accuracy (Wilson CIs)",
+      "endpoint": "/api/medical/diagnostic-accuracy",
+      "checks": [
+        {
+          "statistic": "sensitivity CI lower",
+          "observed": 0.7671644040916763,
+          "expected": 0.7671644040916763,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "TP 85, FP 10, TN 90, FN 15",
+          "test_id": "tests/test_medical.py::test_diagnostic_accuracy_wilson"
+        }
+      ],
+      "references": [
+        "statsmodels proportion_confint(method='wilson')"
+      ],
+      "reference_kinds": [
+        "scipy-ref"
+      ],
+      "datasets": [
+        "TP 85, FP 10, TN 90, FN 15"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Egger regression test",
+      "endpoint": "/api/meta-analysis/publication-bias",
+      "checks": [
+        {
+          "statistic": "t",
+          "observed": -1.4013,
+          "expected": -1.4012820023,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_publication_bias"
+        },
+        {
+          "statistic": "p",
+          "observed": 0.188707,
+          "expected": 0.1887069951,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_publication_bias"
+        }
+      ],
+      "references": [
+        "metafor 5.2.1 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "BCG vaccine trials (dat.bcg), log risk ratios"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Fixed-effect meta-analysis",
+      "endpoint": "/api/meta-analysis/fixed-effects",
+      "checks": [
+        {
+          "statistic": "estimate",
+          "observed": -0.430285,
+          "expected": -0.4302851637,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_fixed_effect"
+        },
+        {
+          "statistic": "SE",
+          "observed": 0.040499,
+          "expected": 0.0404987517,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_fixed_effect"
+        },
+        {
+          "statistic": "Q",
+          "observed": 152.233008,
+          "expected": 152.2330080824,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_fixed_effect"
+        }
+      ],
+      "references": [
+        "metafor 5.2.1 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "BCG vaccine trials (dat.bcg), log risk ratios"
+      ],
+      "n_checks": 3
+    },
+    {
+      "method": "Friedman test",
+      "endpoint": "/api/advanced/non-parametric",
+      "checks": [
+        {
+          "statistic": "chi-square",
+          "observed": 16.200000000000017,
+          "expected": 16.2,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-09,
+          "dataset": "two 10-value groups (G1, G2, G3)",
+          "test_id": "tests/test_advanced_stats.py::test_nonparametric_tests_match_r"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "two 10-value groups (G1, G2, G3)"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Global Moran's I",
+      "endpoint": "/api/spatial/morans-i",
+      "checks": [
+        {
+          "statistic": "I",
+          "observed": 0.720770680725609,
+          "expected": 0.7207706807,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "40 jittered grid points, kNN (k = 5) weights",
+          "test_id": "tests/test_spatial.py::test_morans_i_matches_spdep"
+        },
+        {
+          "statistic": "variance (randomisation)",
+          "observed": 0.007752336242077333,
+          "expected": 0.0077523362,
+          "tolerance_abs": 1e-10,
+          "tolerance_rel": null,
+          "dataset": "40 jittered grid points, kNN (k = 5) weights",
+          "test_id": "tests/test_spatial.py::test_morans_i_matches_spdep"
+        }
+      ],
+      "references": [
+        "R spdep 1.4 / spatialreg"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "40 jittered grid points, kNN (k = 5) weights"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Graded response model (MML)",
+      "endpoint": "/api/irt/graded-response",
+      "checks": [
+        {
+          "statistic": "a1",
+          "observed": 1.040638691452721,
+          "expected": 1.040641521,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "b1,1",
+          "observed": -4.672830628826397,
+          "expected": -4.672811382,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "b1,2",
+          "observed": -2.536099951224757,
+          "expected": -2.5360934626,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "b1,3",
+          "observed": 1.4082268269776579,
+          "expected": 1.4082242492,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "a2",
+          "observed": 1.225827461384079,
+          "expected": 1.225832734,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "b2,1",
+          "observed": -2.385327874953268,
+          "expected": -2.385317569,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "b2,2",
+          "observed": -0.7351197075247089,
+          "expected": -0.7351170965,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "b2,3",
+          "observed": 1.8488950497205259,
+          "expected": 1.8488898426,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "a3",
+          "observed": 2.3005947980510433,
+          "expected": 2.300594758,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "b3,1",
+          "observed": -2.279922640051669,
+          "expected": -2.279921377,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "b3,2",
+          "observed": -0.9643781900926522,
+          "expected": -0.9643779009,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "b3,3",
+          "observed": 0.8552119062030876,
+          "expected": 0.8552119456,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "a4",
+          "observed": 1.0938051146006629,
+          "expected": 1.093799468,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "b4,1",
+          "observed": -3.0598553044558328,
+          "expected": -3.059870287,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "b4,2",
+          "observed": -0.9063961941441616,
+          "expected": -0.9063997464,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "b4,3",
+          "observed": 1.5428100825932312,
+          "expected": 1.5428156474,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "log-likelihood",
+          "observed": -1608.8694107444412,
+          "expected": -1608.86941312,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        },
+        {
+          "statistic": "empirical reliability",
+          "observed": 0.6670375596711239,
+          "expected": 0.66703761,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_graded_response_matches_mirt"
+        }
+      ],
+      "references": [
+        "mirt 1.48 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Science"
+      ],
+      "n_checks": 18
+    },
+    {
+      "method": "Grubbs outlier test (two-sided)",
+      "endpoint": "/api/diagnostics/outlier-diagnostics",
+      "checks": [
+        {
+          "statistic": "p",
+          "observed": 0.11875217,
+          "expected": 0.118752171,
+          "tolerance_abs": 1e-08,
+          "tolerance_rel": null,
+          "dataset": "12 values",
+          "test_id": "tests/test_diagnostics.py::test_grubbs_matches_r_outliers"
+        }
+      ],
+      "references": [
+        "R outliers::grubbs.test"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "12 values"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Huber M-estimator of location",
+      "endpoint": "/api/nonparametric/robust-stats",
+      "checks": [
+        {
+          "statistic": "location",
+          "observed": 14.54384463636356,
+          "expected": 14.5438425219,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "12 values",
+          "test_id": "tests/test_nonparametric.py::test_huber_location_matches_mass"
+        }
+      ],
+      "references": [
+        "R MASS::huber (k = 1.345)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "12 values"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "IRT linking (haebara)",
+      "endpoint": "/api/irt/test-equating",
+      "checks": [
+        {
+          "statistic": "A",
+          "observed": 1.0803026151490387,
+          "expected": 1.08030261,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "6 common 3PL items (constructed)",
+          "test_id": "tests/test_irt.py::test_linking_matches_equateIRT"
+        },
+        {
+          "statistic": "B",
+          "observed": 0.33999163412467626,
+          "expected": 0.33999163,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "6 common 3PL items (constructed)",
+          "test_id": "tests/test_irt.py::test_linking_matches_equateIRT"
+        }
+      ],
+      "references": [
+        "equateIRT 2.5.2 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "6 common 3PL items (constructed)"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "IRT linking (mean-mean)",
+      "endpoint": "/api/irt/test-equating",
+      "checks": [
+        {
+          "statistic": "A",
+          "observed": 1.1151079136690647,
+          "expected": 1.11510791,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "6 common 3PL items (constructed)",
+          "test_id": "tests/test_irt.py::test_linking_matches_equateIRT"
+        },
+        {
+          "statistic": "B",
+          "observed": 0.33273381294964033,
+          "expected": 0.33273381,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "6 common 3PL items (constructed)",
+          "test_id": "tests/test_irt.py::test_linking_matches_equateIRT"
+        }
+      ],
+      "references": [
+        "equateIRT 2.5.2 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "6 common 3PL items (constructed)"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "IRT linking (mean-sigma)",
+      "endpoint": "/api/irt/test-equating",
+      "checks": [
+        {
+          "statistic": "A",
+          "observed": 1.0471488734594665,
+          "expected": 1.04714887,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "6 common 3PL items (constructed)",
+          "test_id": "tests/test_irt.py::test_linking_matches_equateIRT"
+        },
+        {
+          "statistic": "B",
+          "observed": 0.34292766898108007,
+          "expected": 0.34292767,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "6 common 3PL items (constructed)",
+          "test_id": "tests/test_irt.py::test_linking_matches_equateIRT"
+        }
+      ],
+      "references": [
+        "equateIRT 2.5.2 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "6 common 3PL items (constructed)"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "IRT linking (stocking-lord)",
+      "endpoint": "/api/irt/test-equating",
+      "checks": [
+        {
+          "statistic": "A",
+          "observed": 1.0903794176374486,
+          "expected": 1.09037942,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "6 common 3PL items (constructed)",
+          "test_id": "tests/test_irt.py::test_linking_matches_equateIRT"
+        },
+        {
+          "statistic": "B",
+          "observed": 0.33370044701449264,
+          "expected": 0.33370045,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "6 common 3PL items (constructed)",
+          "test_id": "tests/test_irt.py::test_linking_matches_equateIRT"
+        }
+      ],
+      "references": [
+        "equateIRT 2.5.2 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "6 common 3PL items (constructed)"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Interrupted time series (segmented regression)",
+      "endpoint": "/api/time-series/interrupted-time-series",
+      "checks": [
+        {
+          "statistic": "level change",
+          "observed": 11.011904761904761,
+          "expected": 11.011904761904775,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "16-point step series, intervention at 8",
+          "test_id": "tests/test_time_series.py::test_its_segmented_regression_matches_least_squares"
+        }
+      ],
+      "references": [
+        "Least squares by hand (Wagner et al., 2002 model)"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "16-point step series, intervention at 8"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "KMO / Bartlett sphericity",
+      "endpoint": "/api/psychometrics/factor-analysis",
+      "checks": [
+        {
+          "statistic": "KMO",
+          "observed": 0.7522443799501823,
+          "expected": 0.7522444,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_kmo_and_bartlett_match_psych"
+        },
+        {
+          "statistic": "MSA x7",
+          "observed": 0.5930468844678398,
+          "expected": 0.5930468845,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_kmo_and_bartlett_match_psych"
+        },
+        {
+          "statistic": "Bartlett chi-square",
+          "observed": 904.0993301897123,
+          "expected": 904.0993,
+          "tolerance_abs": 0.001,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_kmo_and_bartlett_match_psych"
+        }
+      ],
+      "references": [
+        "psych 2.6.9 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Holzinger-Swineford 1939"
+      ],
+      "n_checks": 3
+    },
+    {
+      "method": "Kaplan\u2013Meier with log-rank test",
+      "endpoint": "/api/medical/kaplan-meier",
+      "checks": [
+        {
+          "statistic": "log-rank chi-square",
+          "observed": 16.792940989216547,
+          "expected": 16.79,
+          "tolerance_abs": 0.01,
+          "tolerance_rel": null,
+          "dataset": "Freireich et al. (1963) leukaemia remission",
+          "test_id": "tests/test_medical.py::test_kaplan_meier_freireich"
+        }
+      ],
+      "references": [
+        "Kleinbaum & Klein, Survival Analysis (2012), Freireich 6-MP data"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "Freireich et al. (1963) leukaemia remission"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Kendall tau",
+      "endpoint": "/api/advanced/non-parametric",
+      "checks": [
+        {
+          "statistic": "tau",
+          "observed": 0.9999999999999998,
+          "expected": 0.9999999999999998,
+          "tolerance_abs": 1e-12,
+          "tolerance_rel": null,
+          "dataset": "Zar height/weight (strictly monotone)",
+          "test_id": "tests/validation/test_spearman_kendall.py::test_kendall"
+        }
+      ],
+      "references": [
+        "analytical (Zar data is strictly monotone \u2192 tau = 1, up to fp)"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "Zar height/weight (strictly monotone)"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Kendall tau-b",
+      "endpoint": "/api/advanced/non-parametric",
+      "checks": [
+        {
+          "statistic": "tau",
+          "observed": 0.4319297483312999,
+          "expected": 0.4319297483,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-09,
+          "dataset": "two 10-value groups (G1, G2, G3)",
+          "test_id": "tests/test_advanced_stats.py::test_nonparametric_tests_match_r"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "two 10-value groups (G1, G2, G3)"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Knapp\u2013Hartung adjustment",
+      "endpoint": "/api/meta-analysis/random-effects",
+      "checks": [
+        {
+          "statistic": "SE",
+          "observed": 0.180792,
+          "expected": 0.1807917455,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_random_effects_reml_qprofile_and_knha"
+        },
+        {
+          "statistic": "CI lower",
+          "observed": -1.108444,
+          "expected": -1.108443723,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_random_effects_reml_qprofile_and_knha"
+        }
+      ],
+      "references": [
+        "metafor 5.2.1 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "BCG vaccine trials (dat.bcg), log risk ratios"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Kruskal-Wallis H",
+      "endpoint": "/api/advanced/non-parametric",
+      "checks": [
+        {
+          "statistic": "H",
+          "observed": 18.937770828679902,
+          "expected": 18.9377708287,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-09,
+          "dataset": "two 10-value groups (G1, G2, G3)",
+          "test_id": "tests/test_advanced_stats.py::test_nonparametric_tests_match_r"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "two 10-value groups (G1, G2, G3)"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Linear mixed model, random intercept (REML)",
+      "endpoint": "/api/advanced/mixed-model",
+      "checks": [
+        {
+          "statistic": "slope",
+          "observed": 9.952689484126997,
+          "expected": 9.95268948,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-06,
+          "dataset": "deterministic 12 subjects x 8 days (LCG)",
+          "test_id": "tests/test_advanced_stats.py::test_mixed_model_matches_lme4"
+        },
+        {
+          "statistic": "slope SE",
+          "observed": 0.5869045047605614,
+          "expected": 0.58690718,
+          "tolerance_abs": null,
+          "tolerance_rel": 0.0001,
+          "dataset": "deterministic 12 subjects x 8 days (LCG)",
+          "test_id": "tests/test_advanced_stats.py::test_mixed_model_matches_lme4"
+        },
+        {
+          "statistic": "intercept variance",
+          "observed": 70.35906608689372,
+          "expected": 70.352547,
+          "tolerance_abs": null,
+          "tolerance_rel": 0.001,
+          "dataset": "deterministic 12 subjects x 8 days (LCG)",
+          "test_id": "tests/test_advanced_stats.py::test_mixed_model_matches_lme4"
+        },
+        {
+          "statistic": "REML log-likelihood",
+          "observed": -389.0908100509148,
+          "expected": -389.09081,
+          "tolerance_abs": 0.001,
+          "tolerance_rel": null,
+          "dataset": "deterministic 12 subjects x 8 days (LCG)",
+          "test_id": "tests/test_advanced_stats.py::test_mixed_model_matches_lme4"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "deterministic 12 subjects x 8 days (LCG)"
+      ],
+      "n_checks": 4
+    },
+    {
+      "method": "Linear mixed model, random slope (REML)",
+      "endpoint": "/api/advanced/mixed-model",
+      "checks": [
+        {
+          "statistic": "slope SE",
+          "observed": 0.7393162903064692,
+          "expected": 0.7393197,
+          "tolerance_abs": null,
+          "tolerance_rel": 0.001,
+          "dataset": "deterministic 12 subjects x 8 days (LCG)",
+          "test_id": "tests/test_advanced_stats.py::test_mixed_model_matches_lme4"
+        },
+        {
+          "statistic": "REML log-likelihood",
+          "observed": -386.9512557060532,
+          "expected": -386.951256,
+          "tolerance_abs": 0.001,
+          "tolerance_rel": null,
+          "dataset": "deterministic 12 subjects x 8 days (LCG)",
+          "test_id": "tests/test_advanced_stats.py::test_mixed_model_matches_lme4"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "deterministic 12 subjects x 8 days (LCG)"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Logistic regression",
+      "endpoint": "/api/extended-stats/logistic-regression",
+      "checks": [
+        {
+          "statistic": "slope",
+          "observed": 2.5170485807783796,
+          "expected": 2.5170485808,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "20 observations",
+          "test_id": "tests/test_logistic_roc.py::test_logistic_regression_matches_glm"
+        },
+        {
+          "statistic": "slope SE",
+          "observed": 1.0856489758187,
+          "expected": 1.085646489,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "20 observations",
+          "test_id": "tests/test_logistic_roc.py::test_logistic_regression_matches_glm"
+        },
+        {
+          "statistic": "LR chi-square",
+          "observed": 10.219696505987265,
+          "expected": 10.2196965046,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "20 observations",
+          "test_id": "tests/test_logistic_roc.py::test_logistic_regression_matches_glm"
+        },
+        {
+          "statistic": "AIC",
+          "observed": 21.30585604395411,
+          "expected": 21.305856044,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "20 observations",
+          "test_id": "tests/test_logistic_roc.py::test_logistic_regression_matches_glm"
+        }
+      ],
+      "references": [
+        "R glm(binomial)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "20 observations"
+      ],
+      "n_checks": 4
+    },
+    {
+      "method": "Logistic regression DIF",
+      "endpoint": "/api/irt/dif",
+      "checks": [
+        {
+          "statistic": "LR chi-square (2 df) item 1",
+          "observed": 2.001353937007366,
+          "expected": 2.001354,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "Nagelkerke delta R2 item 1",
+          "observed": 0.006731904524187149,
+          "expected": 0.0067319,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "LR chi-square (2 df) item 2",
+          "observed": 3.3540988112341665,
+          "expected": 3.354099,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "Nagelkerke delta R2 item 2",
+          "observed": 0.010097851464090701,
+          "expected": 0.01009785,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "LR chi-square (2 df) item 3",
+          "observed": 2.474219894014311,
+          "expected": 2.47422,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "Nagelkerke delta R2 item 3",
+          "observed": 0.007386982505659223,
+          "expected": 0.00738698,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "LR chi-square (2 df) item 4",
+          "observed": 4.729632932106455,
+          "expected": 4.729633,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "Nagelkerke delta R2 item 4",
+          "observed": 0.017678867844258817,
+          "expected": 0.01767887,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "LR chi-square (2 df) item 5",
+          "observed": 4.1403954774274325,
+          "expected": 4.140395,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "Nagelkerke delta R2 item 5",
+          "observed": 0.01247953379236072,
+          "expected": 0.01247953,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "LR chi-square (2 df) item 6",
+          "observed": 11.411094010850775,
+          "expected": 11.411094,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "Nagelkerke delta R2 item 6",
+          "observed": 0.03427299998847061,
+          "expected": 0.034273,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        }
+      ],
+      "references": [
+        "difR 6.1.0 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "difR verbal (Gender)"
+      ],
+      "n_checks": 12
+    },
+    {
+      "method": "Lord's chi-square DIF",
+      "endpoint": "/api/irt/dif",
+      "checks": [
+        {
+          "statistic": "Lord chi-square item 1",
+          "observed": 1.2360221622284575,
+          "expected": 1.235678,
+          "tolerance_abs": 0.005,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "Lord chi-square item 2",
+          "observed": 2.209016216945442,
+          "expected": 2.208876,
+          "tolerance_abs": 0.005,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "Lord chi-square item 3",
+          "observed": 0.9739536726773871,
+          "expected": 0.974123,
+          "tolerance_abs": 0.005,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "Lord chi-square item 4",
+          "observed": 3.975257913420111,
+          "expected": 3.972956,
+          "tolerance_abs": 0.005,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "Lord chi-square item 5",
+          "observed": 2.8476397675842042,
+          "expected": 2.846341,
+          "tolerance_abs": 0.005,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "Lord chi-square item 6",
+          "observed": 5.339618964403342,
+          "expected": 5.340329,
+          "tolerance_abs": 0.005,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        }
+      ],
+      "references": [
+        "difR 6.1.0 (R 4.5.2) + mirt 1.48"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "difR verbal (Gender)"
+      ],
+      "n_checks": 6
+    },
+    {
+      "method": "MANOVA",
+      "endpoint": "/api/advanced-anova/manova",
+      "checks": [
+        {
+          "statistic": "Pillai trace",
+          "observed": 1.1610724271323785,
+          "expected": 1.1610724271,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "iris, first 15 per species, 3 DVs",
+          "test_id": "tests/test_anova_ca.py::test_manova_and_lda_match_r"
+        },
+        {
+          "statistic": "Pillai F",
+          "observed": 18.9146123582944,
+          "expected": 18.9146123583,
+          "tolerance_abs": 1e-08,
+          "tolerance_rel": null,
+          "dataset": "iris, first 15 per species, 3 DVs",
+          "test_id": "tests/test_anova_ca.py::test_manova_and_lda_match_r"
+        },
+        {
+          "statistic": "Wilks lambda",
+          "observed": 0.022959541268463758,
+          "expected": 0.0229595413,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "iris, first 15 per species, 3 DVs",
+          "test_id": "tests/test_anova_ca.py::test_manova_and_lda_match_r"
+        },
+        {
+          "statistic": "Wilks F",
+          "observed": 74.66149194635267,
+          "expected": 74.6614919464,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "iris, first 15 per species, 3 DVs",
+          "test_id": "tests/test_anova_ca.py::test_manova_and_lda_match_r"
+        },
+        {
+          "statistic": "Hotelling-Lawley F",
+          "observed": 224.50601808101413,
+          "expected": 224.506018081,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "iris, first 15 per species, 3 DVs",
+          "test_id": "tests/test_anova_ca.py::test_manova_and_lda_match_r"
+        },
+        {
+          "statistic": "Roy F",
+          "observed": 468.8450961158494,
+          "expected": 468.8450961158,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "iris, first 15 per species, 3 DVs",
+          "test_id": "tests/test_anova_ca.py::test_manova_and_lda_match_r"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "iris, first 15 per species, 3 DVs"
+      ],
+      "n_checks": 6
+    },
+    {
+      "method": "ML factor analysis (1 factor)",
+      "endpoint": "/api/psychometrics/factor-analysis",
+      "checks": [
+        {
+          "statistic": "LR chi-square",
+          "observed": 306.5602163712539,
+          "expected": 306.5602,
+          "tolerance_abs": 0.001,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_kmo_and_bartlett_match_psych"
+        }
+      ],
+      "references": [
+        "stats::factanal (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Holzinger-Swineford 1939"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "ML factor analysis (none)",
+      "endpoint": "/api/psychometrics/factor-analysis",
+      "checks": [
+        {
+          "statistic": "loading x1,F1",
+          "observed": 0.488048725602667,
+          "expected": 0.4880483939,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[none-row11]"
+        },
+        {
+          "statistic": "loading x1,F2",
+          "observed": 0.3135254233258387,
+          "expected": 0.3135246355,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[none-row11]"
+        },
+        {
+          "statistic": "loading x1,F3",
+          "observed": 0.38856757308691986,
+          "expected": 0.38856885396,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[none-row11]"
+        },
+        {
+          "statistic": "uniqueness x1",
+          "observed": 0.5125254902276393,
+          "expected": 0.5125256051,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[none-row11]"
+        },
+        {
+          "statistic": "uniqueness x5",
+          "observed": 0.24287681224869628,
+          "expected": 0.2428761608,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[none-row11]"
+        },
+        {
+          "statistic": "uniqueness x9",
+          "observed": 0.5432437830012928,
+          "expected": 0.5432406266,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[none-row11]"
+        },
+        {
+          "statistic": "LR chi-square",
+          "observed": 22.377226895341565,
+          "expected": 22.37723,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[none-row11]"
+        },
+        {
+          "statistic": "LR p-value",
+          "observed": 0.03350316280573312,
+          "expected": 0.03350316,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[none-row11]"
+        }
+      ],
+      "references": [
+        "stats::factanal (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Holzinger-Swineford 1939"
+      ],
+      "n_checks": 8
+    },
+    {
+      "method": "ML factor analysis (promax)",
+      "endpoint": "/api/psychometrics/factor-analysis",
+      "checks": [
+        {
+          "statistic": "loading x1,F1",
+          "observed": 0.14567420316376295,
+          "expected": 0.145673915867,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[promax-row12]"
+        },
+        {
+          "statistic": "loading x1,F2",
+          "observed": 0.6239049750782484,
+          "expected": 0.62390619715,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[promax-row12]"
+        },
+        {
+          "statistic": "loading x1,F3",
+          "observed": 0.00876384044247802,
+          "expected": 0.008761445802,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[promax-row12]"
+        },
+        {
+          "statistic": "uniqueness x1",
+          "observed": 0.5125254902276393,
+          "expected": 0.5125256051,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[promax-row12]"
+        },
+        {
+          "statistic": "uniqueness x5",
+          "observed": 0.24287681224869628,
+          "expected": 0.2428761608,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[promax-row12]"
+        },
+        {
+          "statistic": "uniqueness x9",
+          "observed": 0.5432437830012928,
+          "expected": 0.5432406266,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[promax-row12]"
+        },
+        {
+          "statistic": "LR chi-square",
+          "observed": 22.377226895341565,
+          "expected": 22.37723,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[promax-row12]"
+        },
+        {
+          "statistic": "LR p-value",
+          "observed": 0.03350316280573312,
+          "expected": 0.03350316,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[promax-row12]"
+        },
+        {
+          "statistic": "factor correlation F1,F2",
+          "observed": 0.3993973878427858,
+          "expected": 0.3993970856,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[promax-row12]"
+        },
+        {
+          "statistic": "factor correlation F2,F3",
+          "observed": 0.3390580440914156,
+          "expected": 0.3390591935,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[promax-row12]"
+        }
+      ],
+      "references": [
+        "stats::factanal (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Holzinger-Swineford 1939"
+      ],
+      "n_checks": 10
+    },
+    {
+      "method": "ML factor analysis (varimax)",
+      "endpoint": "/api/psychometrics/factor-analysis",
+      "checks": [
+        {
+          "statistic": "loading x1,F1",
+          "observed": 0.27729130818645836,
+          "expected": 0.27729131359,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[varimax-row10]"
+        },
+        {
+          "statistic": "loading x1,F2",
+          "observed": 0.6226615666420245,
+          "expected": 0.62266175764,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[varimax-row10]"
+        },
+        {
+          "statistic": "loading x1,F3",
+          "observed": 0.15125016469357824,
+          "expected": 0.15124995582,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[varimax-row10]"
+        },
+        {
+          "statistic": "uniqueness x1",
+          "observed": 0.5125254902276393,
+          "expected": 0.5125256051,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[varimax-row10]"
+        },
+        {
+          "statistic": "uniqueness x5",
+          "observed": 0.24287681224869628,
+          "expected": 0.2428761608,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[varimax-row10]"
+        },
+        {
+          "statistic": "uniqueness x9",
+          "observed": 0.5432437830012928,
+          "expected": 0.5432406266,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[varimax-row10]"
+        },
+        {
+          "statistic": "LR chi-square",
+          "observed": 22.377226895341565,
+          "expected": 22.37723,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[varimax-row10]"
+        },
+        {
+          "statistic": "LR p-value",
+          "observed": 0.03350316280573312,
+          "expected": 0.03350316,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_psychometrics.py::test_ml_factor_analysis_matches_factanal[varimax-row10]"
+        }
+      ],
+      "references": [
+        "stats::factanal (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Holzinger-Swineford 1939"
+      ],
+      "n_checks": 8
+    },
+    {
+      "method": "MTMM Campbell\u2013Fiske criteria",
+      "endpoint": "/api/mtmm/analyze",
+      "checks": [
+        {
+          "statistic": "criteria met (hand-worked 3x2 matrix)",
+          "observed": 4.0,
+          "expected": 4.0,
+          "tolerance_abs": 0,
+          "tolerance_rel": null,
+          "dataset": "constructed 3-trait x 2-method matrix",
+          "test_id": "tests/test_mtmm.py::test_campbell_fiske_hand_worked_example"
+        }
+      ],
+      "references": [
+        "Campbell & Fiske (1959), worked by hand"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "constructed 3-trait x 2-method matrix"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Mann-Whitney U (Stats Studio)",
+      "endpoint": "/api/advanced/non-parametric",
+      "checks": [
+        {
+          "statistic": "p",
+          "observed": 0.0016653853816887098,
+          "expected": 0.0016653854,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-06,
+          "dataset": "two 10-value groups (G1, G2, G3)",
+          "test_id": "tests/test_advanced_stats.py::test_nonparametric_tests_match_r"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "two 10-value groups (G1, G2, G3)"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Mann-Whitney U test",
+      "endpoint": "/api/advanced/non-parametric",
+      "checks": [
+        {
+          "statistic": "U_statistic",
+          "observed": 1.5,
+          "expected": 1.5,
+          "tolerance_abs": 1e-12,
+          "tolerance_rel": 1e-06,
+          "dataset": "Snedecor & Cochran 7+7 obs (same as indep t-test)",
+          "test_id": "tests/validation/test_mann_whitney.py::test_mann_whitney_u"
+        },
+        {
+          "statistic": "p_value",
+          "observed": 0.004000668303482264,
+          "expected": 0.004000668303482264,
+          "tolerance_abs": 0.0,
+          "tolerance_rel": 1e-08,
+          "dataset": "Snedecor & Cochran 7+7 obs (same as indep t-test)",
+          "test_id": "tests/validation/test_mann_whitney.py::test_mann_whitney_u"
+        }
+      ],
+      "references": [
+        "scipy 1.14",
+        "scipy 1.14 (verified against R stats::wilcox.test)"
+      ],
+      "reference_kinds": [
+        "scipy-ref"
+      ],
+      "datasets": [
+        "Snedecor & Cochran 7+7 obs (same as indep t-test)"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Mantel-Haenszel DIF",
+      "endpoint": "/api/irt/dif",
+      "checks": [
+        {
+          "statistic": "MH chi-square item 1",
+          "observed": 1.7076371278008693,
+          "expected": 1.70763713,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "MH common odds ratio item 1",
+          "observed": 1.700465483267474,
+          "expected": 1.7004655,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "MH chi-square item 2",
+          "observed": 2.1485927018730404,
+          "expected": 2.1485927,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "MH common odds ratio item 2",
+          "observed": 1.7701794485757476,
+          "expected": 1.7701795,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "MH chi-square item 3",
+          "observed": 0.9925927229521533,
+          "expected": 0.99259272,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "MH common odds ratio item 3",
+          "observed": 1.448096656461485,
+          "expected": 1.4480967,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "MH chi-square item 4",
+          "observed": 1.9301971422797657,
+          "expected": 1.93019714,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "MH common odds ratio item 4",
+          "observed": 1.939474512699374,
+          "expected": 1.9394745,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "MH chi-square item 5",
+          "observed": 2.9539913875347703,
+          "expected": 2.95399139,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "MH common odds ratio item 5",
+          "observed": 1.9799015357696021,
+          "expected": 1.9799015,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "MH chi-square item 6",
+          "observed": 9.603208644046147,
+          "expected": 9.60320864,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        },
+        {
+          "statistic": "MH common odds ratio item 6",
+          "observed": 2.8803829467889246,
+          "expected": 2.8803829,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        }
+      ],
+      "references": [
+        "difR 6.1.0 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "difR verbal (Gender)"
+      ],
+      "n_checks": 12
+    },
+    {
+      "method": "Mantel-Haenszel DIF (purified)",
+      "endpoint": "/api/irt/dif",
+      "checks": [
+        {
+          "statistic": "MH chi-square item 17",
+          "observed": 11.943638427952795,
+          "expected": 11.94363843,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "difR verbal (Gender)",
+          "test_id": "tests/test_irt.py::test_dif_matches_difR"
+        }
+      ],
+      "references": [
+        "difR 6.1.0 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "difR verbal (Gender)"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Mauchly sphericity test",
+      "endpoint": "/api/advanced/repeated-measures",
+      "checks": [
+        {
+          "statistic": "p",
+          "observed": 0.01336864153174685,
+          "expected": 0.0134,
+          "tolerance_abs": 5e-05,
+          "tolerance_rel": null,
+          "dataset": "8 subjects x 4 conditions",
+          "test_id": "tests/test_advanced_stats.py::test_repeated_measures_matches_afex"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "8 subjects x 4 conditions"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Meta-regression (fixed effect)",
+      "endpoint": "/api/meta-analysis/moderator-analysis",
+      "checks": [
+        {
+          "statistic": "slope",
+          "observed": -0.029237,
+          "expected": -0.0292369343,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_moderators"
+        },
+        {
+          "statistic": "QM",
+          "observed": 121.499918,
+          "expected": 121.4999180716,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_moderators"
+        }
+      ],
+      "references": [
+        "metafor 5.2.1 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "BCG vaccine trials (dat.bcg), log risk ratios"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Meta-regression (mixed effects, DL residual tau^2)",
+      "endpoint": "/api/meta-analysis/moderator-analysis",
+      "checks": [
+        {
+          "statistic": "slope",
+          "observed": -0.029229,
+          "expected": -0.0292287388,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_moderators"
+        },
+        {
+          "statistic": "slope SE",
+          "observed": 0.006733,
+          "expected": 0.0067330108,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_moderators"
+        },
+        {
+          "statistic": "residual tau^2",
+          "observed": 0.063301,
+          "expected": 0.0633005024,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_moderators"
+        },
+        {
+          "statistic": "QM",
+          "observed": 18.845234,
+          "expected": 18.8452335426,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_moderators"
+        },
+        {
+          "statistic": "QE",
+          "observed": 30.73309,
+          "expected": 30.7330900107,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_moderators"
+        },
+        {
+          "statistic": "R^2",
+          "observed": 0.795,
+          "expected": 0.794984944502,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_moderators"
+        }
+      ],
+      "references": [
+        "metafor 5.2.1 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "BCG vaccine trials (dat.bcg), log risk ratios"
+      ],
+      "n_checks": 6
+    },
+    {
+      "method": "Mixed ANOVA (Type III)",
+      "endpoint": "/api/advanced-anova/mixed-anova",
+      "checks": [
+        {
+          "statistic": "F between",
+          "observed": 9.878010763273616,
+          "expected": 9.878011,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "12 subjects (5 + 7, unbalanced) x 4 conditions",
+          "test_id": "tests/test_anova_ca.py::test_mixed_anova_matches_afex_type3"
+        },
+        {
+          "statistic": "F within",
+          "observed": 70.87830805828126,
+          "expected": 70.878308,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "12 subjects (5 + 7, unbalanced) x 4 conditions",
+          "test_id": "tests/test_anova_ca.py::test_mixed_anova_matches_afex_type3"
+        },
+        {
+          "statistic": "F interaction",
+          "observed": 9.266651798988995,
+          "expected": 9.266652,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "12 subjects (5 + 7, unbalanced) x 4 conditions",
+          "test_id": "tests/test_anova_ca.py::test_mixed_anova_matches_afex_type3"
+        },
+        {
+          "statistic": "partial eta^2 within",
+          "observed": 0.8763574530664767,
+          "expected": 0.8763575,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "12 subjects (5 + 7, unbalanced) x 4 conditions",
+          "test_id": "tests/test_anova_ca.py::test_mixed_anova_matches_afex_type3"
+        },
+        {
+          "statistic": "GG epsilon",
+          "observed": 0.6171612979903867,
+          "expected": 0.6171613,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "12 subjects (5 + 7, unbalanced) x 4 conditions",
+          "test_id": "tests/test_anova_ca.py::test_mixed_anova_matches_afex_type3"
+        },
+        {
+          "statistic": "HF epsilon",
+          "observed": 0.7513156422060729,
+          "expected": 0.7513156,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "12 subjects (5 + 7, unbalanced) x 4 conditions",
+          "test_id": "tests/test_anova_ca.py::test_mixed_anova_matches_afex_type3"
+        },
+        {
+          "statistic": "GG-corrected p (within)",
+          "observed": 3.203458935135552e-09,
+          "expected": 3.203459e-09,
+          "tolerance_abs": 1e-14,
+          "tolerance_rel": null,
+          "dataset": "12 subjects (5 + 7, unbalanced) x 4 conditions",
+          "test_id": "tests/test_anova_ca.py::test_mixed_anova_matches_afex_type3"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "12 subjects (5 + 7, unbalanced) x 4 conditions"
+      ],
+      "n_checks": 7
+    },
+    {
+      "method": "Moderation (PROCESS model 1)",
+      "endpoint": "/api/mediation/moderation",
+      "checks": [
+        {
+          "statistic": "interaction b",
+          "observed": 0.28296846355231153,
+          "expected": 0.2829684636,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "40 observations (LCG), mean-centred",
+          "test_id": "tests/test_mediation.py::test_moderation_matches_r"
+        },
+        {
+          "statistic": "interaction p",
+          "observed": 0.022317499414659457,
+          "expected": 0.022317499415,
+          "tolerance_abs": 1e-10,
+          "tolerance_rel": null,
+          "dataset": "40 observations (LCG), mean-centred",
+          "test_id": "tests/test_mediation.py::test_moderation_matches_r"
+        },
+        {
+          "statistic": "delta R^2",
+          "observed": 0.022691883866167384,
+          "expected": 0.0226918839,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "40 observations (LCG), mean-centred",
+          "test_id": "tests/test_mediation.py::test_moderation_matches_r"
+        },
+        {
+          "statistic": "simple slope at -1 SD",
+          "observed": 0.8585435950101447,
+          "expected": 0.858543595,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "40 observations (LCG), mean-centred",
+          "test_id": "tests/test_mediation.py::test_moderation_matches_r"
+        },
+        {
+          "statistic": "simple slope SE at +1 SD",
+          "observed": 0.15251335624221266,
+          "expected": 0.1525133562,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "40 observations (LCG), mean-centred",
+          "test_id": "tests/test_mediation.py::test_moderation_matches_r"
+        }
+      ],
+      "references": [
+        "R 4.5.2 lm + vcov"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "40 observations (LCG), mean-centred"
+      ],
+      "n_checks": 5
+    },
+    {
+      "method": "Multiple correspondence analysis",
+      "endpoint": "/api/correspondence/multiple",
+      "checks": [
+        {
+          "statistic": "adjusted % dim 1 (Greenacre)",
+          "observed": 60.18624923479008,
+          "expected": 60.186249,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "10 observations, 3 categorical variables",
+          "test_id": "tests/test_anova_ca.py::test_correspondence_analysis_matches_ca_package"
+        },
+        {
+          "statistic": "adjusted eigenvalue 1 (Benzecri)",
+          "observed": 0.10833524862262234,
+          "expected": 0.1083352486,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "10 observations, 3 categorical variables",
+          "test_id": "tests/test_anova_ca.py::test_correspondence_analysis_matches_ca_package"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "10 observations, 3 categorical variables"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Multiple regression with diagnostics",
+      "endpoint": "/api/advanced/multiple-regression",
+      "checks": [
+        {
+          "statistic": "b1",
+          "observed": 2.0627619047619032,
+          "expected": 2.0627619048,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-09,
+          "dataset": "12 observations, 2 predictors",
+          "test_id": "tests/test_advanced_stats.py::test_multiple_regression_matches_r"
+        },
+        {
+          "statistic": "VIF",
+          "observed": 2.560380952380953,
+          "expected": 2.5603809524,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-09,
+          "dataset": "12 observations, 2 predictors",
+          "test_id": "tests/test_advanced_stats.py::test_multiple_regression_matches_r"
+        },
+        {
+          "statistic": "Breusch-Pagan (Koenker)",
+          "observed": 0.7579401809651483,
+          "expected": 0.757940181,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-08,
+          "dataset": "12 observations, 2 predictors",
+          "test_id": "tests/test_advanced_stats.py::test_multiple_regression_matches_r"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "12 observations, 2 predictors"
+      ],
+      "n_checks": 3
+    },
+    {
+      "method": "Number needed to treat (Altman CI)",
+      "endpoint": "/api/medical/nnt",
+      "checks": [
+        {
+          "statistic": "NNT",
+          "observed": 6.666666666666667,
+          "expected": 6.666666666666667,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-09,
+          "dataset": "15/100 vs 30/100",
+          "test_id": "tests/test_medical.py::test_nnt_altman_interval"
+        }
+      ],
+      "references": [
+        "Altman (1998) BMJ 317:1309, closed form"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "15/100 vs 30/100"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "PELT change point detection",
+      "endpoint": "/api/time-series/changepoint",
+      "checks": [
+        {
+          "statistic": "segmentations differing from exhaustive optimum (120 random series)",
+          "observed": 0.0,
+          "expected": 0.0,
+          "tolerance_abs": 0,
+          "tolerance_rel": null,
+          "dataset": "120 simulated piecewise-Gaussian series",
+          "test_id": "tests/test_time_series.py::test_pelt_is_exact"
+        }
+      ],
+      "references": [
+        "Exhaustive optimal partitioning (Jackson et al., 2005)"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "120 simulated piecewise-Gaussian series"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Partial credit model (MML)",
+      "endpoint": "/api/irt/partial-credit",
+      "checks": [
+        {
+          "statistic": "step 1,1",
+          "observed": -3.0878480818834357,
+          "expected": -3.087966,
+          "tolerance_abs": 0.0003,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "step 1,2",
+          "observed": -2.595303837423,
+          "expected": -2.5953185,
+          "tolerance_abs": 0.0003,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "step 1,3",
+          "observed": 1.3887931377560094,
+          "expected": 1.388795,
+          "tolerance_abs": 0.0003,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "step 2,1",
+          "observed": -1.8963441344843004,
+          "expected": -1.896367,
+          "tolerance_abs": 0.0003,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "step 2,2",
+          "observed": -0.9109132294606679,
+          "expected": -0.9109218,
+          "tolerance_abs": 0.0003,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "step 2,3",
+          "observed": 1.8587500034152862,
+          "expected": 1.858756,
+          "tolerance_abs": 0.0003,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "step 3,1",
+          "observed": -2.6475594732736396,
+          "expected": -2.647599,
+          "tolerance_abs": 0.0003,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "step 3,2",
+          "observed": -1.4212046995566974,
+          "expected": -1.4212167,
+          "tolerance_abs": 0.0003,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "step 3,3",
+          "observed": 1.1352092389519894,
+          "expected": 1.135212,
+          "tolerance_abs": 0.0003,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "step 4,1",
+          "observed": -2.449136929141669,
+          "expected": -2.449166,
+          "tolerance_abs": 0.0003,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "step 4,2",
+          "observed": -0.8997475872382114,
+          "expected": -0.8997573,
+          "tolerance_abs": 0.0003,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "step 4,3",
+          "observed": 1.3580287884532578,
+          "expected": 1.358033,
+          "tolerance_abs": 0.0003,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "latent variance",
+          "observed": 1.0025026760328763,
+          "expected": 1.002532,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "log-likelihood",
+          "observed": -1619.274099363521,
+          "expected": -1619.27410089,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        },
+        {
+          "statistic": "empirical reliability",
+          "observed": 0.6088851477196074,
+          "expected": 0.6088891,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Science",
+          "test_id": "tests/test_irt.py::test_partial_credit_matches_mirt"
+        }
+      ],
+      "references": [
+        "mirt 1.48 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Science"
+      ],
+      "n_checks": 15
+    },
+    {
+      "method": "Pearson product-moment correlation",
+      "endpoint": "/api/advanced/correlation-matrix",
+      "checks": [
+        {
+          "statistic": "r",
+          "observed": 0.9996623638908606,
+          "expected": 0.9996623638908606,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-10,
+          "dataset": "12-pair monotone height/weight teaching example",
+          "test_id": "tests/validation/test_pearson_correlation.py::test_pearson_correlation"
+        },
+        {
+          "statistic": "p_value",
+          "observed": 3.4534294801406197e-17,
+          "expected": 3.4534294801406197e-17,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-06,
+          "dataset": "12-pair monotone height/weight teaching example",
+          "test_id": "tests/validation/test_pearson_correlation.py::test_pearson_correlation"
+        }
+      ],
+      "references": [
+        "scipy 1.14",
+        "scipy 1.14 (verified against R stats::cor.test method='pearson')"
+      ],
+      "reference_kinds": [
+        "scipy-ref"
+      ],
+      "datasets": [
+        "12-pair monotone height/weight teaching example"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Permutation test (exact)",
+      "endpoint": "/api/nonparametric/permutation-test",
+      "checks": [
+        {
+          "statistic": "p",
+          "observed": 0.005827505827505828,
+          "expected": 0.005827505827505828,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-12,
+          "dataset": "7 vs 6 observations",
+          "test_id": "tests/test_nonparametric.py::test_exact_permutation_p"
+        }
+      ],
+      "references": [
+        "scipy 1.14 permutation_test (exact) and full enumeration"
+      ],
+      "reference_kinds": [
+        "scipy-ref"
+      ],
+      "datasets": [
+        "7 vs 6 observations"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Phillips\u2013Perron unit root test",
+      "endpoint": "/api/time-series/stationarity",
+      "checks": [
+        {
+          "statistic": "Z_t",
+          "observed": -6.619931569831976,
+          "expected": -6.619931569831973,
+          "tolerance_abs": 1e-08,
+          "tolerance_rel": null,
+          "dataset": "LCG AR(1), n=150, phi=0.5",
+          "test_id": "tests/test_time_series.py::test_phillips_perron_matches_arch[150-0.5--6.619931569831973-6.07300314909679e-09-14]"
+        },
+        {
+          "statistic": "p_value",
+          "observed": 6.0730031490966586e-09,
+          "expected": 6.07300314909679e-09,
+          "tolerance_abs": 1e-08,
+          "tolerance_rel": null,
+          "dataset": "LCG AR(1), n=150, phi=0.5",
+          "test_id": "tests/test_time_series.py::test_phillips_perron_matches_arch[150-0.5--6.619931569831973-6.07300314909679e-09-14]"
+        },
+        {
+          "statistic": "Z_t",
+          "observed": -1.8163217230003226,
+          "expected": -1.8163217230003503,
+          "tolerance_abs": 1e-08,
+          "tolerance_rel": null,
+          "dataset": "LCG AR(1), n=150, phi=1.0",
+          "test_id": "tests/test_time_series.py::test_phillips_perron_matches_arch[150-1.0--1.8163217230003503-0.3723890467309342-14]"
+        },
+        {
+          "statistic": "p_value",
+          "observed": 0.37238904673094786,
+          "expected": 0.3723890467309342,
+          "tolerance_abs": 1e-08,
+          "tolerance_rel": null,
+          "dataset": "LCG AR(1), n=150, phi=1.0",
+          "test_id": "tests/test_time_series.py::test_phillips_perron_matches_arch[150-1.0--1.8163217230003503-0.3723890467309342-14]"
+        },
+        {
+          "statistic": "Z_t",
+          "observed": -1.4010850635840622,
+          "expected": -1.4010850635840792,
+          "tolerance_abs": 1e-08,
+          "tolerance_rel": null,
+          "dataset": "LCG AR(1), n=80, phi=0.9",
+          "test_id": "tests/test_time_series.py::test_phillips_perron_matches_arch[80-0.9--1.4010850635840792-0.5817558149899436-12]"
+        },
+        {
+          "statistic": "p_value",
+          "observed": 0.5817558149899518,
+          "expected": 0.5817558149899436,
+          "tolerance_abs": 1e-08,
+          "tolerance_rel": null,
+          "dataset": "LCG AR(1), n=80, phi=0.9",
+          "test_id": "tests/test_time_series.py::test_phillips_perron_matches_arch[80-0.9--1.4010850635840792-0.5817558149899436-12]"
+        }
+      ],
+      "references": [
+        "arch 8.0.0 PhillipsPerron(trend='c')"
+      ],
+      "reference_kinds": [
+        "scipy-ref"
+      ],
+      "datasets": [
+        "LCG AR(1), n=150, phi=0.5",
+        "LCG AR(1), n=150, phi=1.0",
+        "LCG AR(1), n=80, phi=0.9"
+      ],
+      "n_checks": 6
+    },
+    {
+      "method": "Pipeline: Brown\u2013Forsythe test",
+      "endpoint": "/api/pipeline/run",
+      "checks": [
+        {
+          "statistic": "F",
+          "observed": 0.52744,
+          "expected": 0.5274401112946944,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "simulated 4-group data, n=40",
+          "test_id": "tests/test_pipeline.py::test_brown_forsythe_equals_anova_on_median_deviations"
+        }
+      ],
+      "references": [
+        "one-way ANOVA on |x - group median| (Brown & Forsythe, 1974)"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "simulated 4-group data, n=40"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Pipeline: Pearson correlation",
+      "endpoint": "/api/pipeline/run",
+      "checks": [
+        {
+          "statistic": "r",
+          "observed": 0.7624,
+          "expected": 0.7623664901805672,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "simulated data, n=40",
+          "test_id": "tests/test_pipeline.py::test_correlation_pairs_match_closed_form"
+        }
+      ],
+      "references": [
+        "closed form; p from t = r sqrt((n-2)/(1-r^2))"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "simulated data, n=40"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Pipeline: Welch t-test",
+      "endpoint": "/api/pipeline/run",
+      "checks": [
+        {
+          "statistic": "t",
+          "observed": -2.1073,
+          "expected": -2.107288247207529,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "simulated 2-group data, n=40",
+          "test_id": "tests/test_pipeline.py::test_welch_t_and_cohens_d_match_statsmodels"
+        }
+      ],
+      "references": [
+        "statsmodels CompareMeans.ttest_ind(usevar='unequal')"
+      ],
+      "reference_kinds": [
+        "scipy-ref"
+      ],
+      "datasets": [
+        "simulated 2-group data, n=40"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Pipeline: linear regression",
+      "endpoint": "/api/pipeline/run",
+      "checks": [
+        {
+          "statistic": "R^2",
+          "observed": 0.4534,
+          "expected": 0.45344840354773375,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "simulated data, n=40, 2 predictors",
+          "test_id": "tests/test_pipeline.py::test_regression_matches_least_squares"
+        }
+      ],
+      "references": [
+        "numpy least squares"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "simulated data, n=40, 2 predictors"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Pipeline: one-way ANOVA",
+      "endpoint": "/api/pipeline/run",
+      "checks": [
+        {
+          "statistic": "F",
+          "observed": 1.8485,
+          "expected": 1.848539628206723,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "simulated 4-group data, n=40",
+          "test_id": "tests/test_pipeline.py::test_one_way_anova_matches_statsmodels_ols"
+        }
+      ],
+      "references": [
+        "statsmodels anova_lm(ols)"
+      ],
+      "reference_kinds": [
+        "scipy-ref"
+      ],
+      "datasets": [
+        "simulated 4-group data, n=40"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Pipeline: paired t-test",
+      "endpoint": "/api/pipeline/run",
+      "checks": [
+        {
+          "statistic": "t",
+          "observed": 24.3252,
+          "expected": 24.325156729520383,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "simulated paired data, n=40",
+          "test_id": "tests/test_pipeline.py::test_paired_t_uses_n_minus_1_df_and_dz"
+        }
+      ],
+      "references": [
+        "closed form: mean(d) / (sd(d)/sqrt(n)), df = n - 1"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "simulated paired data, n=40"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Pipeline: variance inflation factor",
+      "endpoint": "/api/pipeline/run",
+      "checks": [
+        {
+          "statistic": "VIF",
+          "observed": 8.2962,
+          "expected": 8.296230299478669,
+          "tolerance_abs": 0.001,
+          "tolerance_rel": null,
+          "dataset": "simulated collinear predictors, n=40",
+          "test_id": "tests/test_pipeline.py::test_vif_equals_one_over_one_minus_r2"
+        }
+      ],
+      "references": [
+        "1 / (1 - R^2) of each predictor on the others"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "simulated collinear predictors, n=40"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Power analysis, one-way ANOVA",
+      "endpoint": "/api/stats/power-analysis",
+      "checks": [
+        {
+          "statistic": "total N",
+          "observed": 159.0,
+          "expected": 159.0,
+          "tolerance_abs": 0,
+          "tolerance_rel": null,
+          "dataset": "f = 0.25, alpha = .05, 3 groups",
+          "test_id": "tests/test_logistic_roc.py::test_anova_power_per_group_matches_gpower"
+        }
+      ],
+      "references": [
+        "G*Power 3.1 (f = 0.25, k = 3, power = .80)"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "f = 0.25, alpha = .05, 3 groups"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Q-methodology (PCA, varimax, qmethod flagging)",
+      "endpoint": "/api/q-methodology/analyze",
+      "checks": [
+        {
+          "statistic": "factor 1 z-score, statement 1",
+          "observed": 1.6599,
+          "expected": 1.659916,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Lipset (1963), 9 Q-sorts x 33 statements",
+          "test_id": "tests/test_q_methodology.py::test_q_analysis_matches_qmethod"
+        }
+      ],
+      "references": [
+        "R qmethod 1.8.4"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Lipset (1963), 9 Q-sorts x 33 statements"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "ROC AUC with DeLong CI",
+      "endpoint": "/api/extended-stats/roc-auc",
+      "checks": [
+        {
+          "statistic": "AUC",
+          "observed": 0.921875,
+          "expected": 0.921875,
+          "tolerance_abs": 1e-12,
+          "tolerance_rel": null,
+          "dataset": "20 observations",
+          "test_id": "tests/test_logistic_roc.py::test_roc_auc_delong_matches_proc"
+        },
+        {
+          "statistic": "CI lower",
+          "observed": 0.8068409219384682,
+          "expected": 0.8068409219,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "20 observations",
+          "test_id": "tests/test_logistic_roc.py::test_roc_auc_delong_matches_proc"
+        }
+      ],
+      "references": [
+        "pROC::ci.auc (DeLong)",
+        "pROC::roc / ci.auc (DeLong)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "20 observations"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Random-effects meta-analysis (DerSimonian\u2013Laird)",
+      "endpoint": "/api/meta-analysis/random-effects",
+      "checks": [
+        {
+          "statistic": "estimate",
+          "observed": -0.714117,
+          "expected": -0.7141172221,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_random_effects_dl"
+        },
+        {
+          "statistic": "SE",
+          "observed": 0.178742,
+          "expected": 0.1787420895,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_random_effects_dl"
+        },
+        {
+          "statistic": "tau^2",
+          "observed": 0.30876,
+          "expected": 0.3087602629,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_random_effects_dl"
+        },
+        {
+          "statistic": "I^2",
+          "observed": 92.12,
+          "expected": 92.1173468546,
+          "tolerance_abs": 0.005,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_random_effects_dl"
+        }
+      ],
+      "references": [
+        "metafor 5.2.1 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "BCG vaccine trials (dat.bcg), log risk ratios"
+      ],
+      "n_checks": 4
+    },
+    {
+      "method": "Random-effects meta-analysis (REML)",
+      "endpoint": "/api/meta-analysis/random-effects",
+      "checks": [
+        {
+          "statistic": "estimate",
+          "observed": -0.714532,
+          "expected": -0.7145323484,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_random_effects_reml_qprofile_and_knha"
+        },
+        {
+          "statistic": "SE",
+          "observed": 0.179782,
+          "expected": 0.1797815318,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_random_effects_reml_qprofile_and_knha"
+        },
+        {
+          "statistic": "tau^2",
+          "observed": 0.313243,
+          "expected": 0.313243326,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_random_effects_reml_qprofile_and_knha"
+        },
+        {
+          "statistic": "I^2",
+          "observed": 92.22,
+          "expected": 92.221386075,
+          "tolerance_abs": 0.005,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_random_effects_reml_qprofile_and_knha"
+        }
+      ],
+      "references": [
+        "metafor 5.2.1 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "BCG vaccine trials (dat.bcg), log risk ratios"
+      ],
+      "n_checks": 4
+    },
+    {
+      "method": "Rasch item fit (EAP)",
+      "endpoint": "/api/irt/rasch",
+      "checks": [
+        {
+          "statistic": "infit item 1",
+          "observed": 0.9393168615086566,
+          "expected": 0.9393162,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "outfit item 1",
+          "observed": 0.7443279011786067,
+          "expected": 0.7443282,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "infit item 2",
+          "observed": 0.8261343057744432,
+          "expected": 0.8261344,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "outfit item 2",
+          "observed": 0.7575894958544135,
+          "expected": 0.7575904,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "infit item 3",
+          "observed": 0.8595587236073714,
+          "expected": 0.8595587,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "outfit item 3",
+          "observed": 0.7112279193820265,
+          "expected": 0.7112288,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "infit item 4",
+          "observed": 0.8175019042096214,
+          "expected": 0.817502,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "outfit item 4",
+          "observed": 0.7697225532918536,
+          "expected": 0.7697234,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "infit item 5",
+          "observed": 0.9935426040895325,
+          "expected": 0.9935414,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "outfit item 5",
+          "observed": 0.7972853605872912,
+          "expected": 0.7972851,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        }
+      ],
+      "references": [
+        "mirt 1.48 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "LSAT7"
+      ],
+      "n_checks": 10
+    },
+    {
+      "method": "Rasch model (MML)",
+      "endpoint": "/api/irt/rasch",
+      "checks": [
+        {
+          "statistic": "b1",
+          "observed": -1.86826473120569,
+          "expected": -1.8682605,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "b2",
+          "observed": -0.7910062350157046,
+          "expected": -0.79100432,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "b3",
+          "observed": -1.460979597325169,
+          "expected": -1.46097621,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "b4",
+          "observed": -0.5215060599882109,
+          "expected": -0.52150468,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "b5",
+          "observed": -1.9929749347018848,
+          "expected": -1.99297041,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "latent variance",
+          "observed": 1.0226619942373065,
+          "expected": 1.02264709,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "log-likelihood",
+          "observed": -2664.9008908543383,
+          "expected": -2664.90089095,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        },
+        {
+          "statistic": "empirical reliability",
+          "observed": 0.4316258867434231,
+          "expected": 0.43162395,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "LSAT7",
+          "test_id": "tests/test_irt.py::test_rasch_matches_mirt"
+        }
+      ],
+      "references": [
+        "mirt 1.48 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "LSAT7"
+      ],
+      "n_checks": 8
+    },
+    {
+      "method": "Repeated-measures ANOVA",
+      "endpoint": "/api/advanced/repeated-measures",
+      "checks": [
+        {
+          "statistic": "F",
+          "observed": 182.19359534206694,
+          "expected": 182.19359534,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-08,
+          "dataset": "8 subjects x 4 conditions",
+          "test_id": "tests/test_advanced_stats.py::test_repeated_measures_matches_afex"
+        },
+        {
+          "statistic": "Greenhouse-Geisser p",
+          "observed": 3.772106344410763e-08,
+          "expected": 3.772106e-08,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-05,
+          "dataset": "8 subjects x 4 conditions",
+          "test_id": "tests/test_advanced_stats.py::test_repeated_measures_matches_afex"
+        },
+        {
+          "statistic": "Huynh-Feldt epsilon",
+          "observed": 0.5581620468027051,
+          "expected": 0.558162,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "8 subjects x 4 conditions",
+          "test_id": "tests/test_advanced_stats.py::test_repeated_measures_matches_afex"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "8 subjects x 4 conditions"
+      ],
+      "n_checks": 3
+    },
+    {
+      "method": "Rosenthal fail-safe N",
+      "endpoint": "/api/meta-analysis/publication-bias",
+      "checks": [
+        {
+          "statistic": "N",
+          "observed": 598.0,
+          "expected": 598.0,
+          "tolerance_abs": 0,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_publication_bias"
+        }
+      ],
+      "references": [
+        "metafor 5.2.1 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "BCG vaccine trials (dat.bcg), log risk ratios"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Simple correspondence analysis",
+      "endpoint": "/api/correspondence/simple",
+      "checks": [
+        {
+          "statistic": "eigenvalue 1",
+          "observed": 0.20876908843375164,
+          "expected": 0.2087690884,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "3x4 contingency table",
+          "test_id": "tests/test_anova_ca.py::test_correspondence_analysis_matches_ca_package"
+        },
+        {
+          "statistic": "eigenvalue 2",
+          "observed": 0.07890757955709125,
+          "expected": 0.0789075796,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "3x4 contingency table",
+          "test_id": "tests/test_anova_ca.py::test_correspondence_analysis_matches_ca_package"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "3x4 contingency table"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Spatial LM diagnostics",
+      "endpoint": "/api/spatial/spatial-regression",
+      "checks": [
+        {
+          "statistic": "lm_error",
+          "observed": 66.58721603114681,
+          "expected": 66.5872160311,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "40 jittered grid points, kNN (k = 5) weights",
+          "test_id": "tests/test_spatial.py::test_lm_tests_and_ml_lag_match_spatialreg"
+        },
+        {
+          "statistic": "lm_lag",
+          "observed": 62.89488657702289,
+          "expected": 62.894886577,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "40 jittered grid points, kNN (k = 5) weights",
+          "test_id": "tests/test_spatial.py::test_lm_tests_and_ml_lag_match_spatialreg"
+        },
+        {
+          "statistic": "robust_lm_error",
+          "observed": 7.461287193505091,
+          "expected": 7.4612871935,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "40 jittered grid points, kNN (k = 5) weights",
+          "test_id": "tests/test_spatial.py::test_lm_tests_and_ml_lag_match_spatialreg"
+        },
+        {
+          "statistic": "robust_lm_lag",
+          "observed": 3.768957739381111,
+          "expected": 3.7689577394,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "40 jittered grid points, kNN (k = 5) weights",
+          "test_id": "tests/test_spatial.py::test_lm_tests_and_ml_lag_match_spatialreg"
+        }
+      ],
+      "references": [
+        "R spdep 1.4 / spatialreg"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "40 jittered grid points, kNN (k = 5) weights"
+      ],
+      "n_checks": 4
+    },
+    {
+      "method": "Spatial lag model (ML)",
+      "endpoint": "/api/spatial/spatial-regression",
+      "checks": [
+        {
+          "statistic": "rho",
+          "observed": 0.9408453040091158,
+          "expected": 0.940845304,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "40 jittered grid points, kNN (k = 5) weights",
+          "test_id": "tests/test_spatial.py::test_lm_tests_and_ml_lag_match_spatialreg"
+        },
+        {
+          "statistic": "rho SE",
+          "observed": 0.03513292361157094,
+          "expected": 0.0351329236,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "40 jittered grid points, kNN (k = 5) weights",
+          "test_id": "tests/test_spatial.py::test_lm_tests_and_ml_lag_match_spatialreg"
+        },
+        {
+          "statistic": "slope SE",
+          "observed": 0.16099793255596534,
+          "expected": 0.1609979326,
+          "tolerance_abs": 1e-07,
+          "tolerance_rel": null,
+          "dataset": "40 jittered grid points, kNN (k = 5) weights",
+          "test_id": "tests/test_spatial.py::test_lm_tests_and_ml_lag_match_spatialreg"
+        },
+        {
+          "statistic": "log-likelihood",
+          "observed": -43.971668778602556,
+          "expected": -43.9716687786,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "40 jittered grid points, kNN (k = 5) weights",
+          "test_id": "tests/test_spatial.py::test_lm_tests_and_ml_lag_match_spatialreg"
+        }
+      ],
+      "references": [
+        "R spdep 1.4 / spatialreg"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "40 jittered grid points, kNN (k = 5) weights"
+      ],
+      "n_checks": 4
+    },
+    {
+      "method": "Spearman rank correlation",
+      "endpoint": "/api/advanced/non-parametric",
+      "checks": [
+        {
+          "statistic": "rho",
+          "observed": 1.0,
+          "expected": 1.0,
+          "tolerance_abs": 1e-12,
+          "tolerance_rel": null,
+          "dataset": "Zar height/weight (strictly monotone)",
+          "test_id": "tests/validation/test_spearman_kendall.py::test_spearman"
+        }
+      ],
+      "references": [
+        "analytical (Zar height/weight is strictly monotone \u2192 rho = 1)"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "Zar height/weight (strictly monotone)"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Spearman rank correlation (Stats Studio)",
+      "endpoint": "/api/advanced/non-parametric",
+      "checks": [
+        {
+          "statistic": "p",
+          "observed": 0.08324762708549167,
+          "expected": 0.0832476271,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-06,
+          "dataset": "two 10-value groups (G1, G2, G3)",
+          "test_id": "tests/test_advanced_stats.py::test_nonparametric_tests_match_r"
+        }
+      ],
+      "references": [
+        "R 4.5.2"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "two 10-value groups (G1, G2, G3)"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Subgroup analysis (mixed effects)",
+      "endpoint": "/api/meta-analysis/moderator-analysis",
+      "checks": [
+        {
+          "statistic": "Q between",
+          "observed": 1.536769,
+          "expected": 1.5367688721,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_moderators"
+        }
+      ],
+      "references": [
+        "metafor 5.2.1 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "BCG vaccine trials (dat.bcg), log risk ratios"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Trim-and-fill (L0, fixed-effect)",
+      "endpoint": "/api/meta-analysis/publication-bias",
+      "checks": [
+        {
+          "statistic": "adjusted estimate",
+          "observed": -0.291026,
+          "expected": -0.2910259921,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_publication_bias"
+        },
+        {
+          "statistic": "adjusted SE",
+          "observed": 0.038264,
+          "expected": 0.0382641366,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_publication_bias"
+        }
+      ],
+      "references": [
+        "metafor 5.2.1 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "BCG vaccine trials (dat.bcg), log risk ratios"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Two-level HLM (random intercept)",
+      "endpoint": "/api/hlm/two-level",
+      "checks": [
+        {
+          "statistic": "R2 marginal",
+          "observed": 0.6829492787153065,
+          "expected": 0.6829536624,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "deterministic 12 subjects x 8 days (LCG)",
+          "test_id": "tests/test_hlm.py::test_two_level_r2_and_se_match_lme4[False-0.6829536624-0.7743825053-0.58690718]"
+        },
+        {
+          "statistic": "R2 conditional",
+          "observed": 0.7743860066548708,
+          "expected": 0.7743825053,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "deterministic 12 subjects x 8 days (LCG)",
+          "test_id": "tests/test_hlm.py::test_two_level_r2_and_se_match_lme4[False-0.6829536624-0.7743825053-0.58690718]"
+        },
+        {
+          "statistic": "slope SE",
+          "observed": 0.5869045047605614,
+          "expected": 0.58690718,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "deterministic 12 subjects x 8 days (LCG)",
+          "test_id": "tests/test_hlm.py::test_two_level_r2_and_se_match_lme4[False-0.6829536624-0.7743825053-0.58690718]"
+        }
+      ],
+      "references": [
+        "lme4 2.0.6 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "deterministic 12 subjects x 8 days (LCG)"
+      ],
+      "n_checks": 3
+    },
+    {
+      "method": "Two-level HLM (random slope)",
+      "endpoint": "/api/hlm/two-level",
+      "checks": [
+        {
+          "statistic": "R2 marginal",
+          "observed": 0.6820113711538371,
+          "expected": 0.6820131649,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "deterministic 12 subjects x 8 days (LCG)",
+          "test_id": "tests/test_hlm.py::test_two_level_r2_and_se_match_lme4[True-0.6820131649-0.7948920456-0.7393197]"
+        },
+        {
+          "statistic": "R2 conditional",
+          "observed": 0.7948936199153455,
+          "expected": 0.7948920456,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "deterministic 12 subjects x 8 days (LCG)",
+          "test_id": "tests/test_hlm.py::test_two_level_r2_and_se_match_lme4[True-0.6820131649-0.7948920456-0.7393197]"
+        },
+        {
+          "statistic": "slope SE",
+          "observed": 0.7393162903064692,
+          "expected": 0.7393197,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "deterministic 12 subjects x 8 days (LCG)",
+          "test_id": "tests/test_hlm.py::test_two_level_r2_and_se_match_lme4[True-0.6820131649-0.7948920456-0.7393197]"
+        }
+      ],
+      "references": [
+        "lme4 2.0.6 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "deterministic 12 subjects x 8 days (LCG)"
+      ],
+      "n_checks": 3
+    },
+    {
+      "method": "VAR Granger causality (Wald F)",
+      "endpoint": "/api/time-series/var",
+      "checks": [
+        {
+          "statistic": "F",
+          "observed": 21.21314840014083,
+          "expected": 21.213148400140803,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-08,
+          "dataset": "simulated bivariate VAR(1), n=120, seed 3",
+          "test_id": "tests/test_time_series.py::test_var_granger_equals_restricted_ols_f"
+        }
+      ],
+      "references": [
+        "Restricted vs unrestricted OLS F (L\u00fctkepohl, 2005, \u00a73.6)"
+      ],
+      "reference_kinds": [
+        "analytical"
+      ],
+      "datasets": [
+        "simulated bivariate VAR(1), n=120, seed 3"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Wilcoxon signed-rank test",
+      "endpoint": "/api/advanced/non-parametric",
+      "checks": [
+        {
+          "statistic": "W_statistic",
+          "observed": 3.5,
+          "expected": 3.5,
+          "tolerance_abs": 1e-12,
+          "tolerance_rel": 1e-06,
+          "dataset": "Rosner (2016) Ex. 8.14 pre/post BP",
+          "test_id": "tests/validation/test_wilcoxon_signed_rank.py::test_wilcoxon_signed_rank"
+        },
+        {
+          "statistic": "p_value",
+          "observed": 0.013671875,
+          "expected": 0.013671875,
+          "tolerance_abs": 0.0,
+          "tolerance_rel": 1e-10,
+          "dataset": "Rosner (2016) Ex. 8.14 pre/post BP",
+          "test_id": "tests/validation/test_wilcoxon_signed_rank.py::test_wilcoxon_signed_rank"
+        }
+      ],
+      "references": [
+        "scipy 1.14 (exact tail probability, verified against R)",
+        "scipy 1.14 (verified against R stats::wilcox.test paired=TRUE)"
+      ],
+      "reference_kinds": [
+        "scipy-ref"
+      ],
+      "datasets": [
+        "Rosner (2016) Ex. 8.14 pre/post BP"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "chi-square test of independence",
+      "endpoint": "/api/stats/chi-square",
+      "checks": [
+        {
+          "statistic": "chi2_statistic",
+          "observed": 15.041666666666668,
+          "expected": 15.041666666666668,
+          "tolerance_abs": 0.0,
+          "tolerance_rel": 1e-11,
+          "dataset": "Rosner 2x2 contingency [[40,10],[20,30]]",
+          "test_id": "tests/validation/test_chi_square.py::test_chi_square_2x2"
+        },
+        {
+          "statistic": "p_value",
+          "observed": 0.00010516355403363114,
+          "expected": 0.00010516355403363114,
+          "tolerance_abs": 0.0,
+          "tolerance_rel": 1e-09,
+          "dataset": "Rosner 2x2 contingency [[40,10],[20,30]]",
+          "test_id": "tests/validation/test_chi_square.py::test_chi_square_2x2"
+        },
+        {
+          "statistic": "cramers_v",
+          "observed": 0.38783587594066987,
+          "expected": 0.38783587594066987,
+          "tolerance_abs": 0.0,
+          "tolerance_rel": 1e-10,
+          "dataset": "Rosner 2x2 contingency [[40,10],[20,30]]",
+          "test_id": "tests/validation/test_chi_square.py::test_chi_square_2x2"
+        },
+        {
+          "statistic": "odds_ratio",
+          "observed": 6.0,
+          "expected": 6.0,
+          "tolerance_abs": 1e-12,
+          "tolerance_rel": 1e-06,
+          "dataset": "Rosner 2x2 contingency [[40,10],[20,30]]",
+          "test_id": "tests/validation/test_chi_square.py::test_chi_square_2x2"
+        }
+      ],
+      "references": [
+        "analytical ((a\u00b7d)/(b\u00b7c) for 2x2)",
+        "analytical (sqrt(chi\u00b2/(n\u00b7min(rows,cols)-1)))",
+        "scipy 1.14",
+        "scipy 1.14 (verified against R stats::chisq.test correct=FALSE)"
+      ],
+      "reference_kinds": [
+        "analytical",
+        "scipy-ref"
+      ],
+      "datasets": [
+        "Rosner 2x2 contingency [[40,10],[20,30]]"
+      ],
+      "n_checks": 4
+    },
+    {
+      "method": "independent-samples t-test",
+      "endpoint": "/api/stats/t-test",
+      "checks": [
+        {
+          "statistic": "t_statistic",
+          "observed": -4.787768506593367,
+          "expected": -4.787768506593367,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-10,
+          "dataset": "teaching example (7 + 7 obs)",
+          "test_id": "tests/validation/test_indep_t_test.py::test_indep_t_test"
+        },
+        {
+          "statistic": "p_value",
+          "observed": 0.0004426595489460319,
+          "expected": 0.0004426595489460319,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-09,
+          "dataset": "teaching example (7 + 7 obs)",
+          "test_id": "tests/validation/test_indep_t_test.py::test_indep_t_test"
+        },
+        {
+          "statistic": "hedges_g",
+          "observed": -2.3958186430084596,
+          "expected": -2.3958186430084596,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-10,
+          "dataset": "teaching example (7 + 7 obs)",
+          "test_id": "tests/validation/test_indep_t_test.py::test_indep_t_test"
+        }
+      ],
+      "references": [
+        "analytical (Hedges & Olkin 1985 small-sample correction)",
+        "scipy 1.14",
+        "scipy 1.14 (verified against R stats::t.test var.equal=TRUE)"
+      ],
+      "reference_kinds": [
+        "analytical",
+        "scipy-ref"
+      ],
+      "datasets": [
+        "teaching example (7 + 7 obs)"
+      ],
+      "n_checks": 3
+    },
+    {
+      "method": "one-way ANOVA",
+      "endpoint": "/api/stats/anova",
+      "checks": [
+        {
+          "statistic": "f_statistic",
+          "observed": 56.65281899109795,
+          "expected": 56.65281899109795,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-10,
+          "dataset": "3 groups \u00d7 5 obs teaching example",
+          "test_id": "tests/validation/test_one_way_anova.py::test_one_way_anova"
+        },
+        {
+          "statistic": "p_value",
+          "observed": 7.713718824863973e-07,
+          "expected": 7.713718824863973e-07,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-08,
+          "dataset": "3 groups \u00d7 5 obs teaching example",
+          "test_id": "tests/validation/test_one_way_anova.py::test_one_way_anova"
+        },
+        {
+          "statistic": "eta_squared",
+          "observed": 0.9042341574310896,
+          "expected": 0.9042341574310898,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-10,
+          "dataset": "3 groups \u00d7 5 obs teaching example",
+          "test_id": "tests/validation/test_one_way_anova.py::test_one_way_anova"
+        }
+      ],
+      "references": [
+        "analytical (SSB / SST)",
+        "scipy 1.14",
+        "scipy 1.14 (verified against R stats::aov)"
+      ],
+      "reference_kinds": [
+        "analytical",
+        "scipy-ref"
+      ],
+      "datasets": [
+        "3 groups \u00d7 5 obs teaching example"
+      ],
+      "n_checks": 3
+    },
+    {
+      "method": "paired-samples t-test",
+      "endpoint": "/api/stats/paired-t-test",
+      "checks": [
+        {
+          "statistic": "t_statistic",
+          "observed": 3.324651095085193,
+          "expected": 3.324651095085193,
+          "tolerance_abs": 0.0,
+          "tolerance_rel": 1e-10,
+          "dataset": "Rosner (2016) Ex. 8.14 pre/post BP",
+          "test_id": "tests/validation/test_paired_t_test.py::test_paired_t_test"
+        },
+        {
+          "statistic": "p_value",
+          "observed": 0.008874336881492044,
+          "expected": 0.008874336881492044,
+          "tolerance_abs": 0.0,
+          "tolerance_rel": 1e-09,
+          "dataset": "Rosner (2016) Ex. 8.14 pre/post BP",
+          "test_id": "tests/validation/test_paired_t_test.py::test_paired_t_test"
+        },
+        {
+          "statistic": "mean_difference",
+          "observed": 4.8,
+          "expected": 4.8,
+          "tolerance_abs": 1e-12,
+          "tolerance_rel": 1e-06,
+          "dataset": "Rosner (2016) Ex. 8.14 pre/post BP",
+          "test_id": "tests/validation/test_paired_t_test.py::test_paired_t_test"
+        }
+      ],
+      "references": [
+        "analytical",
+        "scipy 1.14",
+        "scipy 1.14 (verified against R stats::t.test paired=TRUE)"
+      ],
+      "reference_kinds": [
+        "analytical",
+        "scipy-ref"
+      ],
+      "datasets": [
+        "Rosner (2016) Ex. 8.14 pre/post BP"
+      ],
+      "n_checks": 3
+    },
+    {
+      "method": "simple linear regression",
+      "endpoint": "/api/stats/regression",
+      "checks": [
+        {
+          "statistic": "intercept",
+          "observed": -0.2623230737740556,
+          "expected": -0.262323073774029,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-09,
+          "dataset": "NIST StRD: Norris",
+          "test_id": "tests/validation/test_linear_regression.py::test_norris_regression"
+        },
+        {
+          "statistic": "slope",
+          "observed": 1.002116818020454,
+          "expected": 1.00211681802045,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-09,
+          "dataset": "NIST StRD: Norris",
+          "test_id": "tests/validation/test_linear_regression.py::test_norris_regression"
+        },
+        {
+          "statistic": "residual_std",
+          "observed": 0.8847963961443845,
+          "expected": 0.884796396144373,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-09,
+          "dataset": "NIST StRD: Norris",
+          "test_id": "tests/validation/test_linear_regression.py::test_norris_regression"
+        },
+        {
+          "statistic": "r_squared",
+          "observed": 0.9999937458837117,
+          "expected": 0.999993745883712,
+          "tolerance_abs": null,
+          "tolerance_rel": 1e-09,
+          "dataset": "NIST StRD: Norris",
+          "test_id": "tests/validation/test_linear_regression.py::test_norris_regression"
+        }
+      ],
+      "references": [
+        "NIST StRD (Norris)"
+      ],
+      "reference_kinds": [
+        "nist"
+      ],
+      "datasets": [
+        "NIST StRD: Norris"
+      ],
+      "n_checks": 4
+    },
+    {
+      "method": "tau^2 Q-profile CI",
+      "endpoint": "/api/meta-analysis/random-effects",
+      "checks": [
+        {
+          "statistic": "lower",
+          "observed": 0.119718,
+          "expected": 0.1197183611,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_random_effects_reml_qprofile_and_knha"
+        },
+        {
+          "statistic": "upper",
+          "observed": 1.111479,
+          "expected": 1.1114790841,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "BCG vaccine trials (dat.bcg), log risk ratios",
+          "test_id": "tests/test_meta_analysis.py::test_random_effects_reml_qprofile_and_knha"
+        }
+      ],
+      "references": [
+        "metafor 5.2.1 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "BCG vaccine trials (dat.bcg), log risk ratios"
+      ],
+      "n_checks": 2
+    }
+  ]
+}

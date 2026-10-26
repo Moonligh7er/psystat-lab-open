@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<meta name="google-site-verification" content="IWGVEm2c0aIEJAr9l31qjz3YzIDiqVe8VdwF1FATmTw" />
+<title>When to Use Bayesian Methods (And When Not To) — PsyStat Lab Blog</title>
+<meta name="description" content="A balanced, scholarly guide to Bayesian inference: priors, likelihoods, posteriors, Bayes factors, the Lindley paradox, and when frequentist methods remain the better choice.">
+<meta name="keywords" content="Bayesian methods, Bayes factor, priors, posterior, MCMC, Lindley paradox, frequentist statistics, JASP, BayesFactor, Wagenmakers, Kruschke, PsyStat Lab">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://psystat-lab.dev/blog/bayesian-methods.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="When to Use Bayesian Methods (And When Not To)">
+<meta property="og:description" content="Bayesian inference is powerful, but it isn't always the right tool. A balanced look at priors, posteriors, Bayes factors, and the practical tradeoffs.">
+<meta property="og:url" content="https://psystat-lab.dev/blog/bayesian-methods.html">
+<meta property="og:image" content="https://psystat-lab.dev/og-image.png">
+<meta property="article:published_time" content="2026-04-16">
+<meta property="article:author" content="Moonlit Social Labs">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="When to Use Bayesian Methods (And When Not To) — PsyStat Lab">
+<meta name="twitter:description" content="A balanced, scholarly take on Bayesian inference and its limits.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "When to Use Bayesian Methods (And When Not To)",
+  "description": "A balanced, scholarly guide to Bayesian inference and its appropriate use in psychology and behavioral science.",
+  "author": { "@type": "Organization", "name": "Moonlit Social Labs" },
+  "publisher": { "@type": "Organization", "name": "PsyStat Lab" },
+  "datePublished": "2026-04-16",
+  "url": "https://psystat-lab.dev/blog/bayesian-methods.html"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://psystat-lab.dev/"},
+    {"@type": "ListItem", "position": 2, "name": "Blog", "item": "https://psystat-lab.dev/blog/"},
+    {"@type": "ListItem", "position": 3, "name": "Bayesian Methods", "item": "https://psystat-lab.dev/blog/bayesian-methods.html"}
+  ]
+}
+</script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --bg:#0B0F1A; --surface:#131926; --elevated:#1A2236; --border:#1E293B; --text:#F1F5F9; --text2:#94A3B8; --text3:#64748B; --primary:#6366F1; --cyan:#06B6D4; --accent:#D97706; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; -webkit-font-smoothing: antialiased; }
+  a { color: var(--cyan); text-decoration: none; } a:hover { text-decoration: underline; }
+  ::selection { background: var(--primary); color: #fff; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 0; background: rgba(11,15,26,.85); backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,.04); }
+  nav .inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+  nav .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; }
+  nav .logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #6366F1, #06B6D4); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; font-weight: 800; }
+  nav .links { display: flex; align-items: center; gap: 24px; font-size: .9rem; }
+  nav .links a { color: var(--text2); } nav .links a:hover { color: var(--text); text-decoration: none; }
+  nav .cta-sm { background: var(--primary); color: #fff !important; padding: 6px 16px; border-radius: 8px; font-weight: 600; }
+  article { max-width: 740px; margin: 0 auto; padding: 120px 24px 60px; }
+  .tag { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 10px; border-radius: 100px; background: rgba(217,119,6,.15); color: var(--accent); margin-bottom: 16px; }
+  h1 { font-size: 2rem; font-weight: 800; line-height: 1.25; margin-bottom: 16px; }
+  .meta { color: var(--text3); font-size: .85rem; margin-bottom: 32px; }
+  h2 { font-size: 1.4rem; font-weight: 700; margin: 36px 0 12px; color: var(--text); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 28px 0 8px; color: #818CF8; }
+  p { color: var(--text2); margin-bottom: 16px; font-size: 1.02rem; }
+  ul, ol { color: var(--text2); margin: 0 0 16px 24px; font-size: 1.02rem; }
+  li { margin-bottom: 6px; }
+  blockquote { border-left: 3px solid var(--accent); padding: 12px 20px; margin: 20px 0; background: var(--surface); border-radius: 0 8px 8px 0; }
+  blockquote p { margin: 0; color: var(--text); font-style: italic; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: .88rem; background: var(--elevated); padding: 2px 6px; border-radius: 4px; color: #818CF8; }
+  .callout { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 24px 0; }
+  .callout-title { font-weight: 700; font-size: .9rem; color: var(--accent); margin-bottom: 8px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; color: var(--text3); font-size: .9rem; margin-bottom: 24px; }
+  .back:hover { color: var(--text); text-decoration: none; }
+  footer { border-top: 1px solid var(--border); padding: 32px 24px; text-align: center; color: var(--text3); font-size: .85rem; }
+  footer a { color: var(--text3); margin: 0 12px; } footer a:hover { color: var(--text); }
+  @media (max-width: 640px) { article { padding: 100px 16px 40px; } h1 { font-size: 1.5rem; } nav .links { display: none; } }
+</style>
+</head>
+<body>
+
+<nav><div class="inner">
+  <a href="../landing.html" class="logo" style="text-decoration:none;color:var(--text)"><div class="logo-icon">&Psi;</div><span>PsyStat <span style="background:linear-gradient(135deg,#818CF8,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Lab</span></span><span style="display:inline-block;background:#7C3AED;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;text-transform:uppercase">BETA</span></a>
+  <div class="links"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../about.html">About</a><a href="../landing.html#start" class="cta-sm">Get Started</a></div>
+</div></nav>
+
+<article>
+  <nav aria-label="Breadcrumb" style="font-size:.85rem;color:var(--text3);margin-bottom:16px">
+    <a href="../landing.html" style="color:var(--text3)">Home</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <a href="./" style="color:var(--text3)">Blog</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <span style="color:var(--text2)">Bayesian Methods</span>
+  </nav>
+  <a href="./" class="back">&larr; All posts</a>
+  <div class="tag">Methodology</div>
+  <h1>When to Use Bayesian Methods (And When Not To)</h1>
+  <div class="meta">By Moonlit Social Labs &middot; April 16, 2026 &middot; 13 min read</div>
+
+  <p>Bayesian methods have moved from the methodological fringe to the mainstream of psychology in the past fifteen years. Software like JASP and the <code>BayesFactor</code> R package have made what was once a niche specialty available to any researcher willing to install a free program. Major journals now publish Bayesian analyses without flinching. Influential papers (Wagenmakers et al., 2018; Kruschke, 2015) argue that Bayesian inference solves problems that frequentist statistics cannot.</p>
+
+  <p>And yet most published psychology is still frequentist. Most reviewers still think in <em>p</em>-values. Most pre-registration templates ask for power analyses, not prior specifications. The gap between the methodological literature and everyday practice remains wide &mdash; and it isn't entirely a failure of education. There are real reasons researchers stay frequentist, and real situations where they shouldn't.</p>
+
+  <p>This post is an attempt to give an honest, scholarly account of when Bayesian methods earn their keep, and when they don't.</p>
+
+  <h2>A Brief Bayesian Primer</h2>
+
+  <p>The mathematical core of Bayesian inference is one of the simplest equations in statistics:</p>
+
+  <blockquote><p>posterior &prop; likelihood &times; prior</p></blockquote>
+
+  <p>Three pieces, three jobs:</p>
+  <ul>
+    <li><strong>Prior.</strong> What you believed about the parameter before seeing the data, expressed as a probability distribution. A prior on Cohen's <em>d</em> might say "I expect effects between &minus;1 and 1, with most mass near zero."</li>
+    <li><strong>Likelihood.</strong> How probable the observed data are under each possible parameter value. This is the same likelihood frequentists use; it isn't uniquely Bayesian.</li>
+    <li><strong>Posterior.</strong> The updated belief about the parameter after seeing the data. The posterior is what you report &mdash; typically as a point estimate (the posterior mean or median) and a <em>credible interval</em> (e.g., the 95% highest-density interval).</li>
+  </ul>
+
+  <p>The interpretive payoff is large. A 95% credible interval means exactly what most students mistakenly think a 95% confidence interval means: <em>given the data and the prior, there is a 95% probability the parameter lies in this range.</em> A frequentist confidence interval is a statement about the long-run behavior of the procedure, not the parameter itself &mdash; a distinction that matters mathematically but is almost never honored in practice.</p>
+
+  <h2>Bayes Factors vs. <em>p</em>-values</h2>
+
+  <p>For hypothesis testing, the Bayesian alternative to the <em>p</em>-value is the <strong>Bayes factor</strong>. A Bayes factor BF<sub>10</sub> is a likelihood ratio: how much more probable the observed data are under the alternative hypothesis (H1) than under the null (H0).</p>
+
+  <p>A worked example. Suppose you run a small two-group experiment and obtain BF<sub>10</sub> = 3. The interpretation is direct:</p>
+
+  <blockquote><p>The data are three times more likely under H1 than under H0. If you started with equal odds for the two hypotheses, you should now favor H1 by 3:1.</p></blockquote>
+
+  <p>By Jeffreys' (1961) widely cited heuristic scale, BF<sub>10</sub> between 1 and 3 is "anecdotal" evidence, 3 to 10 is "moderate," 10 to 30 is "strong," and above 30 is "very strong." A BF<sub>10</sub> of 3 is therefore real but unimpressive evidence &mdash; nothing like the rhetorical force of "<em>p</em> &lt; .05."</p>
+
+  <p>Crucially, BF<sub>01</sub> = 1/BF<sub>10</sub> quantifies evidence for the null. A BF<sub>01</sub> of 8 means the data are 8 times more likely under H0 than under H1 &mdash; a result frequentist methods structurally cannot deliver. A non-significant <em>p</em>-value is famously not evidence for the null; it is merely failure to reject it. Bayes factors fix this asymmetry.</p>
+
+  <h2>The Real Advantages</h2>
+
+  <h3>1. Quantifying evidence for the null</h3>
+
+  <p>This is the single most underappreciated reason to go Bayesian. Psychology has a long history of pretending that <em>p</em> = .42 is uninformative when it is often quite informative. Rouder et al. (2009) developed default Bayes factors for <em>t</em>-tests precisely so researchers could report "BF<sub>01</sub> = 12, moderate-to-strong evidence the means are equivalent" rather than the evasive "no significant difference was found."</p>
+
+  <p>For null-result papers, replication studies, equivalence claims, and any context where "the effect is small or absent" is itself the finding, Bayes factors are simply the right tool.</p>
+
+  <h3>2. Sequential analysis and optional stopping</h3>
+
+  <p>Frequentist <em>p</em>-values are <em>not</em> robust to checking your data as you collect it. Each peek inflates the Type I error rate; researchers either pre-commit to a sample size or pay for sequential designs with corrections like alpha spending.</p>
+
+  <p>Bayes factors are different. Because they are likelihood ratios rather than tail probabilities, they can in principle be monitored continuously, and you can stop when evidence reaches a pre-specified threshold (e.g., BF<sub>10</sub> &gt; 10 or BF<sub>01</sub> &gt; 10). This is sometimes overstated &mdash; optional stopping based on Bayes factors does still bias the <em>distribution</em> of obtained Bayes factors and requires honest priors &mdash; but the practical flexibility is real and substantial.</p>
+
+  <h3>3. Accumulating prior evidence across studies</h3>
+
+  <p>If twenty previous studies have established that an intervention has roughly <em>d</em> = 0.3, frequentist methods give you no principled way to use that information in your twenty-first study. You either ignore it or fold it into a separate meta-analysis. Bayesian methods let you encode prior research as &mdash; literally &mdash; the prior. The posterior then reflects the cumulative scientific picture, not just your single sample.</p>
+
+  <h3>4. More interpretable intervals</h3>
+
+  <p>As noted above, credible intervals say what people want them to say. For applied audiences &mdash; clinicians, policymakers, journalists &mdash; "there is a 95% probability the true effect is between 0.21 and 0.44" is comprehensible in a way no frequentist statement is.</p>
+  <h2>The Real Disadvantages</h2>
+
+  <h3>1. Prior specification is genuinely hard</h3>
+
+  <p>The most honest Bayesian critique of Bayesianism is that priors are subjective and consequential. Default priors (Cauchy, Jeffreys-Zellner-Siow, etc.) are conventions designed to be reasonable across many situations, but they are not neutral. A wider prior makes BF<sub>01</sub> larger by spreading the alternative's probability mass over implausible effects, mechanically punishing H1. Narrower priors do the opposite.</p>
+
+  <p>This is not a fatal problem. It does, however, mean that <strong>prior sensitivity analysis is mandatory</strong>, not optional. Reporting a Bayes factor without showing how it varies across reasonable priors is the Bayesian equivalent of <em>p</em>-hacking.</p>
+
+  <h3>2. Computational cost</h3>
+
+  <p>Closed-form Bayesian solutions exist for simple cases (<em>t</em>-tests, ANOVAs, linear regression with conjugate priors). For anything complicated &mdash; multilevel models, structural equation models, custom likelihoods &mdash; you need <strong>Markov chain Monte Carlo (MCMC)</strong>. MCMC samples from the posterior by random walk; modern variants like Hamiltonian Monte Carlo (the engine behind Stan) are vastly better than the Metropolis-Hastings of the 1990s, but they still require:</p>
+  <ul>
+    <li>Convergence diagnostics (R-hat &lt; 1.01, effective sample size &gt; 400, trace plot inspection).</li>
+    <li>Hours to days of compute for large hierarchical models.</li>
+    <li>A non-trivial amount of statistical literacy to debug when chains misbehave.</li>
+  </ul>
+
+  <p>For a 2 &times; 2 ANOVA, MCMC is overkill. For a six-level hierarchical model with crossed random effects, it may be the only honest option &mdash; but it is not a quick analysis.</p>
+
+  <h3>3. Communication friction</h3>
+
+  <p>Most reviewers were trained on frequentist statistics. Many will ask for a <em>p</em>-value alongside your Bayes factor, or politely express skepticism about your priors, or simply not engage with the analysis at all. Editors at certain journals still treat Bayesian methods as exotic. In regulated contexts (FDA submissions, formal clinical trial reporting), frequentist procedures are often outright required.</p>
+
+  <p>This is a sociological problem, not a statistical one, but it is real. Choosing Bayesian methods in the wrong venue can mean choosing not to be read.</p>
+
+  <h2>The Lindley Paradox</h2>
+
+  <p>Lindley (1957) pointed out a striking phenomenon: it is possible for a result to yield <em>p</em> &lt; .05 (rejecting the null) while simultaneously yielding a Bayes factor that <em>strongly favors the null</em>. The two paradigms can give opposite answers from the same data.</p>
+
+  <p>The resolution is that they are answering different questions. A <em>p</em>-value asks: "How surprising are these data if the null is exactly true?" A Bayes factor asks: "How well does the null predict these data, compared to the alternative averaged over its prior?" When the sample is very large and the effect is very small, the data can be unsurprising under H0 (giving a small <em>p</em>) and yet still better predicted by a tightly null-favoring H0 than by a diffuse H1 that wasted prior probability on large effects that didn't materialize.</p>
+
+  <p>The Lindley paradox is not a bug; it is a feature that exposes a hidden assumption. Frequentist tests implicitly weight all alternatives equally; Bayes factors do not. Which weighting is correct depends on what you actually believe before the study &mdash; which is exactly what makes the prior non-trivial.</p>
+
+  <h2>When to Prefer Bayesian Methods</h2>
+
+  <ul>
+    <li><strong>Small samples.</strong> Frequentist asymptotic justifications are weakest where Bayesian methods (with informative priors) are strongest.</li>
+    <li><strong>Optional stopping.</strong> If you genuinely don't know your final <em>n</em>, Bayes factors handle this more gracefully than corrected sequential frequentist designs.</li>
+    <li><strong>Evidence for the null.</strong> Equivalence claims, replication failures, "the manipulation didn't work" findings &mdash; all of these benefit enormously from BF<sub>01</sub>.</li>
+    <li><strong>Model comparison.</strong> Bayes factors and information criteria (WAIC, LOO) handle non-nested models more cleanly than likelihood ratio tests.</li>
+    <li><strong>Strong prior information.</strong> When previous studies, theory, or physical constraints meaningfully inform the parameter, ignoring that information is wasteful.</li>
+    <li><strong>Hierarchical models with sparse cells.</strong> Partial pooling via Bayesian shrinkage handles small cell sizes more gracefully than maximum-likelihood mixed models.</li>
+  </ul>
+
+  <h2>When to Stick with Frequentist</h2>
+
+  <ul>
+    <li><strong>Large pre-registered studies.</strong> If you have plenty of data and a clean design, the frequentist analysis will give nearly the same answer with less methodological overhead.</li>
+    <li><strong>Regulatory contexts.</strong> Clinical trial submissions, official statistics, and many funding-body reports require specific frequentist procedures.</li>
+    <li><strong>Journal expectations.</strong> Some subfields are still firmly frequentist. Battling reviewers over your prior choice when the result would be the same under either framework is a poor use of time.</li>
+    <li><strong>Routine descriptive comparisons.</strong> If you just want to know whether two means differ, a <em>t</em>-test communicates faster than a posterior plot.</li>
+    <li><strong>Truly diffuse priors.</strong> If you have no prior information and no defensible reason to choose any particular default, frequentist procedures are at least transparent about what they assume.</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">A Pragmatic Heuristic</div>
+    <p>Don't choose a paradigm; choose an analysis. The most defensible practice in modern psychology is to report <em>both</em> &mdash; <em>p</em>-values, effect sizes, and confidence intervals alongside Bayes factors and credible intervals &mdash; and let readers see whether the conclusions align. When they do, you've gained inferential robustness. When they don't (the Lindley scenario), you've found something genuinely interesting about your data.</p>
+  </div>
+
+  <h2>A Word on MCMC</h2>
+
+  <p>For anyone moving past default-prior <em>t</em>-tests into substantive Bayesian modeling, MCMC is the entry ticket. Its honest pros and cons:</p>
+
+  <p><strong>Pros.</strong> MCMC fits essentially any model you can write down. It naturally produces full posterior distributions for every parameter, with uncertainty quantification baked in. Modern tools (Stan, PyMC, brms) make specification surprisingly tractable, and convergence diagnostics are well established.</p>
+
+  <p><strong>Cons.</strong> It is slow, sometimes very slow. Convergence problems can be subtle and require statistical intuition to diagnose. Reparameterization tricks (non-centered parameterizations, etc.) are sometimes necessary to get chains to mix. And the posterior depends on the prior in ways that may surprise users who haven't done sensitivity analysis.</p>
+
+  <h2>Recommended Reading</h2>
+
+  <p>The papers and books worth reading first, in roughly increasing technical depth:</p>
+  <ul>
+    <li><strong>Wagenmakers et al. (2018), "Bayesian inference for psychology, Part I."</strong> A clear, opinionated introduction targeted at psychologists. Probably the best on-ramp.</li>
+    <li><strong>Rouder et al. (2009), "Bayesian <em>t</em>-tests for accepting and rejecting the null hypothesis."</strong> The technical foundation of the default Bayes factor scale used in JASP and the <code>BayesFactor</code> R package.</li>
+    <li><strong>Kruschke (2015), <em>Doing Bayesian Data Analysis</em> (2nd ed.).</strong> A comprehensive, application-oriented textbook. Heavy on examples, light on measure theory. The standard graduate-course text.</li>
+    <li><strong>Lindley (1957), "A statistical paradox."</strong> The original two-page note. Worth reading in its original form.</li>
+  </ul>
+
+  <h2>Try It in PsyStat Lab</h2>
+
+  <p>The <strong>Bayesian Lab</strong> module computes default Bayes factors for <em>t</em>-tests, correlations, and ANOVAs, and produces credible intervals with adjustable priors so you can run sensitivity analyses without leaving the browser. The <strong>Dual Report</strong> module runs the same data through both frequentist and Bayesian pipelines side by side &mdash; ideal when you want to honor reviewer expectations on both fronts, or when you suspect a Lindley-paradox situation in your data.</p>
+
+  <p><a href="../landing.html#start">Get started free &rarr;</a></p>
+
+  <div style="margin-top:48px;padding-top:32px;border-top:1px solid #1E293B">
+    <h2 style="font-size:1.1rem;margin-bottom:16px;color:#94A3B8">Related Posts</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+      <a href="dialectical-inference.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06B6D4;margin-bottom:6px">Robustness Check</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">Frequentist vs Bayesian</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">Run a p-value and a default Bayes factor on the same data and see whether they agree.</div>
+      </a>
+      <a href="effect-sizes-beyond-cohen.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#D97706;margin-bottom:6px">Methodology</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">Effect Sizes Beyond Cohen's d</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">Cohen's d is the workhorse, but it isn't the only option. A guide to robust, distribution-free, and probability-of-superiority effect sizes.</div>
+      </a>
+    </div>
+  </div>
+</article>
+
+<div class="ad-slot" data-position="bottom" style="text-align:center;padding:16px 0;background:#0F172A;border-top:1px solid #1E293B"></div>
+
+<footer>
+  <p>&copy; 2026 Moonlit Social Labs.</p>
+  <div style="margin-top:12px"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../privacy.html">Privacy</a><a href="../terms.html">Terms</a><a href="https://ko-fi.com/moonlitsociallabs" target="_blank" rel="noopener" style="background:#FF5E5B;color:#fff;padding:4px 14px;border-radius:6px;font-weight:600;text-decoration:none">&#9749; Support Us</a></div>
+</footer>
+</body>
+</html>

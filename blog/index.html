@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<meta name="google-site-verification" content="IWGVEm2c0aIEJAr9l31qjz3YzIDiqVe8VdwF1FATmTw" />
+<title>PsyStat Lab Blog — Research Methods, Statistics, and Tools</title>
+<meta name="description" content="Articles on statistical methods, robustness checks, research best practices, and tools for behavioral scientists. From the team behind PsyStat Lab.">
+<meta name="keywords" content="statistics blog, research methods, behavioral science, robustness checks, specification curve, multiverse analysis, Bayes factors, model selection">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://psystat-lab.dev/blog/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="PsyStat Lab Blog">
+<meta property="og:description" content="Articles on statistical methods, robustness checks and tools for behavioral scientists.">
+<meta property="og:url" content="https://psystat-lab.dev/blog/">
+<meta property="og:image" content="https://psystat-lab.dev/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PsyStat Lab Blog">
+<meta name="twitter:description" content="Statistical methods, robustness checks and research tools, explained.">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0B0F1A; --surface: #131926; --elevated: #1A2236; --border: #1E293B;
+    --text: #F1F5F9; --text2: #94A3B8; --text3: #64748B;
+    --primary: #6366F1; --cyan: #06B6D4; --amber: #D97706; --teal: #0D9488;
+    --red: #DC2626; --emerald: #059669;
+  }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; -webkit-font-smoothing: antialiased; }
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::selection { background: var(--primary); color: #fff; }
+
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 0; background: rgba(11,15,26,.85); backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,.04); }
+  nav .inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+  nav .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; }
+  nav .logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #6366F1, #06B6D4); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; font-weight: 800; }
+  nav .links { display: flex; align-items: center; gap: 24px; font-size: .9rem; }
+  nav .links a { color: var(--text2); }
+  nav .links a:hover { color: var(--text); text-decoration: none; }
+  nav .cta-sm { background: var(--primary); color: #fff !important; padding: 6px 16px; border-radius: 8px; font-weight: 600; }
+
+  .wrap { max-width: 900px; margin: 0 auto; padding: 120px 24px 60px; }
+  h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; background: linear-gradient(135deg, #818CF8, #6366F1, #06B6D4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .subtitle { color: var(--text2); font-size: 1.05rem; margin-bottom: 40px; }
+
+  .post-grid { display: grid; gap: 24px; }
+  .post-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 28px; transition: border-color .2s, transform .2s;
+  }
+  .post-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .post-card a { text-decoration: none; }
+  .post-tag { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 10px; border-radius: 100px; margin-bottom: 12px; }
+  .post-card h2 { font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 8px; line-height: 1.3; }
+  .post-card p { color: var(--text2); font-size: .95rem; margin-bottom: 12px; }
+  .post-meta { color: var(--text3); font-size: .8rem; }
+
+  footer { border-top: 1px solid var(--border); padding: 32px 24px; text-align: center; color: var(--text3); font-size: .85rem; }
+  footer a { color: var(--text3); margin: 0 12px; }
+  footer a:hover { color: var(--text); }
+  @media (max-width: 640px) { .wrap { padding: 100px 16px 40px; } h1 { font-size: 1.6rem; } nav .links { display: none; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <a href="../landing.html" class="logo" style="text-decoration:none;color:var(--text)">
+      <div class="logo-icon">&Psi;</div>
+      <span>PsyStat <span style="background:linear-gradient(135deg,#818CF8,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Lab</span></span><span style="display:inline-block;background:#7C3AED;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;text-transform:uppercase">BETA</span>
+    </a>
+    <div class="links">
+      <a href="../landing.html">Home</a>
+      <a href="../features.html">Features</a>
+      <a href="../encyclopedia.html">Encyclopedia</a>
+      <a href="../about.html">About</a>
+      <a href="../landing.html#start" class="cta-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <h1>Blog</h1>
+  <p class="subtitle">Statistical methods, robustness checks, research best practices, and tools for behavioral scientists.</p>
+
+  <h2 style="font-size:1.1rem;font-weight:600;color:var(--text2);margin:32px 0 16px;text-transform:uppercase;letter-spacing:.06em">Methodology &amp; Open Science</h2>
+  <div class="post-grid" style="margin-bottom:40px">
+    <a href="replication-crisis.html" class="post-card" style="text-decoration:none">
+      <div class="post-tag" style="background:rgba(217,119,6,.15);color:var(--amber)">Open Science</div>
+      <h2>The Replication Crisis: What Actually Happened</h2>
+      <p>From Bem's precognition paper to Many Labs and registered reports — a scholarly retrospective on the events that reshaped psychological science and what reform looks like in 2026.</p>
+      <div class="post-meta">By Moonlit Social Labs &middot; April 16, 2026 &middot; 16 min read</div>
+    </a>
+
+    <a href="causal-inference.html" class="post-card" style="text-decoration:none">
+      <div class="post-tag" style="background:rgba(99,102,241,.15);color:var(--primary)">Methodology</div>
+      <h2>Causal Inference Without Randomization</h2>
+      <p>DAGs, propensity scores, instrumental variables, regression discontinuity, difference-in-differences — a graduate-level tour of how to extract causal claims from observational data.</p>
+      <div class="post-meta">By Moonlit Social Labs &middot; April 16, 2026 &middot; 15 min read</div>
+    </a>
+
+    <a href="multiple-comparisons.html" class="post-card" style="text-decoration:none">
+      <div class="post-tag" style="background:rgba(99,102,241,.15);color:var(--primary)">Methodology</div>
+      <h2>Multiple Comparisons and the Garden of Forking Paths</h2>
+      <p>Why running 20 tests at &alpha;=.05 yields a 64% chance of a false positive — and what Bonferroni, Holm, FDR, and pre-registration actually do about it.</p>
+      <div class="post-meta">By Moonlit Social Labs &middot; April 16, 2026 &middot; 14 min read</div>
+    </a>
+
+    <a href="mixed-models-nested-data.html" class="post-card" style="text-decoration:none">
+      <div class="post-tag" style="background:rgba(99,102,241,.15);color:var(--primary)">Methodology</div>
+      <h2>Mixed Models for Nested Data</h2>
+      <p>Students within schools, patients within hospitals, repeated measures within persons — when independence assumptions break and how to model what's actually there.</p>
+      <div class="post-meta">By Moonlit Social Labs &middot; April 16, 2026 &middot; 14 min read</div>
+    </a>
+
+    <a href="bayesian-methods.html" class="post-card" style="text-decoration:none">
+      <div class="post-tag" style="background:rgba(99,102,241,.15);color:var(--primary)">Methodology</div>
+      <h2>When to Use Bayesian Methods (And When Not To)</h2>
+      <p>An honest, non-zealot guide. Bayesian inference shines for null evidence, sequential designs, and small samples — and isn't always the right answer.</p>
+      <div class="post-meta">By Moonlit Social Labs &middot; April 16, 2026 &middot; 13 min read</div>
+    </a>
+
+    <a href="power-analysis.html" class="post-card" style="text-decoration:none">
+      <div class="post-tag" style="background:rgba(99,102,241,.15);color:var(--primary)">Methodology</div>
+      <h2>Power Analysis: How Much Data Do You Actually Need?</h2>
+      <p>The 0.80 convention came from somewhere. So did the underpowered-study problem. A practical guide to sample-size planning for t-tests, ANOVA, regression, and beyond.</p>
+      <div class="post-meta">By Moonlit Social Labs &middot; April 16, 2026 &middot; 12 min read</div>
+    </a>
+
+    <a href="effect-sizes-beyond-cohen.html" class="post-card" style="text-decoration:none">
+      <div class="post-tag" style="background:rgba(99,102,241,.15);color:var(--primary)">Methodology</div>
+      <h2>Effect Sizes Beyond Cohen's d</h2>
+      <p>Hedges' g, Glass's delta, omega-squared, Cliff's delta, NNT, CLES — a reference-quality tour of effect-size metrics and the field-specific benchmarks that replaced "small/medium/large."</p>
+      <div class="post-meta">By Moonlit Social Labs &middot; April 16, 2026 &middot; 11 min read</div>
+    </a>
+  </div>
+
+  <h2 style="font-size:1.1rem;font-weight:600;color:var(--text2);margin:32px 0 16px;text-transform:uppercase;letter-spacing:.06em">Robustness Checks</h2>
+  <div class="post-grid">
+    <a href="convergent-core-analysis.html" class="post-card" style="text-decoration:none">
+      <div class="post-tag" style="background:rgba(217,119,6,.15);color:var(--amber)">Robustness Check</div>
+      <h2>Specification Summary (formerly Convergent Core Analysis)</h2>
+      <p>Multiverse analysis gives you 200 results. Specification Summary describes how much they agree and which choices change the answer. Descriptive, not a formal test.</p>
+      <div class="post-meta">By Moonlit Social Labs &middot; April 3, 2026 &middot; 8 min read</div>
+    </a>
+
+    <a href="complexity-navigator.html" class="post-card" style="text-decoration:none">
+      <div class="post-tag" style="background:rgba(13,148,136,.15);color:var(--teal)">Robustness Check</div>
+      <h2>Complexity Ladder (formerly Complexity Navigator)</h2>
+      <p>Does a curve fit better than a straight line? Nested models compared with AIC, AICc, BIC, adjusted R&sup2; and cross-validation, with the usual limits of model selection.</p>
+      <div class="post-meta">By Moonlit Social Labs &middot; April 3, 2026 &middot; 7 min read</div>
+    </a>
+
+    <a href="dialectical-inference.html" class="post-card" style="text-decoration:none">
+      <div class="post-tag" style="background:rgba(220,38,38,.15);color:var(--red)">Robustness Check</div>
+      <h2>Frequentist vs Bayesian (formerly Dialectical Inference)</h2>
+      <p>Run a p-value and a default Bayes factor on the same data and see whether they agree, with a check on how much the prior matters.</p>
+      <div class="post-meta">By Moonlit Social Labs &middot; April 3, 2026 &middot; 9 min read</div>
+    </a>
+
+    <a href="scale-persistent-features.html" class="post-card" style="text-decoration:none">
+      <div class="post-tag" style="background:rgba(5,150,105,.15);color:var(--emerald)">Robustness Check</div>
+      <h2>Correlation Stability (formerly Scale-Persistent Features)</h2>
+      <p>How many cases can you drop before a correlation loses its sign? What the stability coefficient measures, and why it is not proof of replication.</p>
+      <div class="post-meta">By Moonlit Social Labs &middot; April 3, 2026 &middot; 7 min read</div>
+    </a>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2026 Moonlit Social Labs.</p>
+  <div style="margin-top:12px">
+    <a href="../landing.html">Home</a>
+    <a href="../features.html">Features</a>
+    <a href="../encyclopedia.html">Encyclopedia</a>
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="../terms.html">Terms</a>
+    <a href="https://ko-fi.com/moonlitsociallabs" target="_blank" rel="noopener" style="background:#FF5E5B;color:#fff;padding:4px 14px;border-radius:6px;font-weight:600;text-decoration:none">&#9749; Support Us</a>
+  </div>
+</footer>
+
+</body>
+</html>

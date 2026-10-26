@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<meta name="google-site-verification" content="IWGVEm2c0aIEJAr9l31qjz3YzIDiqVe8VdwF1FATmTw" />
+<title>Multiple Comparisons and the Garden of Forking Paths — PsyStat Lab Blog</title>
+<meta name="description" content="A scholarly guide to the multiple comparisons problem, family-wise error rate, FDR, Bonferroni and Holm corrections, the garden of forking paths, and pre-registration as a remedy.">
+<meta name="keywords" content="multiple comparisons, family-wise error rate, false discovery rate, Bonferroni, Holm-Bonferroni, Benjamini-Hochberg, garden of forking paths, p-hacking, researcher degrees of freedom, pre-registration, multiverse analysis, PsyStat Lab">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://psystat-lab.dev/blog/multiple-comparisons.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Multiple Comparisons and the Garden of Forking Paths">
+<meta property="og:description" content="Why running 20 tests at alpha = .05 yields a 64% chance of a false positive — and what to do about it.">
+<meta property="og:url" content="https://psystat-lab.dev/blog/multiple-comparisons.html">
+<meta property="og:image" content="https://psystat-lab.dev/og-image.png">
+<meta property="article:published_time" content="2026-04-16">
+<meta property="article:author" content="Moonlit Social Labs">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Multiple Comparisons and the Garden of Forking Paths — PsyStat Lab">
+<meta name="twitter:description" content="The multiple comparisons problem, FDR control, and why even honest researchers fall into the garden of forking paths.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Multiple Comparisons and the Garden of Forking Paths",
+  "description": "A scholarly treatment of family-wise error rate, false discovery rate, and the unintentional multiplicity problem articulated by Gelman and Loken (2013).",
+  "author": { "@type": "Organization", "name": "Moonlit Social Labs" },
+  "publisher": { "@type": "Organization", "name": "PsyStat Lab" },
+  "datePublished": "2026-04-16",
+  "url": "https://psystat-lab.dev/blog/multiple-comparisons.html"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://psystat-lab.dev/"},
+    {"@type": "ListItem", "position": 2, "name": "Blog", "item": "https://psystat-lab.dev/blog/"},
+    {"@type": "ListItem", "position": 3, "name": "Multiple Comparisons", "item": "https://psystat-lab.dev/blog/multiple-comparisons.html"}
+  ]
+}
+</script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --bg:#0B0F1A; --surface:#131926; --elevated:#1A2236; --border:#1E293B; --text:#F1F5F9; --text2:#94A3B8; --text3:#64748B; --primary:#6366F1; --cyan:#06B6D4; --accent:#D97706; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; -webkit-font-smoothing: antialiased; }
+  a { color: var(--cyan); text-decoration: none; } a:hover { text-decoration: underline; }
+  ::selection { background: var(--primary); color: #fff; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 0; background: rgba(11,15,26,.85); backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,.04); }
+  nav .inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+  nav .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; }
+  nav .logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #6366F1, #06B6D4); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; font-weight: 800; }
+  nav .links { display: flex; align-items: center; gap: 24px; font-size: .9rem; }
+  nav .links a { color: var(--text2); } nav .links a:hover { color: var(--text); text-decoration: none; }
+  nav .cta-sm { background: var(--primary); color: #fff !important; padding: 6px 16px; border-radius: 8px; font-weight: 600; }
+  article { max-width: 740px; margin: 0 auto; padding: 120px 24px 60px; }
+  .tag { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 10px; border-radius: 100px; background: rgba(217,119,6,.15); color: var(--accent); margin-bottom: 16px; }
+  h1 { font-size: 2rem; font-weight: 800; line-height: 1.25; margin-bottom: 16px; }
+  .meta { color: var(--text3); font-size: .85rem; margin-bottom: 32px; }
+  h2 { font-size: 1.4rem; font-weight: 700; margin: 36px 0 12px; color: var(--text); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 28px 0 8px; color: #818CF8; }
+  p { color: var(--text2); margin-bottom: 16px; font-size: 1.02rem; }
+  ul, ol { color: var(--text2); margin: 0 0 16px 24px; font-size: 1.02rem; }
+  li { margin-bottom: 6px; }
+  blockquote { border-left: 3px solid var(--accent); padding: 12px 20px; margin: 20px 0; background: var(--surface); border-radius: 0 8px 8px 0; }
+  blockquote p { margin: 0; color: var(--text); font-style: italic; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: .88rem; background: var(--elevated); padding: 2px 6px; border-radius: 4px; color: #818CF8; }
+  .callout { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 24px 0; }
+  .callout-title { font-weight: 700; font-size: .9rem; color: var(--accent); margin-bottom: 8px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; color: var(--text3); font-size: .9rem; margin-bottom: 24px; }
+  .back:hover { color: var(--text); text-decoration: none; }
+  footer { border-top: 1px solid var(--border); padding: 32px 24px; text-align: center; color: var(--text3); font-size: .85rem; }
+  footer a { color: var(--text3); margin: 0 12px; } footer a:hover { color: var(--text); }
+  @media (max-width: 640px) { article { padding: 100px 16px 40px; } h1 { font-size: 1.5rem; } nav .links { display: none; } }
+</style>
+</head>
+<body>
+
+<nav><div class="inner">
+  <a href="../landing.html" class="logo" style="text-decoration:none;color:var(--text)"><div class="logo-icon">&Psi;</div><span>PsyStat <span style="background:linear-gradient(135deg,#818CF8,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Lab</span></span><span style="display:inline-block;background:#7C3AED;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;text-transform:uppercase">BETA</span></a>
+  <div class="links"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../about.html">About</a><a href="../landing.html#start" class="cta-sm">Get Started</a></div>
+</div></nav>
+
+<article>
+  <nav aria-label="Breadcrumb" style="font-size:.85rem;color:var(--text3);margin-bottom:16px">
+    <a href="../landing.html" style="color:var(--text3)">Home</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <a href="./" style="color:var(--text3)">Blog</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <span style="color:var(--text2)">Multiple Comparisons</span>
+  </nav>
+  <a href="./" class="back">&larr; All posts</a>
+  <div class="tag">Methodology</div>
+  <h1>Multiple Comparisons and the Garden of Forking Paths</h1>
+  <div class="meta">By Moonlit Social Labs &middot; April 16, 2026 &middot; 14 min read</div>
+
+  <p>A single <em>p</em>-value of .03 looks like evidence. Twenty <em>p</em>-values of which one is .03 looks like noise. The difference is not in the statistic itself but in the inferential context that produced it &mdash; and that context is one of the most consistently mishandled aspects of empirical research. This essay walks through the multiple comparisons problem from its arithmetic foundations to its more subtle modern incarnation: the <em>garden of forking paths</em> articulated by Gelman and Loken (2013), in which multiplicity emerges not from a researcher's bad faith but from the ordinary, defensible decisions made during analysis.</p>
+
+  <h2>The Arithmetic of Multiplicity</h2>
+
+  <p>Begin with the textbook setup. A null hypothesis significance test rejects the null when <em>p</em> &lt; &alpha;, conventionally &alpha; = .05. Under the null, the probability of <em>not</em> rejecting on a single test is 1 &minus; &alpha; = .95. If we conduct <em>k</em> independent tests, all under their respective nulls, the probability of avoiding every false rejection is (1 &minus; &alpha;)<sup><em>k</em></sup>. The probability of at least one false positive &mdash; the <strong>family-wise error rate</strong>, or FWER &mdash; is therefore:</p>
+
+  <p style="text-align:center"><code>FWER = 1 &minus; (1 &minus; &alpha;)<sup><em>k</em></sup></code></p>
+
+  <p>For &alpha; = .05 and <em>k</em> = 20 tests, this gives 1 &minus; .95<sup>20</sup> &asymp; <strong>0.642</strong>. A researcher who runs twenty independent tests on null data has roughly a 64% chance of finding at least one "significant" effect. At <em>k</em> = 100 the probability climbs above 99%. The nominal &alpha; protects an individual test, not a study; the gap between those two guarantees is the multiple comparisons problem in its purest form.</p>
+
+  <p>This much has been understood since at least Bonferroni's inequality work in the 1930s (Bonferroni, 1936). What has shifted over the last fifteen years is the recognition that the relevant <em>k</em> is rarely the number of tests a researcher reports. It is the number of tests that <em>could have been reported</em> given the choices the data invited.</p>
+
+  <h2>Family-Wise Error Rate Control</h2>
+
+  <h3>The Bonferroni correction</h3>
+
+  <p>The classical fix attributed to Bonferroni (and popularized by Dunn, 1961) is to test each of the <em>k</em> hypotheses at the more stringent threshold &alpha;/<em>k</em>. By Boole's inequality, this guarantees FWER &le; &alpha; regardless of dependence structure among the tests. It is the most conservative and most general correction available, and that is both its strength and its weakness.</p>
+
+  <p>Why too conservative? Three reasons. First, Boole's inequality is loose when tests are positively correlated &mdash; common in psychology, where outcome measures often share method variance. Second, the correction treats every comparison as equally interesting, ignoring prior plausibility or theoretical structure. Third, and most importantly, it controls the wrong quantity for many research questions. A behavioral geneticist scanning 500,000 SNPs for association with depression does not want a 5% chance of <em>any</em> false positive across the entire genome; she wants to know what proportion of her flagged loci are spurious. Bonferroni answers the first question; in answering it strictly, it leaves nearly every real signal undetected.</p>
+
+  <h3>Holm's step-down procedure</h3>
+
+  <p>Holm (1979) offered a uniformly more powerful alternative that still controls FWER at &alpha;. Order the <em>p</em>-values from smallest to largest: <em>p</em><sub>(1)</sub> &le; <em>p</em><sub>(2)</sub> &le; &hellip; &le; <em>p</em><sub>(<em>k</em>)</sub>. Compare <em>p</em><sub>(1)</sub> to &alpha;/<em>k</em>; if it survives, compare <em>p</em><sub>(2)</sub> to &alpha;/(<em>k</em> &minus; 1); continue until a test fails, then accept all remaining nulls. The procedure rejects at least as many hypotheses as Bonferroni and often several more, with no additional assumptions. It should be the default when FWER control is genuinely the goal &mdash; there is essentially no reason to prefer raw Bonferroni today.</p>
+
+  <h2>From FWER to FDR</h2>
+
+  <p>Benjamini and Hochberg (1995) reframed the problem. Instead of asking "what is the probability of any false positive?" they asked "among my discoveries, what fraction are false?" The <strong>false discovery rate</strong> &mdash; the expected proportion of rejected nulls that are actually true &mdash; is a more natural target whenever a researcher expects multiple real effects and is willing to tolerate some spurious ones in exchange for greater sensitivity.</p>
+
+  <p>Their procedure is elegant. Order the <em>p</em>-values as before. Find the largest <em>i</em> such that <em>p</em><sub>(<em>i</em>)</sub> &le; (<em>i</em>/<em>k</em>) &middot; <em>q</em>, where <em>q</em> is the desired FDR. Reject all hypotheses with rank &le; <em>i</em>. Under independence (and certain forms of positive dependence), this controls FDR &le; <em>q</em>.</p>
+
+  <p>The Benjamini-Hochberg procedure is now the de facto standard in genomics, neuroimaging, and any setting where dozens to millions of tests are conducted simultaneously. Its philosophical appeal is that it scales: doubling the number of tests does not halve the effective threshold, as Bonferroni does, because the procedure is sensitive to the <em>distribution</em> of <em>p</em>-values rather than treating each in isolation.</p>
+
+  <div class="callout">
+    <div class="callout-title">When to Use Which</div>
+    <p><strong>FWER (Holm-Bonferroni)</strong> is appropriate when even one false positive is consequential &mdash; clinical trial primary endpoints, regulatory decisions, confirmatory tests of a single pre-specified hypothesis. <strong>FDR (Benjamini-Hochberg)</strong> is appropriate for exploratory or screening contexts &mdash; finding candidate biomarkers, flagging brain regions for follow-up, ranking gene-trait associations. The choice is not statistical; it is about what kind of error your downstream decisions can absorb.</p>
+  </div>
+
+  <h2>The Garden of Forking Paths</h2>
+
+  <p>The arithmetic above assumes the researcher chose her <em>k</em> tests in advance. In practice, <em>k</em> is shaped by the data. Gelman and Loken (2013) coined "the garden of forking paths" to describe the phenomenon: even an honest researcher, running what feels like a single analysis, has implicitly traversed one branch of a tree whose other branches she would have followed had the data looked different.</p>
+
+  <blockquote><p>"Researcher degrees of freedom can lead to a multiple comparisons problem, even in settings where researchers perform only a single analysis on their data." &mdash; Gelman &amp; Loken (2013)</p></blockquote>
+
+  <p>Consider a study on whether warm-temperature priming increases prosocial behavior. The pre-registered analysis is "compare donation amounts between warm-cup and cold-cup conditions." But suppose the data come in. The headline contrast is null. Then the researcher notices:</p>
+
+  <ul>
+    <li>The effect is significant <em>among women</em>.</li>
+    <li>The effect appears if she excludes three high-leverage outliers.</li>
+    <li>The effect emerges if she dichotomizes the dependent variable above the median.</li>
+    <li>The effect is robust if she controls for age and self-reported mood.</li>
+  </ul>
+
+  <p>None of these moves is fraudulent. Each is a sensible response to what the data revealed. But the researcher's analytic path was selected <em>because</em> the data fell as they did. Had the headline contrast been positive, none of those alternatives would have been explored. The reported test is therefore the maximum of an unobserved set of tests, and its nominal <em>p</em>-value dramatically overstates the evidence.</p>
+
+  <h2>Forking Paths versus P-Hacking</h2>
+
+  <div class="callout">
+    <div class="callout-title">A Crucial Distinction</div>
+    <p><strong>P-hacking</strong> is the intentional manipulation of analytic choices &mdash; collecting a few more participants until <em>p</em> dips below .05, dropping conditions that don't work, switching outcome measures &mdash; in pursuit of a publishable result. It is conscious and motivated. <strong>Forking paths</strong> is the unintentional, often unconscious version: a researcher who would have made different defensible choices had the data looked different. The <em>statistical</em> consequence is identical &mdash; the reported <em>p</em>-value reflects a selection process &mdash; but the <em>moral</em> framing differs profoundly. Most practitioners are not p-hackers. Almost all are forkers.</p>
+  </div>
+
+  <p>This distinction matters because the remedies differ. P-hacking is curbed by norms, training, and professional sanctions. Forking paths is curbed only by procedural commitments made <em>before</em> seeing the data. No amount of integrity protects you from a path you never knew you might have taken.</p>
+  <h2>Researcher Degrees of Freedom</h2>
+
+  <p>Simmons, Nelson, and Simonsohn (2011), in the article that catalyzed psychology's credibility reckoning, demonstrated through Monte Carlo simulation that four common &mdash; and individually defensible &mdash; researcher degrees of freedom inflate the false-positive rate from the nominal 5% to over 60%. The four were:</p>
+
+  <ol>
+    <li><strong>Optional stopping.</strong> Collecting data, peeking, and continuing if results are not yet significant.</li>
+    <li><strong>Flexible covariates.</strong> Reporting whichever covariate-adjusted analysis "works."</li>
+    <li><strong>Outcome flexibility.</strong> Choosing among several measured dependent variables post hoc.</li>
+    <li><strong>Condition flexibility.</strong> Dropping experimental conditions that produce inconvenient patterns.</li>
+  </ol>
+
+  <p>Their famous demonstration showed that, with these four flexibilities combined, two truly null variables could "predict" listening to the Beatles' <em>When I'm Sixty-Four</em> made participants 1.5 years younger. The point was not that the finding was real but that the analytic pipeline could manufacture comparable absurdities at will.</p>
+
+  <h2>When to Correct &mdash; and When Not To</h2>
+
+  <p>Multiple-comparisons correction is not a moral imperative; it is a tool fitted to a specific inferential goal. There are well-defined situations in which correction is inappropriate:</p>
+
+  <ul>
+    <li><strong>Pre-registered, theoretically distinct hypotheses.</strong> If you predicted three independent effects in advance and each is a separate confirmatory test of a separate theoretical claim, correcting across them confuses "family" with "study." Each effect stands or falls on its own merits.</li>
+    <li><strong>Bayesian analyses with proper priors.</strong> Posterior probabilities already incorporate prior plausibility; an additional frequentist correction is conceptually misplaced.</li>
+    <li><strong>Descriptive or exploratory work explicitly labelled as such.</strong> Correction implies confirmatory inference. If the goal is hypothesis generation, the correct move is honest labelling, not threshold adjustment.</li>
+  </ul>
+
+  <p>Correction <em>is</em> warranted when:</p>
+
+  <ul>
+    <li>You are testing many comparisons within a single coherent inferential family (e.g., post-hoc pairwise comparisons after an omnibus ANOVA).</li>
+    <li>You are screening &mdash; brain voxels, SNPs, candidate predictors &mdash; with the intention of treating survivors as discoveries.</li>
+    <li>You explored the data before settling on a test, and the reported test was selected from among alternatives.</li>
+  </ul>
+
+  <h2>Pre-Registration: The Procedural Solution</h2>
+
+  <p>The forking-paths framing implies that no post-hoc correction can fully remedy unintentional multiplicity, because the relevant <em>k</em> &mdash; the set of analyses the researcher would have run under counterfactual data &mdash; is unobservable. The only structural fix is to commit, in writing, to the analytic plan before seeing the data. Pre-registration converts what would have been forking paths into a single specified path; deviations are visible as deviations rather than rebranded as "the analysis."</p>
+
+  <p>Pre-registration does not prevent exploration. It separates exploration from confirmation. A pre-registered confirmatory test means what its <em>p</em>-value advertises; a post-hoc exploratory finding can still be reported, but as the hypothesis-generating observation it actually is, with no claim to the false-positive guarantees that confirmatory inference provides.</p>
+
+  <h2>Multiverse Analysis: When You Cannot Pre-Register</h2>
+
+  <p>For analyses of existing datasets, where pre-registration is impossible or only partial, Steegen and colleagues (2016) proposed the <strong>multiverse analysis</strong>. Rather than choosing one defensible specification, run all of them. Plot the distribution of effect sizes and <em>p</em>-values across the full grid. The resulting specification curve reveals how robust a finding is to the analytical choices the researcher could plausibly have made.</p>
+
+  <p>A multiverse does not eliminate forking paths; it makes them visible. If 95% of specifications yield the same conclusion, the finding is robust to analyst choice. If 30% do, the headline result is a fragile artifact of a particular path through the garden. Either way, the reader can judge.</p>
+
+  <h2>A Worked Example</h2>
+
+  <p>Suppose a developmental psychologist tests whether a literacy intervention improves reading scores. She has measured five outcomes (vocabulary, comprehension, fluency, decoding, spelling). She runs five <em>t</em>-tests and finds <em>p</em>-values of .008, .021, .039, .118, and .402.</p>
+
+  <p>Uncorrected, three results are "significant." But under <strong>Bonferroni</strong> at &alpha; = .05, only <em>p</em> &le; .010 survives &mdash; just vocabulary clears the bar. Under <strong>Holm-Bonferroni</strong>, she compares .008 to .05/5 = .010 (passes), then .021 to .05/4 = .0125 (fails), and stops &mdash; same conclusion as Bonferroni in this case. Under <strong>Benjamini-Hochberg</strong> at FDR <em>q</em> = .05, she finds the largest <em>i</em> with <em>p</em><sub>(<em>i</em>)</sub> &le; (<em>i</em>/5) &middot; .05: testing <em>i</em> = 3 gives .039 &le; .030? No. <em>i</em> = 2: .021 &le; .020? No. <em>i</em> = 1: .008 &le; .010? Yes. So BH also retains only vocabulary. Across all three procedures, the headline conclusion narrows to a single robust finding rather than three putative ones.</p>
+
+  <p>Now suppose the same psychologist had also informally tried log-transforming her outcomes, dropping two children with attendance below 80%, and adding pretest scores as a covariate &mdash; each switch defensible, none reported. Her effective <em>k</em> is no longer 5 but something closer to 5 &times; 2 &times; 2 &times; 2 = 40. Under that implicit family, even her vocabulary <em>p</em> = .008 looks suspect: the Bonferroni-equivalent threshold is .00125. The forking-paths inflation reaches deep enough to threaten conclusions that survived the explicit correction.</p>
+
+  <h2>Try It in PsyStat Lab</h2>
+
+  <p>PsyStat Lab operationalizes both halves of this problem. The <strong>Multiverse Analysis</strong> module lets you specify the analytical degrees of freedom in your study &mdash; outlier rules, covariate sets, transformation choices &mdash; and runs every combination, returning the full specification curve so you can see how sensitive your conclusions are to the path you would otherwise have chosen silently. The <strong>Specification Summary</strong> tool in the Robustness Checks module then describes that curve: the share of specifications with the same sign, the spread of estimates, and which choices reverse the result. It is descriptive; the specifications share one dataset, so agreement is not independent confirmation.</p>
+
+  <p>Together they offer a workflow for taking forking paths seriously without abandoning analysis altogether. <a href="../landing.html#start">Get started free &rarr;</a></p>
+
+  <h2>References</h2>
+
+  <ul>
+    <li>Benjamini, Y., &amp; Hochberg, Y. (1995). Controlling the false discovery rate: A practical and powerful approach to multiple testing. <em>Journal of the Royal Statistical Society: Series B</em>, 57(1), 289&ndash;300.</li>
+    <li>Bonferroni, C. E. (1936). Teoria statistica delle classi e calcolo delle probabilit&agrave;. <em>Pubblicazioni del R. Istituto Superiore di Scienze Economiche e Commerciali di Firenze</em>, 8, 3&ndash;62.</li>
+    <li>Dunn, O. J. (1961). Multiple comparisons among means. <em>Journal of the American Statistical Association</em>, 56(293), 52&ndash;64.</li>
+    <li>Gelman, A., &amp; Loken, E. (2013). The garden of forking paths: Why multiple comparisons can be a problem, even when there is no "fishing expedition" or "p-hacking" and the research hypothesis was posited ahead of time. Department of Statistics, Columbia University.</li>
+    <li>Holm, S. (1979). A simple sequentially rejective multiple test procedure. <em>Scandinavian Journal of Statistics</em>, 6(2), 65&ndash;70.</li>
+    <li>Simmons, J. P., Nelson, L. D., &amp; Simonsohn, U. (2011). False-positive psychology: Undisclosed flexibility in data collection and analysis allows presenting anything as significant. <em>Psychological Science</em>, 22(11), 1359&ndash;1366.</li>
+    <li>Steegen, S., Tuerlinckx, F., Gelman, A., &amp; Vanpaemel, W. (2016). Increasing transparency through a multiverse analysis. <em>Perspectives on Psychological Science</em>, 11(5), 702&ndash;712.</li>
+  </ul>
+
+  <div style="margin-top:48px;padding-top:32px;border-top:1px solid #1E293B">
+    <h2 style="font-size:1.1rem;margin-bottom:16px;color:#94A3B8">Related Posts</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+      <a href="power-analysis.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06B6D4;margin-bottom:6px">Methodology</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">Power Analysis: How Much Data Do You Actually Need?</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">A practical guide to a priori power, sensitivity analysis, and the sample sizes your design actually requires to detect the effects you care about.</div>
+      </a>
+      <a href="replication-crisis.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06B6D4;margin-bottom:6px">Methodology</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">The Replication Crisis: What Actually Happened</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">A clear-eyed account of how psychology discovered its replication problem, what the diagnoses revealed, and which reforms have actually changed practice.</div>
+      </a>
+    </div>
+  </div>
+</article>
+
+<div class="ad-slot" data-position="bottom" style="text-align:center;padding:16px 0;background:#0F172A;border-top:1px solid #1E293B"></div>
+
+<footer>
+  <p>&copy; 2026 Moonlit Social Labs.</p>
+  <div style="margin-top:12px"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../privacy.html">Privacy</a><a href="../terms.html">Terms</a><a href="https://ko-fi.com/moonlitsociallabs" target="_blank" rel="noopener" style="background:#FF5E5B;color:#fff;padding:4px 14px;border-radius:6px;font-weight:600;text-decoration:none">&#9749; Support Us</a></div>
+</footer>
+</body>
+</html>

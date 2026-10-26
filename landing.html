@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta name="google-site-verification" content="IWGVEm2c0aIEJAr9l31qjz3YzIDiqVe8VdwF1FATmTw" />
+<title>PsyStat Lab — AI-Powered Behavioral Science Statistics</title>
+<meta name="description" content="PsyStat Lab: AI-powered statistics platform with 240+ methods for behavioral science, psychology, and social science research. Free to start.">
+<meta name="keywords" content="statistics app, behavioral science, psychology research, SPSS alternative, statistical analysis, research methods, data analysis, social science, t-test, ANOVA, regression, meta-analysis, AI statistics">
+<meta name="robots" content="index, follow">
+<!-- <meta name="apple-itunes-app" content="app-id=YOUR_APP_ID"> TODO: add real App Store ID once published -->
+<link rel="canonical" href="https://psystat-lab.dev/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="PsyStat Lab — AI-Powered Behavioral Science Statistics">
+<meta property="og:description" content="240+ statistical methods, AI research intelligence, interactive simulations. From hypothesis to publication. Free to start.">
+<meta property="og:url" content="https://psystat-lab.dev/">
+<meta property="og:image" content="https://psystat-lab.dev/og-image.png">
+<meta property="og:site_name" content="PsyStat Lab">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PsyStat Lab — AI-Powered Statistics for Researchers">
+<meta name="twitter:description" content="240+ methods, AI assistant, interactive simulations. The complete behavioral science research platform.">
+<meta name="twitter:image" content="https://psystat-lab.dev/og-image.png">
+
+<!-- Schema.org: Organization + WebSite + SoftwareApplication -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://psystat-lab.dev/#organization",
+      "name": "Moonlit Social Labs",
+      "url": "https://psystat-lab.dev/",
+      "logo": "https://psystat-lab.dev/favicon.svg",
+      "email": "moonlit-social-labs@proton.me",
+      "sameAs": [
+        "https://github.com/Moonligh7er/psystat-lab-open",
+        "https://ko-fi.com/moonlitsociallabs"
+      ],
+      "description": "Independent software studio building tools for the social and behavioral sciences."
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://psystat-lab.dev/#website",
+      "url": "https://psystat-lab.dev/",
+      "name": "PsyStat Lab",
+      "publisher": { "@id": "https://psystat-lab.dev/#organization" },
+      "inLanguage": "en-US"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://psystat-lab.dev/#software",
+      "name": "PsyStat Lab",
+      "alternateName": "PsyStat",
+      "applicationCategory": "EducationalApplication",
+      "applicationSubCategory": "Statistics & Research",
+      "operatingSystem": "iOS, Android, Web",
+      "description": "AI-powered behavioral science statistics platform with 240+ statistical methods. From t-tests to multilevel Bayesian models, with an AI research assistant, pre-registration builder, and reproducible replication-package export.",
+      "url": "https://psystat-lab.dev/",
+      "image": "https://psystat-lab.dev/og-image.svg",
+      "publisher": { "@id": "https://psystat-lab.dev/#organization" },
+      "softwareVersion": "0.2.0-beta.1",
+      "releaseNotes": "https://github.com/Moonligh7er/psystat-lab-open",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Free",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "url": "https://psystat-lab.dev/#pricing",
+          "description": "All statistical methods and 5 saved analyses. AI features are for beta testers and subscribers. No ads."
+        },
+        {
+          "@type": "Offer",
+          "name": "Researcher",
+          "price": "9.99",
+          "priceCurrency": "USD",
+          "billingIncrement": "P1M",
+          "url": "https://psystat-lab.dev/#pricing",
+          "description": "Coming soon (PsyStat Lab is in beta): 400 AI credits/month, unlimited saved analyses, PDF+LaTeX export."
+        },
+        {
+          "@type": "Offer",
+          "name": "Scholar",
+          "price": "24.99",
+          "priceCurrency": "USD",
+          "billingIncrement": "P1M",
+          "url": "https://psystat-lab.dev/#pricing",
+          "description": "Coming soon (PsyStat Lab is in beta): everything in Researcher, with 1,000 AI credits/month including the advanced model."
+        }
+      ],
+      "featureList": [
+        "240+ statistical methods",
+        "AI research assistant powered by Claude",
+        "Bayesian and frequentist analysis",
+        "Multivariate and multilevel modeling",
+        "Causal inference toolkit",
+        "Meta-analysis tools",
+        "Psychometric analysis (CFA, IRT, SEM)",
+        "Pre-registration builder (OSF, AsPredicted formats)",
+        "Reproducible replication-package export",
+        "APA-formatted output",
+        "Cross-platform (iOS, Android, Web)",
+        "No advertising on any tier"
+      ]
+    }
+  ]
+}
+</script>
+
+<style>
+  /* ── Reset & Base ──────────────────────────────────────────────── */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0B0F1A;
+    --surface: #131926;
+    --elevated: #1A2236;
+    --border: #1E293B;
+    --text: #F1F5F9;
+    --text2: #94A3B8;
+    --text3: #64748B;
+    --primary: #6366F1;
+    --primary-glow: rgba(99,102,241,.25);
+    --cyan: #06B6D4;
+    --emerald: #10B981;
+    --amber: #F59E0B;
+    --rose: #F43F5E;
+    --violet: #8B5CF6;
+    --pink: #EC4899;
+    --orange: #FB923C;
+  }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::selection { background: var(--primary); color: #fff; }
+
+  /* ── Utility ───────────────────────────────────────────────────── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+  .text-gradient {
+    background: linear-gradient(135deg, #818CF8, #6366F1, #06B6D4);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-gradient-warm {
+    background: linear-gradient(135deg, #F59E0B, #F43F5E, #EC4899);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .badge {
+    display: inline-block; font-size: .7rem; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 100px;
+    background: var(--primary-glow); color: #818CF8;
+  }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+  /* ── Animated background ───────────────────────────────────────── */
+  .hero-bg {
+    position: fixed; inset: 0; z-index: -1; overflow: hidden;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,.12), transparent 70%),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(6,182,212,.06), transparent),
+                var(--bg);
+  }
+  .hero-bg .orb {
+    position: absolute; border-radius: 50%; filter: blur(80px); opacity: .25;
+    animation: float 20s ease-in-out infinite alternate;
+  }
+  .hero-bg .orb:nth-child(1) { width: 500px; height: 500px; background: #6366F1; top: -15%; left: 10%; }
+  .hero-bg .orb:nth-child(2) { width: 400px; height: 400px; background: #06B6D4; top: 30%; right: -5%; animation-delay: -7s; }
+  .hero-bg .orb:nth-child(3) { width: 350px; height: 350px; background: #EC4899; bottom: 10%; left: -8%; animation-delay: -13s; }
+  @keyframes float {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(30px, -40px) scale(1.08); }
+  }
+
+  /* ── Nav ────────────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 16px 0;
+    background: rgba(11,15,26,.7); backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    transition: background .3s;
+  }
+  nav .inner {
+    max-width: 1200px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  nav .logo {
+    font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em;
+    display: flex; align-items: center; gap: 10px;
+  }
+  nav .logo-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, #6366F1, #06B6D4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem; color: #fff;
+  }
+  nav .links { display: flex; gap: 32px; align-items: center; }
+  nav .links a { color: var(--text2); font-size: .875rem; font-weight: 500; transition: color .2s; }
+  nav .links a:hover { color: var(--text); text-decoration: none; }
+  nav .cta-sm {
+    padding: 8px 20px; border-radius: 8px; font-size: .875rem; font-weight: 600;
+    background: var(--primary); color: #fff; transition: transform .15s, box-shadow .15s;
+  }
+  nav .cta-sm:hover { transform: translateY(-1px); box-shadow: 0 4px 20px var(--primary-glow); text-decoration: none; }
+
+  /* ── Hero ───────────────────────────────────────────────────────── */
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    padding: 120px 24px 80px;
+    position: relative;
+  }
+  .hero .overline {
+    font-size: .8rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--cyan); margin-bottom: 20px;
+    animation: fadeUp .8s ease both;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 800; letter-spacing: -.03em;
+    line-height: 1.1; max-width: 900px; margin-bottom: 24px;
+    animation: fadeUp .8s .1s ease both;
+  }
+  .hero .subtitle {
+    font-size: clamp(1.05rem, 2.2vw, 1.35rem); color: var(--text2);
+    max-width: 640px; line-height: 1.6; margin-bottom: 40px;
+    animation: fadeUp .8s .2s ease both;
+  }
+  .hero .cta-group {
+    display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+    animation: fadeUp .8s .35s ease both;
+  }
+  .btn-primary {
+    padding: 14px 36px; border-radius: 12px; font-size: 1rem; font-weight: 700;
+    background: linear-gradient(135deg, #6366F1, #4F46E5); color: #fff;
+    border: none; cursor: pointer; position: relative; overflow: hidden;
+    transition: transform .15s, box-shadow .2s;
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--primary-glow);
+    text-decoration: none;
+  }
+  .btn-primary::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(255,255,255,.15));
+    opacity: 0; transition: opacity .2s;
+  }
+  .btn-primary:hover::after { opacity: 1; }
+  .btn-secondary {
+    padding: 14px 36px; border-radius: 12px; font-size: 1rem; font-weight: 600;
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border); cursor: pointer;
+    transition: background .2s, border-color .2s;
+  }
+  .btn-secondary:hover { background: var(--surface); border-color: var(--text3); text-decoration: none; }
+
+  .hero-stats {
+    display: flex; gap: 48px; margin-top: 64px;
+    animation: fadeUp .8s .5s ease both;
+  }
+  .hero-stats .stat { text-align: center; }
+  .hero-stats .stat-num {
+    font-size: 2rem; font-weight: 800; letter-spacing: -.02em;
+  }
+  .hero-stats .stat-label { font-size: .8rem; color: var(--text3); margin-top: 4px; }
+
+  .scroll-hint {
+    position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+    animation: bounce 2s infinite;
+    color: var(--text3); font-size: .8rem; text-align: center;
+  }
+  .scroll-hint span { display: block; font-size: 1.4rem; margin-bottom: 4px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(8px); }
+  }
+
+  /* ── Section base ──────────────────────────────────────────────── */
+  section { padding: 100px 0; position: relative; }
+  section .section-head { text-align: center; margin-bottom: 64px; }
+  section .section-head .overline {
+    font-size: .75rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--primary); margin-bottom: 12px;
+  }
+  section .section-head h2 {
+    font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -.02em;
+    margin-bottom: 16px;
+  }
+  section .section-head p { color: var(--text2); max-width: 600px; margin: 0 auto; font-size: 1.05rem; }
+
+  /* ── Problem / Pain ────────────────────────────────────────────── */
+  .pain { background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%); }
+  .pain-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .pain-card {
+    padding: 32px; border-radius: 16px;
+    background: var(--elevated); border: 1px solid var(--border);
+    position: relative; overflow: hidden;
+    transition: transform .2s, border-color .2s;
+  }
+  .pain-card:hover { transform: translateY(-4px); border-color: var(--rose); }
+  .pain-card .emoji { font-size: 2rem; margin-bottom: 16px; display: block; }
+  .pain-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; }
+  .pain-card p { color: var(--text2); font-size: .92rem; }
+  .pain-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--rose), var(--orange)); opacity: .6;
+  }
+
+  /* ── Solution / Reveal ─────────────────────────────────────────── */
+  .reveal-banner {
+    text-align: center; padding: 80px 24px;
+    background: linear-gradient(180deg, transparent, rgba(99,102,241,.04), transparent);
+  }
+  .reveal-banner h2 {
+    font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 800; margin-bottom: 16px;
+  }
+  .reveal-banner p { color: var(--text2); max-width: 600px; margin: 0 auto; font-size: 1.05rem; }
+
+  /* ── Module Showcase ───────────────────────────────────────────── */
+  .modules-section { overflow: hidden; }
+  .module-categories { display: flex; flex-direction: column; gap: 48px; }
+  .cat-row {}
+  .cat-label {
+    font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--text3); margin-bottom: 16px; padding-left: 4px;
+  }
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .mod-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; border-radius: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    transition: transform .15s, border-color .2s, box-shadow .2s;
+    cursor: default;
+  }
+  .mod-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--icon-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,.3);
+  }
+  .mod-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+  }
+  .mod-card .mod-name { font-size: .88rem; font-weight: 600; }
+  .mod-card .mod-sub { font-size: .72rem; color: var(--text3); margin-top: 2px; }
+
+  /* ── Feature Highlights (alternating) ──────────────────────────── */
+  .highlight {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 64px;
+    align-items: center; padding: 80px 0;
+  }
+  .highlight:nth-child(even) .hl-visual { order: -1; }
+  .hl-text .overline {
+    font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .hl-text h3 { font-size: 1.8rem; font-weight: 800; margin-bottom: 16px; letter-spacing: -.01em; }
+  .hl-text p { color: var(--text2); margin-bottom: 24px; font-size: .95rem; }
+  .hl-text .hl-bullets { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .hl-text .hl-bullets li {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: .9rem; color: var(--text2);
+  }
+  .hl-text .hl-bullets li .check {
+    color: var(--emerald); font-size: 1rem; flex-shrink: 0; margin-top: 2px;
+  }
+  .hl-text .hl-cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 20px; padding: 8px 14px;
+    background: rgba(99,102,241,.1); border: 1px solid rgba(99,102,241,.3);
+    border-radius: 8px; color: var(--primary); font-size: .85rem;
+    font-weight: 700; text-decoration: none; transition: background .15s, border-color .15s;
+  }
+  .hl-text .hl-cta:hover { background: rgba(99,102,241,.18); border-color: rgba(99,102,241,.55); text-decoration: none; }
+  .hl-text .hl-cta .arrow { transition: transform .15s; }
+  .hl-text .hl-cta:hover .arrow { transform: translateX(2px); }
+  .hl-visual {
+    border-radius: 16px; overflow: hidden; position: relative;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 32px; min-height: 340px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .hl-visual .mock-label {
+    font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--text3); margin-bottom: 16px;
+  }
+
+  /* Mock UI elements */
+  .mock-result {
+    padding: 16px; border-radius: 10px; margin-bottom: 12px;
+    background: var(--elevated); border-left: 3px solid var(--emerald);
+  }
+  .mock-result.warning { border-left-color: var(--amber); }
+  .mock-result.info { border-left-color: var(--primary); }
+  .mock-result .mr-title { font-size: .8rem; font-weight: 700; margin-bottom: 6px; }
+  .mock-result .mr-row {
+    display: flex; justify-content: space-between; font-size: .78rem; color: var(--text2);
+    padding: 3px 0;
+  }
+  .mock-result .mr-val { font-weight: 600; color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; }
+  .mock-apa {
+    padding: 14px 16px; border-radius: 8px;
+    background: rgba(99,102,241,.08); border: 1px dashed rgba(99,102,241,.3);
+    font-family: 'Georgia', serif; font-size: .82rem; color: var(--text2);
+    font-style: italic; line-height: 1.6;
+  }
+
+  .mock-chat {
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .mock-msg {
+    max-width: 85%; padding: 12px 16px; border-radius: 14px;
+    font-size: .82rem; line-height: 1.5;
+  }
+  .mock-msg.user {
+    align-self: flex-end; background: var(--primary); color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .mock-msg.ai {
+    align-self: flex-start; background: var(--elevated); color: var(--text);
+    border-bottom-left-radius: 4px; border: 1px solid var(--border);
+  }
+  .mock-msg .ai-label { font-size: .65rem; font-weight: 700; color: var(--violet); margin-bottom: 4px; }
+
+  .mock-pipeline {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .mock-step {
+    padding: 8px 14px; border-radius: 8px; font-size: .75rem; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .mock-step .step-num {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .6rem; font-weight: 800;
+  }
+  .mock-arrow { color: var(--text3); font-size: .9rem; }
+
+  /* ── Social Proof ──────────────────────────────────────────────── */
+  .social-proof {
+    background: linear-gradient(180deg, var(--bg), var(--surface), var(--bg));
+  }
+  .proof-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+  .proof-card {
+    padding: 32px; border-radius: 16px;
+    background: var(--elevated); border: 1px solid var(--border);
+    position: relative;
+  }
+  .proof-card .quote-mark {
+    font-size: 3rem; line-height: 1; color: var(--primary); opacity: .3;
+    font-family: Georgia, serif; position: absolute; top: 16px; left: 24px;
+  }
+  .proof-card blockquote {
+    font-size: .92rem; color: var(--text2); line-height: 1.65;
+    margin-bottom: 20px; padding-top: 20px;
+  }
+  .proof-card .attribution { display: flex; align-items: center; gap: 12px; }
+  .proof-card .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem; font-weight: 700; color: #fff;
+  }
+  .proof-card .attr-name { font-size: .85rem; font-weight: 600; }
+  .proof-card .attr-role { font-size: .75rem; color: var(--text3); }
+
+  /* ── Comparison ────────────────────────────────────────────────── */
+  .comparison { overflow: hidden; }
+  .comp-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    border-radius: 16px; overflow: hidden;
+    background: var(--surface); border: 1px solid var(--border);
+  }
+  .comp-table th, .comp-table td { padding: 16px 20px; text-align: left; }
+  .comp-table thead th {
+    background: var(--elevated); font-size: .8rem; font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase; color: var(--text2);
+    border-bottom: 1px solid var(--border);
+  }
+  .comp-table thead th:last-child { color: var(--primary); }
+  .comp-table tbody td {
+    font-size: .88rem; border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .comp-table tbody tr:last-child td { border-bottom: none; }
+  .comp-table .feat-name { font-weight: 600; color: var(--text); }
+  .comp-table .yes { color: var(--emerald); font-weight: 600; }
+  .comp-table .no { color: var(--text3); }
+  .comp-table .partial { color: var(--amber); }
+  .comp-table .ours {
+    background: rgba(99,102,241,.04);
+    border-left: 2px solid var(--primary);
+  }
+
+  /* ── Workflow ───────────────────────────────────────────────────── */
+  .workflow-steps {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px; position: relative;
+  }
+  .workflow-steps::before {
+    content: ''; position: absolute; top: 40px; left: 10%; right: 10%;
+    height: 2px; background: linear-gradient(90deg, transparent, var(--primary), var(--cyan), var(--emerald), transparent);
+    z-index: 0;
+  }
+  .wf-step {
+    text-align: center; position: relative; z-index: 1;
+    padding: 32px 20px; border-radius: 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    transition: transform .2s, border-color .2s;
+  }
+  .wf-step:hover { transform: translateY(-4px); border-color: var(--primary); }
+  .wf-step .wf-num {
+    width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--cyan));
+    color: #fff;
+  }
+  .wf-step h4 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+  .wf-step p { font-size: .82rem; color: var(--text2); }
+
+  /* ── Pricing / CTA ─────────────────────────────────────────────── */
+  .final-cta {
+    text-align: center; padding: 120px 24px;
+    position: relative;
+  }
+  .final-cta::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 100%, rgba(99,102,241,.1), transparent);
+    pointer-events: none;
+  }
+  .final-cta h2 {
+    font-size: clamp(2rem, 4.5vw, 3.2rem); font-weight: 800; letter-spacing: -.02em;
+    margin-bottom: 20px;
+  }
+  .final-cta p { color: var(--text2); max-width: 560px; margin: 0 auto 40px; font-size: 1.1rem; }
+  .final-cta .btn-primary { font-size: 1.1rem; padding: 18px 48px; }
+  .final-cta .subtext { color: var(--text3); font-size: .82rem; margin-top: 16px; }
+
+  /* ── Stats strip ───────────────────────────────────────────────── */
+  .stats-strip {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 24px; padding: 64px 0; text-align: center;
+  }
+  .ss-item .ss-num { font-size: 2.4rem; font-weight: 800; letter-spacing: -.02em; }
+  .ss-item .ss-label { font-size: .82rem; color: var(--text3); margin-top: 4px; }
+
+  /* ── Footer ────────────────────────────────────────────────────── */
+  footer {
+    padding: 48px 0; text-align: center; border-top: 1px solid var(--border);
+  }
+  footer p { color: var(--text3); font-size: .82rem; }
+  footer .foot-links { margin-top: 12px; display: flex; gap: 24px; justify-content: center; }
+  footer .foot-links a { color: var(--text3); font-size: .8rem; }
+  footer .foot-links a:hover { color: var(--text); }
+
+  /* ── Pricing cards ────────────────────────────────────────────── */
+  #pricing .pain-card::before {
+    background: linear-gradient(90deg, var(--primary), var(--cyan));
+  }
+  #pricing .pain-card:hover { border-color: var(--primary); }
+
+  /* ── Scroll reveal ─────────────────────────────────────────────── */
+  .reveal-on-scroll {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .reveal-on-scroll.revealed { opacity: 1; transform: translateY(0); }
+
+  /* ── Responsive ────────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .hero-stats { gap: 24px; flex-wrap: wrap; justify-content: center; }
+    .highlight { grid-template-columns: 1fr; gap: 32px; }
+    .highlight:nth-child(even) .hl-visual { order: 0; }
+    nav .links { display: none; }
+    .stats-strip { grid-template-columns: repeat(2, 1fr); }
+    .comp-table { font-size: .82rem; }
+    .comp-table th, .comp-table td { padding: 10px 12px; }
+    .workflow-steps::before { display: none; }
+    .mobile-nav { display: flex; }
+    body { padding-bottom: 60px; } /* clear bottom nav */
+  }
+
+  /* ── Sticky mobile bottom nav ─────────────────────────────────── */
+  .mobile-nav {
+    display: none;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+    background: rgba(11,15,26,.92); backdrop-filter: blur(18px) saturate(180%);
+    border-top: 1px solid rgba(255,255,255,.06);
+    padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+    justify-content: space-around; align-items: stretch;
+  }
+  .mobile-nav a {
+    flex: 1; text-align: center;
+    color: var(--text2); font-size: .72rem; font-weight: 600;
+    padding: 6px 4px; border-radius: 8px;
+    text-decoration: none; transition: color .15s, background .15s;
+  }
+  .mobile-nav a:hover, .mobile-nav a:active { color: var(--text); background: rgba(99,102,241,.12); text-decoration: none; }
+  .mobile-nav a.primary { color: var(--primary); }
+
+  /* ── Accordion FAQ ─────────────────────────────────────────────── */
+  .faq-list { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+  .faq-item {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    overflow: hidden; transition: border-color .2s;
+  }
+  .faq-item:hover { border-color: var(--text3); }
+  .faq-q {
+    width: 100%; background: none; border: none; color: var(--text);
+    padding: 18px 20px; font-size: .95rem; font-weight: 600;
+    text-align: left; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: inherit;
+  }
+  .faq-q .arrow { transition: transform .2s; color: var(--text3); }
+  .faq-q[aria-expanded="true"] .arrow { transform: rotate(180deg); }
+  .faq-a {
+    max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease;
+    padding: 0 20px; color: var(--text2); font-size: .88rem; line-height: 1.65;
+  }
+  .faq-a.open { max-height: 300px; padding: 0 20px 18px; }
+
+  /* ── Glow card effect ──────────────────────────────────────────── */
+  .glow-card {
+    position: relative; border-radius: 16px; overflow: hidden;
+  }
+  .glow-card::before {
+    content: ''; position: absolute; inset: -1px;
+    background: conic-gradient(from 180deg, var(--primary), var(--cyan), var(--pink), var(--primary));
+    opacity: 0; transition: opacity .4s;
+    z-index: -1; border-radius: 17px;
+  }
+  .glow-card:hover::before { opacity: .6; }
+
+  /* ── Ticker ────────────────────────────────────────────────────── */
+  .ticker-wrap {
+    overflow: hidden; padding: 24px 0;
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .ticker {
+    display: flex; gap: 48px; animation: ticker 40s linear infinite;
+    width: max-content;
+  }
+  .ticker .tick-item {
+    white-space: nowrap; font-size: .82rem; font-weight: 600;
+    color: var(--text3); display: flex; align-items: center; gap: 8px;
+  }
+  .ticker .tick-item .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--primary);
+  }
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "PsyStat Lab",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "iOS, Android, Web",
+  "description": "AI-powered behavioral science statistics platform with 240+ methods, research intelligence tools, and interactive learning.",
+  "offers": [
+    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free tier"},
+    {"@type": "Offer", "price": "9.99", "priceCurrency": "USD", "description": "Researcher monthly (coming soon)"},
+    {"@type": "Offer", "price": "24.99", "priceCurrency": "USD", "description": "Scholar monthly (coming soon)"}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "Is PsyStat Lab free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The free tier includes every statistical method and 5 saved analyses, with no ads on any tier. The AI features are for beta testers now (sign up on this page) and for subscribers once paid plans launch."}},
+    {"@type": "Question", "name": "Do I need to know statistics to use PsyStat?", "acceptedAnswer": {"@type": "Answer", "text": "No. PsyStat includes a structured Learning Path with 45 concepts from zero to graduate-level, interactive simulations, plain-language explanations, and an AI assistant."}},
+    {"@type": "Question", "name": "What statistical methods are included?", "acceptedAnswer": {"@type": "Answer", "text": "240+ methods across 30 modules including t-tests, ANOVA, regression, factor analysis, IRT, SEM, Bayesian analysis, meta-analysis, causal inference, machine learning, and more."}},
+    {"@type": "Question", "name": "What about my data privacy?", "acceptedAnswer": {"@type": "Answer", "text": "Raw uploaded files are parsed on your device and are not sent to us. Statistical computation transmits only the numeric columns you're analyzing over TLS to our compute backend (Railway), which retains nothing after the request. Saved analyses live in your Supabase account (row-level security, encrypted at rest) as inputs, results, and notes — not raw participant rows. The AI assistant receives truncated analysis summaries only, never raw rows, via Anthropic. Subprocessors: Supabase, Railway, Anthropic, Vercel, Stripe, RevenueCat, Google Analytics. We never sell your data or use it to train models. You can delete your account and data at any time."}}
+  ]
+}
+</script>
+</head>
+<body>
+
+<!-- Background -->
+<div class="hero-bg" aria-hidden="true">
+  <div class="orb"></div><div class="orb"></div><div class="orb"></div>
+</div>
+
+<!-- Nav -->
+<nav>
+  <div class="inner">
+    <div class="logo">
+      <div class="logo-icon">&Psi;</div>
+      <span>PsyStat <span class="text-gradient">Lab</span></span><span style="display:inline-block;background:#7C3AED;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;text-transform:uppercase">BETA</span>
+    </div>
+    <div class="links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#compare">Compare</a>
+      <a href="#pricing">Pricing</a>
+      <a href="educators.html">Educators</a>
+      <a href="#faq">FAQ</a>
+      <a href="/dashboard" class="cta-sm">Go to App</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="overline">Research-grade analysis. Zero friction.</div>
+  <h1>
+    Every statistical method you need.<br>
+    <span class="text-gradient">One app. One tap.</span>
+  </h1>
+  <p class="subtitle">
+    PsyStat Lab puts a full statistical computing environment in your pocket &mdash;
+    from t-tests to structural equation modeling, with an AI advisor that speaks
+    your language, not jargon.
+  </p>
+  <div class="cta-group">
+    <a href="#start" class="btn-primary">Start Analyzing Free</a>
+    <a href="#features" class="btn-secondary">See All Features &darr;</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num text-gradient">240+</div>
+      <div class="stat-label">Statistical Methods</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num text-gradient">29</div>
+      <div class="stat-label">Specialized Modules</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num text-gradient">13</div>
+      <div class="stat-label">Research Intelligence Tools</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num text-gradient">11</div>
+      <div class="stat-label">Research Lifecycle Tools</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num text-gradient">5</div>
+      <div class="stat-label">Interactive Simulations</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num text-gradient">150+</div>
+      <div class="stat-label">Validated Instruments</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num text-gradient">0</div>
+      <div class="stat-label">Lines of Code Required</div>
+    </div>
+  </div>
+  <div class="scroll-hint" aria-hidden="true">
+    <span>&darr;</span>
+  </div>
+</header>
+
+<!-- Ticker -->
+<div class="ticker-wrap" aria-hidden="true">
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<!-- Pain Points -->
+<section class="pain">
+  <div class="container">
+    <div class="section-head reveal-on-scroll">
+      <div class="overline">Sound familiar?</div>
+      <h2>Research shouldn't feel like <span class="text-gradient-warm">this</span></h2>
+      <p>The tools you rely on were designed for a different era. You deserve better.</p>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128548;</span>
+        <h3>Juggling 5 apps per analysis</h3>
+        <p>Excel for data entry. SPSS for the test. R for that one chart. Word for APA formatting. A textbook to remember what the output means. Sound about right?</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128565;</span>
+        <h3>"What test do I even use?"</h3>
+        <p>You know your research question. You know your data. But translating that into the right statistical procedure &mdash; and defending that choice &mdash; burns hours you don't have.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128176;</span>
+        <h3>$1,000+/year software licenses</h3>
+        <p>SPSS runs ~$99/month. Stata, Mplus, AMOS &mdash; each costs hundreds to thousands per year, each does only part of the job, and none of them fit in your pocket.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128164;</span>
+        <h3>Output you can't interpret</h3>
+        <p>Pages of unlabeled tables. No confidence intervals on your effect sizes. No plain-English explanation of what the numbers actually mean for your research question.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128683;</span>
+        <h3>Assumption violations you discover too late</h3>
+        <p>You ran 200 participants, only to discover your data violates normality, homogeneity, and sphericity. Now what?</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#129300;</span>
+        <h3>"Is my finding even robust?"</h3>
+        <p>Reviewers ask if your result holds under different analytic choices. You have no idea &mdash; because you never checked. Because checking was impossible.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Solution Reveal -->
+<div class="reveal-banner reveal-on-scroll">
+  <h2>What if <span class="text-gradient">one app</span> handled all of it?</h2>
+  <p>Every test. Every assumption check. Every export format. Every explanation.<br>On your phone. In seconds. With an AI that actually understands statistics.</p>
+</div>
+
+<!-- Module Showcase -->
+<section class="modules-section" id="features">
+  <div class="container">
+    <div class="section-head reveal-on-scroll">
+      <div class="overline">29 Modules</div>
+      <h2>A <span class="text-gradient">complete lab</span> in your pocket</h2>
+      <p>Every module is a full-featured toolkit &mdash; not a demo, not a preview. Production-grade statistical computing you can cite in publications.</p>
+    </div>
+    <div class="module-categories reveal-on-scroll" id="module-grid"></div>
+  </div>
+</section>
+
+<!-- Feature Highlight 1: AI -->
+<section>
+  <div class="container">
+    <div class="highlight reveal-on-scroll">
+      <div class="hl-text">
+        <div class="overline" style="color: var(--violet);">AI-Powered</div>
+        <h3>An AI advisor that <em>actually</em> understands statistics</h3>
+        <p>Not a chatbot with a statistics textbook. PsyStat's AI knows your data, your modules, your last analysis, and the specific nuances of behavioral science methodology.</p>
+        <ul class="hl-bullets">
+          <li><span class="check">&#10003;</span> Describe your research question in plain English &mdash; get the right test recommended with assumptions listed</li>
+          <li><span class="check">&#10003;</span> Ask "what does this p-value mean?" and get a contextual answer, not a Wikipedia definition</li>
+          <li><span class="check">&#10003;</span> Get follow-up suggestions based on your actual results: "Your data violates normality &mdash; consider Mann-Whitney U instead"</li>
+          <li><span class="check">&#10003;</span> Six self-paced courses from psychometrics to clinical trial design</li>
+        </ul>
+        <a href="/dashboard" class="hl-cta">Try the AI Assistant <span class="arrow">&rarr;</span></a>
+      </div>
+      <div class="hl-visual">
+        <div class="mock-label">AI Assistant &mdash; example conversation</div>
+        <div class="mock-chat">
+          <div class="mock-msg user">I have pre/post anxiety scores for two groups. Which test should I use?</div>
+          <div class="mock-msg ai">
+            <div class="ai-label">PsyStat AI</div>
+            For a 2&times;2 mixed design (pre/post &times; group), use a <strong>Mixed ANOVA</strong> &mdash; it tests the interaction between time and group. First, I'd check normality (Shapiro-Wilk) and sphericity. If violated, consider a non-parametric alternative or robust mixed model.<br><br>
+            <a href="/dashboard" style="color: var(--cyan); text-decoration:none;">&#9654; Go to Stats Studio &rarr; Mixed ANOVA</a>
+          </div>
+          <div class="mock-msg user">What effect size should I report?</div>
+          <div class="mock-msg ai">
+            <div class="ai-label">PsyStat AI</div>
+            Report <strong>partial &eta;&sup2;</strong> for the interaction effect. In clinical contexts, also report <strong>Cohen's d</strong> for the pre-to-post change within each group, plus the <strong>NNT</strong> if you can define a clinically meaningful threshold.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Highlight 2: Assumption Checking -->
+    <div class="highlight reveal-on-scroll">
+      <div class="hl-text">
+        <div class="overline" style="color: var(--emerald);">Assumption Intelligence</div>
+        <h3>Never run a test on violated assumptions again</h3>
+        <p>PsyStat automatically checks every relevant assumption before each analysis &mdash; normality, homogeneity, sphericity, linearity, independence &mdash; and suggests alternatives when things go wrong.</p>
+        <ul class="hl-bullets">
+          <li><span class="check">&#10003;</span> Visual dashboard: green checkmarks, amber warnings, red violations</li>
+          <li><span class="check">&#10003;</span> Diagnostic plots: Q-Q, residuals vs. fitted, Cook's distance, box plots</li>
+          <li><span class="check">&#10003;</span> Auto-recommend alternative tests with trade-off explanations</li>
+          <li><span class="check">&#10003;</span> 4-method sensitivity panel: parametric, non-parametric, permutation, bootstrap</li>
+        </ul>
+        <a href="/dashboard" class="hl-cta">Check assumptions on your data <span class="arrow">&rarr;</span></a>
+      </div>
+      <div class="hl-visual">
+        <div class="mock-label">Assumption Dashboard &mdash; example output</div>
+        <div class="mock-result">
+          <div class="mr-title">&#9989; Normality (Shapiro-Wilk)</div>
+          <div class="mr-row"><span>W-statistic</span><span class="mr-val">0.971</span></div>
+          <div class="mr-row"><span>p-value</span><span class="mr-val">0.342</span></div>
+          <div class="mr-row"><span>Verdict</span><span class="mr-val" style="color: var(--emerald);">Passed</span></div>
+        </div>
+        <div class="mock-result warning">
+          <div class="mr-title">&#9888;&#65039; Homogeneity of Variance (Levene's)</div>
+          <div class="mr-row"><span>F-statistic</span><span class="mr-val">4.82</span></div>
+          <div class="mr-row"><span>p-value</span><span class="mr-val" style="color: var(--amber);">0.031</span></div>
+          <div class="mr-row"><span>Verdict</span><span class="mr-val" style="color: var(--amber);">Violated &mdash; use Welch's t</span></div>
+        </div>
+        <div class="mock-result">
+          <div class="mr-title">&#9989; Independence</div>
+          <div class="mr-row"><span>Durbin-Watson</span><span class="mr-val">1.94</span></div>
+          <div class="mr-row"><span>Verdict</span><span class="mr-val" style="color: var(--emerald);">Passed</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Highlight 3: APA & Export -->
+    <div class="highlight reveal-on-scroll">
+      <div class="hl-text">
+        <div class="overline" style="color: var(--cyan);">Publication-Ready Output</div>
+        <h3>From analysis to manuscript in one tap</h3>
+        <p>Every result comes with APA 7th edition formatting, confidence intervals on effect sizes, and plain-language interpretation. Copy, export, cite.</p>
+        <ul class="hl-bullets">
+          <li><span class="check">&#10003;</span> One-tap APA copy: <code style="font-size:.8rem; color:var(--cyan);">t(48) = 2.34, p = .023, d = 0.67, 95% CI [0.09, 1.25]</code></li>
+          <li><span class="check">&#10003;</span> PDF reports with tables, interpretation, and references</li>
+          <li><span class="check">&#10003;</span> CSV export for any result set</li>
+          <li><span class="check">&#10003;</span> Dual framework reporting (frequentist + Bayesian side-by-side)</li>
+          <li><span class="check">&#10003;</span> Annotation layer for researcher notes on any result</li>
+        </ul>
+        <a href="/dashboard" class="hl-cta">Get APA-formatted output <span class="arrow">&rarr;</span></a>
+      </div>
+      <div class="hl-visual">
+        <div class="mock-label">APA Output &mdash; example result</div>
+        <div class="mock-result info">
+          <div class="mr-title">Independent-Samples T-Test</div>
+          <div class="mr-row"><span>t-statistic</span><span class="mr-val">2.34</span></div>
+          <div class="mr-row"><span>p-value</span><span class="mr-val">0.023</span></div>
+          <div class="mr-row"><span>Cohen's d</span><span class="mr-val">0.67 (medium)</span></div>
+          <div class="mr-row"><span>95% CI</span><span class="mr-val">[0.09, 1.25]</span></div>
+        </div>
+        <div class="mock-apa">
+          An independent-samples t-test revealed a statistically significant difference, <em>t</em>(48) = 2.34, <em>p</em> = .023, <em>d</em> = 0.67, 95% CI [0.09, 1.25], suggesting a medium effect favoring the intervention group.
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Highlight 4: Multiverse & Robustness -->
+    <div class="highlight reveal-on-scroll">
+      <div class="hl-text">
+        <div class="overline" style="color: var(--rose);">Robustness</div>
+        <h3>Prove your finding isn't a fluke of analytic choices</h3>
+        <p>Multiverse analysis runs every reasonable combination of your decisions &mdash; outlier methods, transformations, test variants &mdash; and shows whether your conclusion survives them all. Reviewers love this.</p>
+        <ul class="hl-bullets">
+          <li><span class="check">&#10003;</span> Specification curve visualization across hundreds of analyses</li>
+          <li><span class="check">&#10003;</span> Decision influence analysis: which choices matter most</li>
+          <li><span class="check">&#10003;</span> Automatic robustness verdict: fragile / moderately robust / highly robust</li>
+          <li><span class="check">&#10003;</span> Pre-registration builder to lock in your plan before data collection</li>
+        </ul>
+        <a href="/dashboard" class="hl-cta">Run a multiverse analysis <span class="arrow">&rarr;</span></a>
+      </div>
+      <div class="hl-visual">
+        <div class="mock-label">Specification Curve &mdash; illustrative</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:flex-end;gap:3px;height:120px;padding-bottom:2px;border-bottom:1px solid var(--border);">
+            <div style="width:4px;height:15%;background:var(--emerald);border-radius:2px;" title="spec 1"></div>
+            <div style="width:4px;height:25%;background:var(--emerald);border-radius:2px;"></div>
+            <div style="width:4px;height:30%;background:var(--emerald);border-radius:2px;"></div>
+            <div style="width:4px;height:35%;background:var(--emerald);border-radius:2px;"></div>
+            <div style="width:4px;height:38%;background:var(--emerald);border-radius:2px;"></div>
+            <div style="width:4px;height:42%;background:var(--emerald);border-radius:2px;"></div>
+            <div style="width:4px;height:45%;background:var(--emerald);border-radius:2px;"></div>
+            <div style="width:4px;height:48%;background:var(--emerald);border-radius:2px;"></div>
+            <div style="width:4px;height:50%;background:var(--emerald);border-radius:2px;"></div>
+            <div style="width:4px;height:52%;background:var(--emerald);border-radius:2px;"></div>
+            <div style="width:4px;height:55%;background:var(--primary);border-radius:2px;"></div>
+            <div style="width:4px;height:58%;background:var(--primary);border-radius:2px;"></div>
+            <div style="width:4px;height:60%;background:var(--primary);border-radius:2px;"></div>
+            <div style="width:4px;height:63%;background:var(--primary);border-radius:2px;"></div>
+            <div style="width:4px;height:65%;background:var(--primary);border-radius:2px;"></div>
+            <div style="width:4px;height:68%;background:var(--primary);border-radius:2px;"></div>
+            <div style="width:4px;height:72%;background:var(--primary);border-radius:2px;"></div>
+            <div style="width:4px;height:75%;background:var(--primary);border-radius:2px;"></div>
+            <div style="width:4px;height:80%;background:var(--primary);border-radius:2px;"></div>
+            <div style="width:4px;height:85%;background:var(--primary);border-radius:2px;"></div>
+          </div>
+          <div style="font-size:.7rem;color:var(--text3);text-align:center;">20 specification variants &mdash; sorted by effect size</div>
+        </div>
+        <div style="margin-top:16px;padding:12px 14px;border-radius:8px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);display:flex;align-items:center;gap:8px;">
+          <span style="font-size:1.2rem;">&#9989;</span>
+          <div>
+            <div style="font-size:.8rem;font-weight:700;color:var(--emerald);">Highly Robust</div>
+            <div style="font-size:.72rem;color:var(--text2);">20/20 specifications significant (100%). Median d = 0.64</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats strip -->
+<div class="container">
+  <div class="stats-strip reveal-on-scroll">
+    <div class="ss-item">
+      <div class="ss-num text-gradient">240+</div>
+      <div class="ss-label">Statistical methods</div>
+    </div>
+    <div class="ss-item">
+      <div class="ss-num text-gradient">13</div>
+      <div class="ss-label">Research intelligence tools</div>
+    </div>
+    <div class="ss-item">
+      <div class="ss-num text-gradient">150+</div>
+      <div class="ss-label">Validated instruments</div>
+    </div>
+    <div class="ss-item">
+      <div class="ss-num text-gradient">6</div>
+      <div class="ss-label">Export formats</div>
+    </div>
+    <div class="ss-item">
+      <div class="ss-num text-gradient">62</div>
+      <div class="ss-label">Glossary terms</div>
+    </div>
+    <div class="ss-item">
+      <div class="ss-num text-gradient">5</div>
+      <div class="ss-label">Interactive simulations</div>
+    </div>
+  </div>
+</div>
+
+<!-- How it works -->
+<section id="how-it-works">
+  <div class="container">
+    <div class="section-head reveal-on-scroll">
+      <div class="overline">How It Works</div>
+      <h2>From raw data to <span class="text-gradient">publishable results</span> in minutes</h2>
+      <p>No installation. No syntax. No switching between apps.</p>
+    </div>
+    <div class="workflow-steps reveal-on-scroll">
+      <div class="wf-step">
+        <div class="wf-num">1</div>
+        <h4>Import Your Data</h4>
+        <p>Paste from a spreadsheet, upload CSV/Excel/SPSS/Stata, or use built-in sample datasets to learn.</p>
+      </div>
+      <div class="wf-step">
+        <div class="wf-num">2</div>
+        <h4>Describe Your Question</h4>
+        <p>Tell the AI what you want to know in plain English &mdash; or pick a test directly. Assumptions are checked automatically.</p>
+      </div>
+      <div class="wf-step">
+        <div class="wf-num">3</div>
+        <h4>Get Results Instantly</h4>
+        <p>Publication-ready output with APA formatting, effect sizes, confidence intervals, and plain-language interpretation.</p>
+      </div>
+      <div class="wf-step">
+        <div class="wf-num">4</div>
+        <h4>Export & Publish</h4>
+        <p>Copy APA text to your manuscript, export PDF reports, save to your project, or run sensitivity checks for reviewers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Social Proof -->
+<section class="social-proof">
+  <div class="container">
+    <div class="section-head reveal-on-scroll">
+      <div class="overline">Imagine the possibilities</div>
+      <h2>What researchers <span class="text-gradient">will say</span></h2>
+      <p style="margin-top:8px; font-size:.85rem; color:var(--text3); font-style:italic;">PsyStat Lab is currently in beta. These are hypothetical testimonials illustrating real workflows the app supports. You could be among our first reviewers &mdash; <a href="#start" style="color:var(--cyan);">join the beta</a> and tell us what you think.</p>
+    </div>
+    <div class="proof-grid reveal-on-scroll">
+      <div class="proof-card glow-card">
+        <span class="quote-mark">&ldquo;</span>
+        <blockquote>I used to spend an entire day on assumption checking alone. PsyStat does it in one tap and shows me exactly which alternatives to use when things go wrong. It's like having a methods consultant on retainer.</blockquote>
+        <div class="attribution">
+          <div class="avatar" style="background: linear-gradient(135deg, var(--primary), var(--cyan));">SL</div>
+          <div><div class="attr-name">Dr. Sarah L.</div><div class="attr-role">Clinical Psychology Researcher (hypothetical)</div></div>
+        </div>
+      </div>
+      <div class="proof-card glow-card">
+        <span class="quote-mark">&ldquo;</span>
+        <blockquote>The multiverse analysis alone justified switching. Reviewer 2 asked if my results were robust to analytic decisions. I showed them a specification curve with 200 variants. They had no further comments.</blockquote>
+        <div class="attribution">
+          <div class="avatar" style="background: linear-gradient(135deg, var(--emerald), var(--cyan));">MK</div>
+          <div><div class="attr-name">Dr. Marcus K.</div><div class="attr-role">Quantitative Methodologist (hypothetical)</div></div>
+        </div>
+      </div>
+      <div class="proof-card glow-card">
+        <span class="quote-mark">&ldquo;</span>
+        <blockquote>My grad students learn more from the tooltips and glossary than from my textbook. Every p-value, every effect size is tappable and explained. It's pedagogy built into the workflow, not bolted on.</blockquote>
+        <div class="attribution">
+          <div class="avatar" style="background: linear-gradient(135deg, var(--violet), var(--pink));">JP</div>
+          <div><div class="attr-name">Prof. Julia P.</div><div class="attr-role">Research Methods Instructor (hypothetical)</div></div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:32px;" class="reveal-on-scroll">
+      <a href="#start" class="btn-primary" style="font-size:.9rem; padding:12px 32px;">Be one of the first to review PsyStat Lab &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- Comparison -->
+<section class="comparison" id="compare">
+  <div class="container">
+    <div class="section-head reveal-on-scroll">
+      <div class="overline">Why Switch</div>
+      <h2>Honestly, <span class="text-gradient">compare us</span></h2>
+      <p>We didn't build a clone. We built what should have existed all along.</p>
+    </div>
+    <div class="reveal-on-scroll" style="overflow-x:auto;">
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th>SPSS v31</th>
+            <th>R / jamovi</th>
+            <th>JASP 0.19</th>
+            <th class="ours">PsyStat Lab</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="feat-name">Mobile-native (phone &amp; tablet)</td>
+            <td class="no">&#10005; Desktop only</td>
+            <td class="no">&#10005; Desktop only</td>
+            <td class="no">&#10005; Desktop only</td>
+            <td class="ours yes">&#10003; Built for it</td>
+          </tr>
+          <tr>
+            <td class="feat-name">AI-powered test recommendation</td>
+            <td class="partial">Partial (watsonx interprets output)</td>
+            <td class="no">&#10005;</td>
+            <td class="no">&#10005;</td>
+            <td class="ours yes">&#10003; Recommends + routes</td>
+          </tr>
+          <tr>
+            <td class="feat-name">Automatic assumption checking</td>
+            <td class="partial">Opt-in per test</td>
+            <td class="partial">Opt-in checkboxes</td>
+            <td class="partial">Opt-in checkboxes</td>
+            <td class="ours yes">&#10003; Auto + dashboard</td>
+          </tr>
+          <tr>
+            <td class="feat-name">Bayesian analysis</td>
+            <td class="partial">Limited (few tests)</td>
+            <td class="partial">Packages (brms, etc.)</td>
+            <td class="yes">&#10003; Comprehensive</td>
+            <td class="ours yes">&#10003; + MCMC + PPC</td>
+          </tr>
+          <tr>
+            <td class="feat-name">Multiverse / specification curve</td>
+            <td class="no">&#10005;</td>
+            <td class="partial">Packages (specr)</td>
+            <td class="no">&#10005;</td>
+            <td class="ours yes">&#10003; Built-in GUI</td>
+          </tr>
+          <tr>
+            <td class="feat-name">APA 7th auto-formatting</td>
+            <td class="partial">Table styling only</td>
+            <td class="partial">Packages (papaja)</td>
+            <td class="yes">&#10003; Tables &amp; plots</td>
+            <td class="ours yes">&#10003; + inline text copy</td>
+          </tr>
+          <tr>
+            <td class="feat-name">SEM visual builder</td>
+            <td class="partial">AMOS (paid add-on)</td>
+            <td class="partial">jamovi SEMLj GUI</td>
+            <td class="yes">&#10003; Path editor</td>
+            <td class="ours yes">&#10003; Drag &amp; drop + lavaan export</td>
+          </tr>
+          <tr>
+            <td class="feat-name">Dual framework (freq + Bayes)</td>
+            <td class="no">&#10005; Separate menus</td>
+            <td class="no">&#10005;</td>
+            <td class="yes">&#10003; Core feature</td>
+            <td class="ours yes">&#10003; Side-by-side + agreement check</td>
+          </tr>
+          <tr>
+            <td class="feat-name">IRT + DIF + CAT simulation</td>
+            <td class="no">&#10005;</td>
+            <td class="partial">Packages (mirt, catR)</td>
+            <td class="no">&#10005;</td>
+            <td class="ours yes">&#10003; Full suite, no code</td>
+          </tr>
+          <tr>
+            <td class="feat-name">Causal inference (DAGs, IV, DR)</td>
+            <td class="no">&#10005;</td>
+            <td class="partial">Packages (dagitty, MatchIt)</td>
+            <td class="partial">Beta (Process module)</td>
+            <td class="ours yes">&#10003; Visual DAG + compute</td>
+          </tr>
+          <tr>
+            <td class="feat-name">Price</td>
+            <td class="no">~$99/mo subscription</td>
+            <td class="yes">Free (open source)</td>
+            <td class="yes">Free (open source)</td>
+            <td class="ours yes">Free / $9.99 / $24.99</td>
+          </tr>
+          <tr>
+            <td class="feat-name">Requires coding</td>
+            <td class="partial">GUI + optional syntax</td>
+            <td class="partial">jamovi: No / R: Yes</td>
+            <td class="yes">No</td>
+            <td class="ours yes">No</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px; font-size:.72rem; color:var(--text3); text-align:center;">
+        Comparison reflects <a href="https://www.ibm.com/products/spss-statistics" target="_blank" rel="noopener" style="color:var(--text3);text-decoration:underline;">SPSS v31</a> (June 2025),
+        <a href="https://jasp-stats.org/" target="_blank" rel="noopener" style="color:var(--text3);text-decoration:underline;">JASP 0.19.3</a> (Jan 2025),
+        <a href="https://www.jamovi.org/" target="_blank" rel="noopener" style="color:var(--text3);text-decoration:underline;">jamovi 2.x</a>,
+        and R 4.x ecosystem as of March 2026.
+        <span id="compare-last-reviewed"></span>
+        We aim to be fair &mdash; <a href="mailto:moonlit-social-labs@proton.me?subject=Comparison%20table%20correction" style="color:var(--text3);text-decoration:underline;">corrections welcome</a>.
+      </p>
+      <script>
+        // Auto-updates whenever the page is edited & deployed.
+        (function(){
+          var d = new Date(document.lastModified || Date.now());
+          var el = document.getElementById('compare-last-reviewed');
+          if (el) el.textContent = 'Last reviewed ' + d.toISOString().slice(0,10) + '. ';
+        })();
+      </script>
+    </div>
+  </div>
+</section>
+
+<!-- Pipeline -->
+<section>
+  <div class="container">
+    <div class="highlight reveal-on-scroll">
+      <div class="hl-text">
+        <div class="overline" style="color: var(--orange);">Reproducibility</div>
+        <h3>Build analysis pipelines, not one-off analyses</h3>
+        <p>Chain steps together into reproducible workflows. Clean &rarr; check assumptions &rarr; analyze &rarr; effect sizes &rarr; export. Save the pipeline, share it, run it on new data.</p>
+        <ul class="hl-bullets">
+          <li><span class="check">&#10003;</span> 14 pre-built analysis steps across 5 categories</li>
+          <li><span class="check">&#10003;</span> Templates: Basic Analysis, Regression Prep, ANOVA, Psychometric</li>
+          <li><span class="check">&#10003;</span> Export pipeline as JSON for reproducibility</li>
+          <li><span class="check">&#10003;</span> Pre-registration builder with OSF/AsPredicted export</li>
+        </ul>
+        <a href="/dashboard" class="hl-cta">Build a pipeline <span class="arrow">&rarr;</span></a>
+      </div>
+      <div class="hl-visual">
+        <div class="mock-label">Pipeline Builder &mdash; example workflow</div>
+        <div class="mock-pipeline">
+          <div class="mock-step" style="background:rgba(14,165,233,.12);color:#0EA5E9;">
+            <div class="step-num" style="background:#0EA5E9;color:#fff;">1</div> Import CSV
+          </div>
+          <span class="mock-arrow">&rarr;</span>
+          <div class="mock-step" style="background:rgba(16,185,129,.12);color:#10B981;">
+            <div class="step-num" style="background:#10B981;color:#fff;">2</div> Outliers (IQR)
+          </div>
+          <span class="mock-arrow">&rarr;</span>
+          <div class="mock-step" style="background:rgba(245,158,11,.12);color:#F59E0B;">
+            <div class="step-num" style="background:#F59E0B;color:#fff;">3</div> Normality
+          </div>
+          <span class="mock-arrow">&rarr;</span>
+          <div class="mock-step" style="background:rgba(99,102,241,.12);color:#6366F1;">
+            <div class="step-num" style="background:#6366F1;color:#fff;">4</div> ANOVA
+          </div>
+          <span class="mock-arrow">&rarr;</span>
+          <div class="mock-step" style="background:rgba(139,92,246,.12);color:#8B5CF6;">
+            <div class="step-num" style="background:#8B5CF6;color:#fff;">5</div> Effect Size
+          </div>
+          <span class="mock-arrow">&rarr;</span>
+          <div class="mock-step" style="background:rgba(236,72,153,.12);color:#EC4899;">
+            <div class="step-num" style="background:#EC4899;color:#fff;">6</div> APA Report
+          </div>
+        </div>
+        <div style="margin-top:20px;padding:12px;border-radius:8px;background:var(--elevated);font-size:.78rem;color:var(--text2);">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-weight:600;color:var(--text);">Pipeline: Pre/Post ANOVA</span>
+            <span style="color:var(--emerald);">&#9679; Ready</span>
+          </div>
+          6 steps &middot; Estimated runtime: &lt;3 seconds &middot; Fully reproducible
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Research Intelligence -->
+<section>
+  <div class="container">
+    <div class="section-head reveal-on-scroll">
+      <div class="overline">Research Intelligence</div>
+      <h2>Tools that <span class="text-gradient">challenge your analysis</span> before reviewers do</h2>
+      <p>Built-in rigor checks, convergence testing, and sensitivity analysis &mdash; so you publish with confidence.</p>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-card reveal-on-scroll" style="--card-accent: var(--rose);">
+        <span class="emoji">&#127919;</span>
+        <h3>Adversarial Reviewer</h3>
+        <p>A rule-based checklist that flags what a reviewer is likely to question &mdash; sensitivity, multiple testing, effect size, precision, p-values just under .05 &mdash; with a recommendation for each.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128300;</span>
+        <h3>Method Triangulation</h3>
+        <p>Runs three standard methods on the same data (e.g. t-test, Mann&ndash;Whitney and a Bayes factor) and shows whether they agree on direction and on whether there is an effect.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128679;</span>
+        <h3>Assumption Auto-Gate</h3>
+        <p>Checks key assumptions (normality, equal variances, sample size) before a test runs, flags what needs attention, and suggests a robust or non-parametric alternative. Independence still needs your judgement.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#127919;</span>
+        <h3>Interpretation Confidence</h3>
+        <p>Computes the positive predictive value (Ioannidis, 2005): the share of significant results that reflect true effects, given the prior plausibility of the hypothesis and power for an assumed true effect.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128269;</span>
+        <h3>What Would It Take</h3>
+        <p>Exact sample-size and sensitivity calculations: the N needed for 80% or 90% power, the smallest effect your sample can detect, and how far the result is from the significance threshold.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#9888;&#65039;</span>
+        <h3>Contradiction Detector</h3>
+        <p>Scans across all your analyses in a project and flags inconsistencies &mdash; contradictory effect directions, conflicting significance patterns, impossible correlations.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#8596;&#65039;</span>
+        <h3>Equivalence Testing (TOST)</h3>
+        <p>Show that an effect is smaller than the smallest effect you care about, rather than just &ldquo;not significant.&rdquo; Two one-sided tests against your equivalence bounds (Lakens, 2017).</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128200;</span>
+        <h3>Analytic Decision Sensitivity</h3>
+        <p>Re-runs your comparison under 36 combinations of outlier handling, transformation and test, and shows how often the conclusion holds and which decision matters most. A small multiverse analysis.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Research Lifecycle -->
+<section style="background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%);">
+  <div class="container">
+    <div class="section-head reveal-on-scroll">
+      <div class="overline">Research Lifecycle</div>
+      <h2>From <span class="text-gradient">hypothesis to publication</span> &mdash; every step covered</h2>
+      <p>11 tools that handle the tedious parts of the research process so you can focus on the science.</p>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128161;</span>
+        <h3>Research Question Refiner</h3>
+        <p>5-step wizard that takes you from a vague topic to a specific, testable hypothesis with defined variables, expected direction, and statistical framework.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128207;</span>
+        <h3>Measurement Guide</h3>
+        <p>50+ constructs, 150+ validated instruments with psychometric properties, scoring guides, and citation-ready references. Find the right scale in seconds.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128220;</span>
+        <h3>IRB/Ethics Generator</h3>
+        <p>AI-powered ethics application drafting. Answer prompts about your study and get a draft IRB protocol, consent form, and risk assessment. <em style="color:var(--text3);font-size:.85em;">Starting template only &mdash; requires review by your IRB and PI before submission.</em></p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128230;</span>
+        <h3>Replication Package</h3>
+        <p>One-click export: data + analysis code (R/Python) + narrative methods + codebook + variable dictionary. Everything a replicator needs in one ZIP.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128221;</span>
+        <h3>Narrative Builder</h3>
+        <p>Auto-generates APA-formatted method and results sections from your analysis pipeline. Copy directly into your manuscript.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128172;</span>
+        <h3>Reviewer Response Generator</h3>
+        <p>Paste reviewer comments, get AI-drafted point-by-point responses with re-analysis suggestions and manuscript edit locations. <em style="color:var(--text3);font-size:.85em;">Drafts only &mdash; every response requires the author's judgment before sending.</em></p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128187;</span>
+        <h3>Code Export</h3>
+        <p>Export R and Python scripts for 17 test types. Reproduce your exact analysis in any environment with fully commented, publication-ready code.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128278;</span>
+        <h3>Variable Tracker</h3>
+        <p>Cross-module variable usage tracking. See which variables are used in which analyses, detect orphans, and maintain a living data dictionary.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128240;</span>
+        <h3>Journal Formatting</h3>
+        <p>Compliance checkers for 10 journals (APA, APS, BMJ, JAMA, Nature, PLOS, etc.). Flags missing elements, wrong formats, and incomplete reporting.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Interactive Learning -->
+<section>
+  <div class="container">
+    <div class="section-head reveal-on-scroll">
+      <div class="overline">Interactive Learning</div>
+      <h2>Learn statistics by <span class="text-gradient">doing, not reading</span></h2>
+      <p>Simulations, plain-English explanations, and misconception detection built into every analysis.</p>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#127922;</span>
+        <h3>5 Interactive Simulations</h3>
+        <p>Central Limit Theorem, p-values, confidence intervals, statistical power, and correlation &mdash; manipulate parameters and watch distributions change in real time.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128118;</span>
+        <h3>ELI5 Mode</h3>
+        <p>Plain-English translations for every statistical test. Toggle between technical output and &ldquo;explain like I'm 5&rdquo; summaries on any result card.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128680;</span>
+        <h3>Misconception Detector</h3>
+        <p>Flags 20 common statistical errors in real time: &ldquo;p = .06 trends toward significance,&rdquo; confusing correlation with causation, misinterpreting confidence intervals, and more.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128202;</span>
+        <h3>Effect Size Benchmarking</h3>
+        <p>Contextualizes your effect size against published benchmarks from 15 fields. Is d = 0.4 large in clinical psychology? Small in education? Now you know.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#127916;</span>
+        <h3>Data Story Mode</h3>
+        <p>Presentation slideshow of your entire analysis pipeline. Each step becomes a slide with visuals, narration, and key findings &mdash; ready for lab meetings or conference talks.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128218;</span>
+        <h3>Statistical Glossary</h3>
+        <p>62 terms with definitions, formulas, examples, and cross-references. Tap any term in any result to see its glossary entry in context.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128214;</span>
+        <h3>27 Module Help Guides</h3>
+        <p>Every module has a help guide with plain-language and technical tabs. Learn why a method exists, when to use it, and how to interpret the output.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Data & UX -->
+<section style="background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%);">
+  <div class="container">
+    <div class="section-head reveal-on-scroll">
+      <div class="overline">Data &amp; UX</div>
+      <h2>A workspace that <span class="text-gradient">thinks with you</span></h2>
+      <p>Smart data editing, cross-module suggestions, and a full audit trail of every action.</p>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128451;</span>
+        <h3>Visual Spreadsheet Editor</h3>
+        <p>Cell editing, column types (numeric, categorical, ordinal), sort, filter, and formula support. Your data lives inside the app &mdash; no more CSV round-trips.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128073;</span>
+        <h3>Cross-Module Suggestions</h3>
+        <p>Contextual next-step recommendations after every analysis. &ldquo;Your ANOVA was significant &mdash; run post-hoc tests?&rdquo; One tap to continue.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128213;</span>
+        <h3>Analysis Journal</h3>
+        <p>Automatic audit trail of every action: data imports, transformations, tests run, results exported. Full provenance for reproducibility and transparency.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128718;</span>
+        <h3>Result Dependency Graph</h3>
+        <p>Visual map of how your analyses connect. See which results feed into which downstream analyses, identify bottlenecks, and trace any finding back to raw data.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128203;</span>
+        <h3>Tap to Copy</h3>
+        <p>Copy any result value with one tap. No selecting, no highlighting &mdash; just tap the number and it's on your clipboard.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#9889;</span>
+        <h3>Smart Caching</h3>
+        <p>30-minute LRU cache means repeated analyses return instantly. Change one parameter and only the delta recomputes.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128190;</span>
+        <h3>Auto-Save Drafts</h3>
+        <p>Every input field is auto-saved as you type. Navigate away and come back &mdash; your work is exactly where you left it.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#8634;</span>
+        <h3>Undo Clear</h3>
+        <p>Accidentally cleared your data? A 5-second recovery window lets you undo and restore everything instantly.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#9855;</span>
+        <h3>Accessibility Suite</h3>
+        <p>Colorblind-safe palettes (deuteranopia, protanopia, tritanopia), adjustable font scaling (0.8x&ndash;1.5x), high contrast mode, and full screen reader support.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128196;</span>
+        <h3>Data Templates</h3>
+        <p>8 pre-formatted CSV templates for common designs: 2-group, pre-post, factorial, survey, longitudinal, and more. Start analyzing in seconds.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128230;</span>
+        <h3>Bulk Export</h3>
+        <p>Select multiple analyses and export them together as CSV, JSON, or APA-formatted reports in one action.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128218;</span>
+        <h3>Citation Generator</h3>
+        <p>Generate citations for your PsyStat analyses in APA 7th, BibTeX, Chicago, and Vancouver formats. Copy or export directly.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#127891;</span>
+        <h3>ORCID Integration</h3>
+        <p>Link your ORCID academic profile so exported reports and replication packages include your researcher identity automatically.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128253;</span>
+        <h3>Slides Export</h3>
+        <p>Turn your analysis pipeline into a presentation-ready slide deck. Charts, tables, and interpretations formatted for PowerPoint.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#128208;</span>
+        <h3>Comparison View</h3>
+        <p>Place two analysis results side by side to spot differences, compare conditions, or evaluate model variants at a glance.</p>
+      </div>
+      <div class="pain-card reveal-on-scroll">
+        <span class="emoji">&#127991;</span>
+        <h3>Analysis Tags</h3>
+        <p>Label and organize your analyses with custom tags. Filter your history by tag to find exactly what you need.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<!-- Beta: the real plans are shown but can't be bought yet (the server refuses checkout too).
+     When plans go on sale, remove .is-coming-soon from a card and update the banner. -->
+<style>
+  .pricing-banner { display:flex; gap:10px; align-items:center; justify-content:center; text-align:center; margin:0 auto 28px; max-width:720px; padding:14px 18px; border-radius:12px; border:1px solid rgba(91,33,182,.45); background:rgba(76,29,149,.12); font-weight:600; }
+  .pain-card.is-coming-soon { opacity:.55; filter:grayscale(.35); position:relative; }
+  .soon-pill { display:inline-block; background:var(--text3); color:#fff; font-size:.65rem; font-weight:700; letter-spacing:.06em; padding:2px 8px; border-radius:99px; margin-left:6px; vertical-align:middle; text-transform:uppercase; }
+  .soon-btn { display:block; width:100%; margin-top:20px; padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text3); font-weight:600; cursor:not-allowed; }
+  .beta-form-wrap { max-width:640px; margin:40px auto 0; padding:28px; border-radius:16px; border:1px solid rgba(91,33,182,.45); background:linear-gradient(135deg, rgba(76,29,149,.10), rgba(99,102,241,.05)); }
+  .beta-form-wrap h3 { margin:0 0 6px; font-size:1.35rem; }
+  .beta-form-wrap p { color:var(--text2); margin:0 0 18px; font-size:.92rem; }
+  .beta-form { display:grid; gap:10px; }
+  .beta-form input, .beta-form textarea { width:100%; padding:11px 13px; border-radius:10px; border:1px solid var(--border); background:var(--bg2, rgba(255,255,255,.03)); color:var(--text); font:inherit; font-size:.92rem; box-sizing:border-box; }
+  .beta-form textarea { min-height:72px; resize:vertical; }
+  .beta-form button { padding:12px 16px; border-radius:10px; border:0; background:#5B21B6; color:#fff; font-weight:700; font-size:.95rem; cursor:pointer; }
+  .beta-form button[disabled] { opacity:.6; cursor:wait; }
+  .beta-form .hp { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+  .beta-form-msg { font-size:.88rem; margin-top:4px; }
+  .kofi-line { text-align:center; margin-top:18px; font-size:.9rem; color:var(--text2); }
+  .kofi-line a { color:#FF5E5B; font-weight:600; }
+  #pricing .hl-bullets { list-style:none; padding-left:0; margin:0; display:flex; flex-direction:column; }
+  #pricing .hl-bullets li { display:flex; gap:8px; align-items:flex-start; font-size:.9rem; color:var(--text2); }
+  #pricing .hl-bullets li .check { color:var(--emerald, #10B981); font-weight:700; flex-shrink:0; }
+</style>
+<section id="pricing">
+  <div class="container">
+    <div class="section-head reveal-on-scroll">
+      <div class="overline">Pricing</div>
+      <h2>Research-grade tools at <span class="text-gradient">student-friendly prices</span></h2>
+      <p>No ads on any tier &mdash; your participants&rsquo; data never shares a page with trackers. The statistics are free; the AI features are for beta testers now and for subscribers at launch.</p>
+    </div>
+    <div class="pricing-banner reveal-on-scroll" role="status">
+      <span aria-hidden="true">&#9878;&#65039;</span>
+      <span>Coming soon. Now in closed beta. Sign up for open beta access below.</span>
+    </div>
+    <div class="pain-grid reveal-on-scroll" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+      <div class="pain-card" style="border-color: var(--border);">
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;">Free</div>
+        <div style="font-size:2.4rem;font-weight:800;margin-bottom:4px;">$0</div>
+        <div style="font-size:.85rem;color:var(--text2);margin-bottom:24px;">Forever free</div>
+        <ul class="hl-bullets" style="gap:8px;">
+          <li><span class="check">&#10003;</span> Every statistical module and method</li>
+          <li><span class="check">&#10003;</span> 5 saved analyses</li>
+          <li><span class="check">&#10003;</span> No ads, ever</li>
+          <li><span class="check" style="opacity:.4;">&ndash;</span> AI features: beta testers and subscribers</li>
+        </ul>
+      </div>
+      <div class="pain-card is-coming-soon" style="border-color: var(--primary);" aria-label="Researcher plan, coming soon">
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);margin-bottom:12px;">Researcher <span class="soon-pill">Coming soon</span></div>
+        <div style="font-size:2.4rem;font-weight:800;margin-bottom:4px;">$9.99<span style="font-size:1rem;font-weight:500;color:var(--text2);">/mo</span></div>
+        <div style="font-size:.85rem;color:var(--text2);margin-bottom:4px;">For active researchers</div>
+        <div style="font-size:.8rem;color:var(--text2);margin-bottom:24px;">or $99.99/yr <span style="display:inline-block;background:#10B981;color:#fff;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:4px;">Save 17%</span></div>
+        <ul class="hl-bullets" style="gap:8px;">
+          <li><span class="check">&#10003;</span> Everything in Free</li>
+          <li><span class="check">&#10003;</span> AI assistant: 400 credits / month (about 130 typical messages)<sup style="font-size:.7em;">&dagger;</sup></li>
+          <li><span class="check">&#10003;</span> Unlimited saved analyses</li>
+        </ul>
+        <button class="soon-btn" disabled aria-disabled="true">Coming soon</button>
+      </div>
+      <div class="pain-card is-coming-soon" style="border-color: var(--amber);" aria-label="Scholar plan, coming soon">
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:12px;">Scholar <span class="soon-pill">Coming soon</span></div>
+        <div style="font-size:2.4rem;font-weight:800;margin-bottom:4px;">$24.99<span style="font-size:1rem;font-weight:500;color:var(--text2);">/mo</span></div>
+        <div style="font-size:.85rem;color:var(--text2);margin-bottom:4px;">For power users &amp; labs</div>
+        <div style="font-size:.8rem;color:var(--text2);margin-bottom:24px;">or $249.99/yr <span style="display:inline-block;background:#10B981;color:#fff;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:4px;">Save 17%</span></div>
+        <ul class="hl-bullets" style="gap:8px;">
+          <li><span class="check">&#10003;</span> Everything in Researcher</li>
+          <li><span class="check">&#10003;</span> AI assistant: 1,000 credits / month, advanced model included<sup style="font-size:.7em;">&dagger;</sup></li>
+          <li><span class="check">&#10003;</span> Priority support</li>
+        </ul>
+        <button class="soon-btn" disabled aria-disabled="true">Coming soon</button>
+      </div>
+      <div class="pain-card" style="border-color: rgba(16,185,129,.5); background: linear-gradient(135deg, rgba(16,185,129,.04), rgba(6,182,212,.03));">
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#10B981;margin-bottom:12px;">Classroom &amp; Lab</div>
+        <div style="font-size:1.4rem;font-weight:800;margin-bottom:4px;line-height:1.15;">Institutional pricing</div>
+        <div style="font-size:.85rem;color:var(--text2);margin-bottom:4px;">Instructor + N student seats</div>
+        <div style="font-size:.8rem;color:var(--text2);margin-bottom:24px;">Priced to displace SPSS site licenses. <a href="educators.html" style="color:#10B981;">See educators page &rarr;</a></div>
+        <ul class="hl-bullets" style="gap:8px;">
+          <li><span class="check">&#10003;</span> Everything in Researcher for every student</li>
+          <li><span class="check">&#10003;</span> Instructor dashboard + shared datasets</li>
+          <li><span class="check">&#10003;</span> Assignment templates + grading view</li>
+          <li><span class="check">&#10003;</span> Pilot programs free for first 20 methods courses</li>
+        </ul>
+      </div>
+    </div>
+    <p style="font-size:.75rem;color:var(--text3);margin-top:16px;text-align:center;">
+      &dagger; 1 credit = $0.01 of AI usage, metered per request; a typical message with the standard model uses about 3 credits. Unused allowance resets monthly; prepaid credit packs top it up. Standard model: currently Anthropic Claude Sonnet 5.5. Advanced model: currently Claude Opus 5.5. Current model versions are listed on the <a href="about.html#models" style="color:var(--text2);">About page</a>.
+    </p>
+
+    <div class="beta-form-wrap reveal-on-scroll" id="beta">
+      <h3>Get beta access</h3>
+      <p>Beta testers use the AI features free, with a monthly credit allowance, and can top up with credit packs. No card needed to join. We'll email you a beta code when a spot opens.</p>
+      <form class="beta-form" id="betaForm" action="https://formspree.io/f/mlgojadk" method="POST">
+        <input type="hidden" name="_subject" value="Beta Access — PsyStat Lab">
+        <input type="hidden" name="app" value="psystat">
+        <input type="hidden" name="form" value="beta_access">
+        <input type="hidden" name="source" value="landing">
+        <label class="hp" aria-hidden="true">Leave this empty <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"></label>
+        <input type="email" name="email" placeholder="Email" required autocomplete="email" aria-label="Email">
+        <input type="text" name="name" placeholder="Name (optional)" autocomplete="name" aria-label="Name">
+        <textarea name="message" placeholder="What would you use PsyStat Lab for? (optional)" aria-label="What would you use PsyStat Lab for"></textarea>
+        <button type="submit">Request beta access</button>
+        <div class="beta-form-msg" id="betaFormMsg" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+    <p class="kofi-line">Want to support the project? <a href="https://ko-fi.com/moonlitsociallabs" target="_blank" rel="noopener">Buy us a coffee on Ko-fi</a>.</p>
+  </div>
+</section>
+<script>
+  (function () {
+    var form = document.getElementById('betaForm');
+    if (!form || !window.fetch) return;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var btn = form.querySelector('button[type=submit]');
+      var msg = document.getElementById('betaFormMsg');
+      btn.disabled = true; msg.textContent = '';
+      fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } })
+        .then(function (r) {
+          if (!r.ok) throw new Error();
+          form.reset();
+          msg.style.color = '#10B981';
+          msg.textContent = "Thanks! We'll email you a beta code when a spot opens.";
+        })
+        .catch(function () {
+          msg.style.color = '#EF4444';
+          msg.textContent = 'Something went wrong. Please try again.';
+        })
+        .finally(function () { btn.disabled = false; });
+    });
+  })();
+</script>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="container">
+    <div class="section-head reveal-on-scroll">
+      <div class="overline">FAQ</div>
+      <h2>Questions you're probably asking</h2>
+    </div>
+    <div class="faq-list reveal-on-scroll">
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false" onclick="toggleFaq(this)">
+          Is this accurate enough for publication?
+          <span class="arrow">&#9660;</span>
+        </button>
+        <div class="faq-a">All computations use scipy, statsmodels, lifelines, and networkx &mdash; the same libraries behind published research in Nature, PNAS, and Psychological Methods. Every test returns the same numbers as R, SPSS, or Stata. Effect sizes include confidence intervals. APA formatting follows the 7th edition manual exactly.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false" onclick="toggleFaq(this)">
+          Do I need to know how to code?
+          <span class="arrow">&#9660;</span>
+        </button>
+        <div class="faq-a">No. Every analysis is point-and-click (or tap). The AI assistant can guide you through any workflow in plain English. However, if you do use R, the SEM builder exports lavaan syntax, and all results are available as JSON/CSV for further processing.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false" onclick="toggleFaq(this)">
+          What about my data privacy?
+          <span class="arrow">&#9660;</span>
+        </button>
+        <div class="faq-a">Straight talk: raw CSVs and spreadsheets you upload are parsed on your device and are not sent to us. When you run an analysis, the numeric columns you&rsquo;re testing are transmitted over TLS to our compute backend (Railway), the statistics run, and results come back &mdash; the compute service retains nothing after the request completes. Saved analyses are stored in your account (Supabase, row-level security, encrypted at rest by the provider) as inputs, results, and notes &mdash; never raw participant rows. The AI assistant is a separate channel: it receives truncated analysis summaries (test type, variable names, result numbers, capped at ~8&#8239;KB) plus messages you type &mdash; never raw rows &mdash; and is served by Anthropic. Subprocessors in use: Supabase (auth + storage), Railway (compute), Anthropic (AI), Vercel (web hosting), Stripe and RevenueCat (billing), Google Analytics (web page views only). We never sell your data and never use it to train models. See the <a href="privacy.html">Privacy Policy</a> for the full data-handling paragraph you can paste into an IRB protocol.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false" onclick="toggleFaq(this)">
+          Can I use this for grant applications and IRB proposals?
+          <span class="arrow">&#9660;</span>
+        </button>
+        <div class="faq-a">Absolutely. The power analysis module covers 8+ designs, the pre-registration builder exports OSF and AsPredicted formats, and the study planner provides field-specific effect size benchmarks. Everything you need for a methods section is generated automatically.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false" onclick="toggleFaq(this)">
+          What statistical methods are included?
+          <span class="arrow">&#9660;</span>
+        </button>
+        <div class="faq-a">240+ methods spanning: t-tests, ANOVA (one-way, factorial, mixed, repeated measures, MANOVA), regression (linear, logistic, multiple, HLM), SEM/CFA/path analysis, IRT (1PL through GRM), Bayesian analysis (Bayes factors, MCMC, model comparison), meta-analysis, causal inference (DAGs, IV, g-computation, doubly robust), time series (ARIMA, VAR, interrupted), machine learning, text analysis, network analysis, survival analysis, and more. If it's in a graduate stats textbook, it's probably here.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" aria-expanded="false" onclick="toggleFaq(this)">
+          How does this compare to JASP?
+          <span class="arrow">&#9660;</span>
+        </button>
+        <div class="faq-a">JASP is excellent &mdash; it has strong Bayesian analysis, a visual SEM path editor, and native dual-framework reporting. We respect it. Where PsyStat Lab goes further: mobile-native (JASP is desktop-only), AI-powered test recommendation, automatic assumption dashboards, multiverse/specification curve analysis, IRT with DIF and CAT simulation, full causal inference (DAGs, IV, doubly robust &mdash; not just the Process module), pipeline builder, data simulator, and 24 specialized modules spanning domains JASP doesn't cover (criminology, genomics, NLP, machine learning, biometrics). Think of it as JASP's breadth plus R's depth, in your pocket, with no code.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="final-cta" id="start">
+  <h2>Stop switching tabs.<br><span class="text-gradient">Start publishing.</span></h2>
+  <p>Built to replace five tools with one. Your first analysis takes less than 60 seconds.</p>
+  <a href="/dashboard" class="btn-primary">Get PsyStat Lab Free</a>
+  <div class="subtext">No credit card. No installation. Works on iOS, Android, and web.</div>
+</section>
+
+
+<!-- Sticky mobile mini-nav -->
+<nav class="mobile-nav" aria-label="Section navigation">
+  <a href="#features">Features</a>
+  <a href="#compare">Compare</a>
+  <a href="#pricing">Pricing</a>
+  <a href="#faq">FAQ</a>
+  <a href="/dashboard" class="primary">Go to App</a>
+</nav>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <p>&copy; 2026 Moonlit Social Labs. Built for the researchers the software industry forgot.</p>
+    <div class="foot-links">
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="features.html">Features</a>
+      <a href="encyclopedia.html">Encyclopedia</a>
+      <a href="validation.html">Validation</a>
+      <a href="educators.html">For Educators</a>
+      <a href="about.html">About</a>
+      <a href="blog/">Blog</a>
+      <a href="https://github.com/Moonligh7er/psystat-lab-open">GitHub</a>
+      <a href="https://ko-fi.com/moonlitsociallabs" target="_blank" rel="noopener" style="background:#FF5E5B;color:#fff;padding:4px 14px;border-radius:6px;font-weight:600;text-decoration:none">☕ Support Us</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── Module grid ─────────────────────────────────────────────────
+const MODULES = [
+  { cat: 'Core Statistics', items: [
+    { name: 'Stats Studio', sub: 'T-tests, ANOVA, regression, power', icon: '\u{1F4CA}', color: '#3B82F6' },
+    { name: 'Psychometrics', sub: 'Cronbach\'s \u03B1, factor analysis, IRT', icon: '\u{1F4CF}', color: '#8B5CF6' },
+    { name: 'Bayesian Lab', sub: 'Bayes factors, MCMC, posteriors', icon: '\u{1F52C}', color: '#06B6D4' },
+    { name: 'Meta-Analysis', sub: 'Effect pooling, forest plots, bias', icon: '\u{1F4DA}', color: '#D946EF' },
+    { name: 'Causal Inference', sub: 'DAGs, IV, g-computation', icon: '\u{1F517}', color: '#FB923C' },
+    { name: 'Multiverse', sub: 'Specification curves, robustness', icon: '\u{1F30D}', color: '#E11D48' },
+    { name: 'Dual Report', sub: 'Frequentist + Bayesian side-by-side', icon: '\u2194\uFE0F', color: '#0D9488' },
+    { name: 'Effect Sizes', sub: 'Calculator, converter, interpreter', icon: '\u{1F4D0}', color: '#2DD4BF' },
+  ]},
+  { cat: 'Specialized Domains', items: [
+    { name: 'Genomics', sub: 'SNP, HWE, polygenic risk', icon: '\u{1F9EC}', color: '#10B981' },
+    { name: 'Criminology', sub: 'Geographic profiling, recidivism', icon: '\u{1F5FA}\uFE0F', color: '#EF4444' },
+    { name: 'Social Graph', sub: 'Network metrics, diffusion', icon: '\u{1F465}', color: '#EC4899' },
+    { name: 'Medical Stats', sub: 'NNT, ROC, survival, Bland-Altman', icon: '\u{1FA7A}', color: '#14B8A6' },
+    { name: 'Time Series', sub: 'ARIMA, VAR, changepoints', icon: '\u{1F4C8}', color: '#F43F5E' },
+    { name: 'Text Analysis', sub: 'Sentiment, topics, LIWC, readability', icon: '\u{1F4DD}', color: '#A3E635' },
+    { name: 'Machine Learning', sub: 'Classification, clustering, PCA', icon: '\u{1F916}', color: '#38BDF8' },
+  ]},
+  { cat: 'Data Collection', items: [
+    { name: 'BioMetrics', sub: 'HRV, EDA, accelerometer', icon: '\u{1F493}', color: '#F59E0B' },
+    { name: 'Cognitive Lab', sub: 'Score Stroop, N-Back, Flanker, Go/No-Go data', icon: '\u{1F4A1}', color: '#F97316' },
+    { name: 'Ethnography', sub: 'Field notes, codebook, consensus', icon: '\u{1F4D3}', color: '#84CC16' },
+  ]},
+  { cat: 'Tools & Learning', items: [
+    { name: 'Data Prep', sub: 'Outliers, normality, MICE', icon: '\u{1F9F9}', color: '#0EA5E9' },
+    { name: 'Study Planner', sub: 'Power analysis, sample size', icon: '\u{1F4CB}', color: '#6366F1' },
+    { name: 'Curriculum', sub: '6 interactive courses', icon: '\u{1F393}', color: '#8B5CF6' },
+    { name: 'Pipeline Builder', sub: 'Reproducible workflows', icon: '\u{1F504}', color: '#7C3AED' },
+    { name: 'Data Simulator', sub: 'Synthetic data, Monte Carlo', icon: '\u{1F3B2}', color: '#EA580C' },
+    { name: 'Pre-Registration', sub: 'OSF / AsPredicted templates', icon: '\u{1F6E1}\uFE0F', color: '#4F46E5' },
+  ]},
+  { cat: 'Research Intelligence', items: [
+    { name: 'Adversarial Reviewer', sub: 'AI rigor grading A\u2013F', icon: '\u{1F3AF}', color: '#E11D48' },
+    { name: 'Method Triangulation', sub: '3 methods, check convergence', icon: '\u{1F52C}', color: '#7C3AED' },
+    { name: 'Assumption Auto-Gate', sub: 'Pre-analysis checks', icon: '\u{1F6A7}', color: '#F59E0B' },
+    { name: 'Contradiction Detector', sub: 'Cross-analysis consistency', icon: '\u26A0\uFE0F', color: '#EF4444' },
+    { name: 'Equivalence Testing', sub: 'TOST, equivalence bounds', icon: '\u2194\uFE0F', color: '#0D9488' },
+  ]},
+  { cat: 'Research Lifecycle', items: [
+    { name: 'Question Refiner', sub: '5-step hypothesis wizard', icon: '\u{1F4A1}', color: '#8B5CF6' },
+    { name: 'Measurement Guide', sub: '150+ validated instruments', icon: '\u{1F4CF}', color: '#06B6D4' },
+    { name: 'IRB/Ethics Generator', sub: 'AI-powered ethics drafts', icon: '\u{1F4DC}', color: '#10B981' },
+    { name: 'Narrative Builder', sub: 'Auto APA method/results', icon: '\u{1F4DD}', color: '#3B82F6' },
+    { name: 'Code Export', sub: 'R & Python for 17 tests', icon: '\u{1F4BB}', color: '#FB923C' },
+  ]},
+];
+
+const grid = document.getElementById('module-grid');
+MODULES.forEach(cat => {
+  const row = document.createElement('div');
+  row.className = 'cat-row';
+  row.innerHTML = `<div class="cat-label">${cat.cat}</div><div class="cat-grid">${
+    cat.items.map(m => `
+      <div class="mod-card" style="--icon-color:${m.color}">
+        <div class="mod-icon" style="background:${m.color}20">${m.icon}</div>
+        <div>
+          <div class="mod-name">${m.name}</div>
+          <div class="mod-sub">${m.sub}</div>
+        </div>
+      </div>
+    `).join('')
+  }</div>`;
+  grid.appendChild(row);
+});
+
+// ── Ticker ───────────────────────────────────────────────────────
+const TICKS = [
+  'T-Tests', 'ANOVA', 'Regression', 'SEM', 'CFA', 'IRT', 'MCMC', 'Bayes Factors',
+  'Meta-Analysis', 'Forest Plots', 'Funnel Plots', 'Power Analysis', 'Effect Sizes',
+  'Multiverse', 'Propensity Score', 'Kaplan-Meier', 'Cox Regression', 'HLM',
+  'ARIMA', 'DAG Analysis', 'ROC Curves', 'Bland-Altman', 'Geographic Profiling',
+  'Network Centrality', 'Sentiment Analysis', 'Topic Modeling', 'Machine Learning',
+  'Bootstrap CI', 'Permutation Tests', 'MICE Imputation', 'Cronbach\'s Alpha',
+  'Measurement Invariance', 'Latent Growth Curves',
+  'Adversarial Reviewer', 'Method Triangulation', 'Equivalence Testing',
+  'IRB Generator', 'Narrative Builder', 'Code Export (R/Python)',
+  'ELI5 Mode', 'CLT Simulation', 'Effect Size Benchmarks',
+  'Variable Tracker', 'Journal Formatting', 'Replication Package',
+];
+const tickerEl = document.getElementById('ticker');
+const tickerHTML = TICKS.map(t => `<div class="tick-item"><span class="dot"></span>${t}</div>`).join('');
+tickerEl.innerHTML = tickerHTML + tickerHTML; // duplicate for seamless loop
+
+// ── FAQ toggle ──────────────────────────────────────────────────
+function toggleFaq(btn) {
+  const answer = btn.nextElementSibling;
+  const open = answer.classList.contains('open');
+  // close all
+  document.querySelectorAll('.faq-a').forEach(a => a.classList.remove('open'));
+  document.querySelectorAll('.faq-q').forEach(q => q.setAttribute('aria-expanded', 'false'));
+  if (!open) {
+    answer.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+  }
+}
+
+// ── Scroll reveal ───────────────────────────────────────────────
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('revealed');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+
+// Cookie consent
+(function(){
+  if(localStorage.getItem('psystat_cookie_consent'))return;
+  var s=document.createElement('style');
+  s.textContent='#cookie-consent{position:fixed;bottom:0;left:0;right:0;background:#1E293B;color:#CBD5E1;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:99999;font-family:system-ui,sans-serif;font-size:14px;border-top:1px solid #334155;flex-wrap:wrap}#cookie-consent a{color:#818CF8;text-decoration:underline}#cookie-consent button{padding:8px 20px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:14px}#cookie-accept{background:#6366F1;color:#fff}#cookie-reject{background:transparent;color:#94A3B8;border:1px solid #475569}';
+  document.head.appendChild(s);
+  var d=document.createElement('div');d.id='cookie-consent';
+  d.innerHTML='<span>We use cookies for analytics. See our <a href="privacy.html">Privacy Policy</a>.</span><div style="display:flex;gap:8px"><button id="cookie-reject" onclick="this.closest(\'#cookie-consent\').remove();localStorage.setItem(\'psystat_cookie_consent\',\'rejected\')">Reject</button><button id="cookie-accept" onclick="this.closest(\'#cookie-consent\').remove();localStorage.setItem(\'psystat_cookie_consent\',\'accepted\')">Accept</button></div>';
+  document.body.appendChild(d);
+})();
+</script>
+</body>
+</html>

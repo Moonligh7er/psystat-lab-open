@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<meta name="google-site-verification" content="IWGVEm2c0aIEJAr9l31qjz3YzIDiqVe8VdwF1FATmTw" />
+<title>Frequentist vs Bayesian (formerly Dialectical Inference): Do Your p-Value and Bayes Factor Agree? — PsyStat Lab Blog</title>
+<meta name="description" content="Frequentist vs Bayesian runs a classical test and a default Bayes factor on the same data and classifies whether they agree. Exact JZS Bayes factor for t-tests (Rouder et al., 2009) and the Ly et al. (2016) Bayes factor for correlations.">
+<meta name="keywords" content="frequentist vs bayesian, Bayes factor, JZS prior, p-value, t-test, correlation, prior sensitivity, JASP, PsyStat Lab">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://psystat-lab.dev/blog/dialectical-inference.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Frequentist vs Bayesian (formerly Dialectical Inference): Do Your p-Value and Bayes Factor Agree?">
+<meta property="og:description" content="Run a p-value and a default Bayes factor on the same data, and see whether they tell the same story.">
+<meta property="og:url" content="https://psystat-lab.dev/blog/dialectical-inference.html">
+<meta property="og:image" content="https://psystat-lab.dev/og-image.png">
+<meta property="article:published_time" content="2026-04-03">
+<meta property="article:author" content="Moonlit Social Labs">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Frequentist vs Bayesian (formerly Dialectical Inference): Do Your p-Value and Bayes Factor Agree?",
+  "description": "Run a p-value and a default Bayes factor on the same data, and see whether they tell the same story.",
+  "author": { "@type": "Organization", "name": "Moonlit Social Labs" },
+  "publisher": { "@type": "Organization", "name": "PsyStat Lab" },
+  "datePublished": "2026-04-03",
+  "url": "https://psystat-lab.dev/blog/dialectical-inference.html"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://psystat-lab.dev/"},
+    {"@type": "ListItem", "position": 2, "name": "Blog", "item": "https://psystat-lab.dev/blog/"},
+    {"@type": "ListItem", "position": 3, "name": "Frequentist vs Bayesian", "item": "https://psystat-lab.dev/blog/dialectical-inference.html"}
+  ]
+}
+</script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --bg:#0B0F1A; --surface:#131926; --elevated:#1A2236; --border:#1E293B; --text:#F1F5F9; --text2:#94A3B8; --text3:#64748B; --primary:#6366F1; --cyan:#06B6D4; --accent:#DC2626; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; -webkit-font-smoothing: antialiased; }
+  a { color: var(--cyan); text-decoration: none; } a:hover { text-decoration: underline; }
+  ::selection { background: var(--primary); color: #fff; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 0; background: rgba(11,15,26,.85); backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,.04); }
+  nav .inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+  nav .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; }
+  nav .logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #6366F1, #06B6D4); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; font-weight: 800; }
+  nav .links { display: flex; align-items: center; gap: 24px; font-size: .9rem; }
+  nav .links a { color: var(--text2); } nav .links a:hover { color: var(--text); text-decoration: none; }
+  nav .cta-sm { background: var(--primary); color: #fff !important; padding: 6px 16px; border-radius: 8px; font-weight: 600; }
+  article { max-width: 740px; margin: 0 auto; padding: 120px 24px 60px; }
+  .tag { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 10px; border-radius: 100px; background: rgba(220,38,38,.15); color: var(--accent); margin-bottom: 16px; }
+  h1 { font-size: 2rem; font-weight: 800; line-height: 1.25; margin-bottom: 16px; }
+  .meta { color: var(--text3); font-size: .85rem; margin-bottom: 32px; }
+  h2 { font-size: 1.4rem; font-weight: 700; margin: 36px 0 12px; color: var(--text); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 28px 0 8px; color: #818CF8; }
+  p { color: var(--text2); margin-bottom: 16px; font-size: 1.02rem; }
+  ul, ol { color: var(--text2); margin: 0 0 16px 24px; font-size: 1.02rem; }
+  li { margin-bottom: 6px; }
+  blockquote { border-left: 3px solid var(--accent); padding: 12px 20px; margin: 20px 0; background: var(--surface); border-radius: 0 8px 8px 0; }
+  blockquote p { margin: 0; color: var(--text); font-style: italic; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: .88rem; background: var(--elevated); padding: 2px 6px; border-radius: 4px; color: #818CF8; }
+  .callout { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 24px 0; }
+  .callout-title { font-weight: 700; font-size: .9rem; color: var(--accent); margin-bottom: 8px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; color: var(--text3); font-size: .9rem; margin-bottom: 24px; }
+  .back:hover { color: var(--text); text-decoration: none; }
+  footer { border-top: 1px solid var(--border); padding: 32px 24px; text-align: center; color: var(--text3); font-size: .85rem; }
+  footer a { color: var(--text3); margin: 0 12px; } footer a:hover { color: var(--text); }
+  @media (max-width: 640px) { article { padding: 100px 16px 40px; } h1 { font-size: 1.5rem; } nav .links { display: none; } }
+</style>
+</head>
+<body>
+
+<nav><div class="inner">
+  <a href="../landing.html" class="logo" style="text-decoration:none;color:var(--text)"><div class="logo-icon">&Psi;</div><span>PsyStat <span style="background:linear-gradient(135deg,#818CF8,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Lab</span></span><span style="display:inline-block;background:#7C3AED;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;text-transform:uppercase">BETA</span></a>
+  <div class="links"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../about.html">About</a><a href="../landing.html#start" class="cta-sm">Get Started</a></div>
+</div></nav>
+
+<article>
+  <nav aria-label="Breadcrumb" style="font-size:.85rem;color:var(--text3);margin-bottom:16px">
+    <a href="../landing.html" style="color:var(--text3)">Home</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <a href="./" style="color:var(--text3)">Blog</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <span style="color:var(--text2)">Frequentist vs Bayesian</span>
+  </nav>
+  <a href="./" class="back">&larr; All posts</a>
+  <div class="tag">Robustness Check</div>
+  <h1>Frequentist vs Bayesian (formerly Dialectical Inference): Do Your p-Value and Bayes Factor Agree?</h1>
+  <div class="meta">By Moonlit Social Labs &middot; April 3, 2026 &middot; 9 min read</div>
+
+  <p>A p-value and a Bayes factor answer different questions. The p-value asks how surprising the data would be if there were no effect. The Bayes factor asks how much more likely the data are under one hypothesis than another. Usually they point the same way. Sometimes they don't, especially with large samples and small effects, or small samples and moderate p-values.</p>
+
+  <p>Frequentist vs Bayesian runs both on the same data and tells you whether they agree. This is not a new idea. Wetzels and colleagues (2011) did exactly this for 855 published t-tests, and JASP reports both kinds of test side by side.</p>
+
+  <h2>What It Computes</h2>
+
+  <h3>t-tests (Student two-sample, paired, one-sample)</h3>
+  <ul>
+    <li>The classical t-test and its p-value.</li>
+    <li>The exact JZS Bayes factor (Rouder et al., 2009), with a Cauchy prior on the standardised effect &delta; (scale r = 0.707), computed by numerical integration.</li>
+    <li>A posterior distribution for &delta;.</li>
+    <li>Cohen's <em>d</em> with an exact confidence interval based on the noncentral t distribution.</li>
+  </ul>
+
+  <h3>Correlations</h3>
+  <ul>
+    <li>The classical test of Pearson's <em>r</em>, with a Fisher-z confidence interval.</li>
+    <li>The Bayes factor of Ly, Verhagen and Wagenmakers (2016), with a stretched-beta prior on &rho; (&kappa; = 1, which is uniform).</li>
+    <li>A posterior distribution for &rho;.</li>
+  </ul>
+
+  <h2>How Agreement Is Classified</h2>
+  <ul>
+    <li><strong>Full agreement:</strong> p &lt; &alpha; and BF<sub>10</sub> &gt; 3 (both favour an effect), or p &ge; &alpha; and BF<sub>10</sub> &lt; 1/3 (the test is not significant and the Bayes factor favours the null).</li>
+    <li><strong>Disagreement:</strong> the two point in opposite directions, for example p &lt; &alpha; but BF<sub>10</sub> &lt; 1/3.</li>
+    <li><strong>Partial agreement:</strong> anything else, most often a Bayes factor between 1/3 and 3, which means the data are not very informative either way.</li>
+  </ul>
+
+  <h3>Prior sensitivity</h3>
+  <p>A Bayes factor depends on its prior. The tool repeats the calculation for prior scales from r = 0.354 to 1.414 (&kappa; = 0.25 to 2 for correlations), so you can see whether the conclusion changes with a narrower or wider prior.</p>
+
+  <div class="callout">
+    <div class="callout-title">What this can't tell you</div>
+    <p>The cut-offs (&alpha; = .05, BF of 3 and 1/3) are conventions, not laws. Agreement between the two frameworks is reassuring, but both are computed from the same data, so agreement is not independent confirmation. Disagreement is not a flaw to be resolved; it usually means the evidence is weaker than the p-value alone suggests, or that the prior matters. The tool reports both results so you can describe them honestly. It does not merge them into a single verdict.</p>
+  </div>
+
+  <h2>When Should You Use It?</h2>
+  <ul>
+    <li>You report p-values and want to show what a default Bayes factor says about the same data.</li>
+    <li>You have a non-significant result and want to know whether the data actually favour the null or are simply uninformative.</li>
+    <li>You have a significant result from a large sample and want to check whether the evidence is strong or just detectable.</li>
+  </ul>
+
+  <h2>Try It in PsyStat Lab</h2>
+
+  <p>Frequentist vs Bayesian is available in the <strong>Robustness Checks</strong> module of PsyStat Lab, and inside the Dual Report module.</p>
+
+  <h2>References</h2>
+  <ul>
+    <li>Ly, A., Verhagen, J., &amp; Wagenmakers, E.-J. (2016). Harold Jeffreys's default Bayes factor hypothesis tests. <em>Journal of Mathematical Psychology</em>.</li>
+    <li>Rouder, J. N., Speckman, P. L., Sun, D., Morey, R. D., &amp; Iverson, G. (2009). Bayesian t tests for accepting and rejecting the null hypothesis. <em>Psychonomic Bulletin &amp; Review</em>.</li>
+    <li>Wetzels, R., Matzke, D., Lee, M. D., Rouder, J. N., Iverson, G. J., &amp; Wagenmakers, E.-J. (2011). Statistical evidence in experimental psychology: An empirical comparison using 855 t tests. <em>Perspectives on Psychological Science</em>.</li>
+  </ul>
+
+  <p><a href="../landing.html#start">Get started free &rarr;</a></p>
+
+  <div style="margin-top:48px;padding-top:32px;border-top:1px solid #1E293B">
+    <h2 style="font-size:1.1rem;margin-bottom:16px;color:#94A3B8">Related Posts</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+      <a href="convergent-core-analysis.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06B6D4;margin-bottom:6px">Robustness Check</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">Specification Summary</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">You ran 200 specifications. Specification Summary reports how many share a sign, how spread out they are, and which choices reverse the result.</div>
+      </a>
+      <a href="scale-persistent-features.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06B6D4;margin-bottom:6px">Robustness Check</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">Correlation Stability</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">How many cases can you drop before a correlation loses its sign? A check on precision, not proof that a result will replicate.</div>
+      </a>
+    </div>
+  </div>
+</article>
+
+<div class="ad-slot" data-position="bottom" style="text-align:center;padding:16px 0;background:#0F172A;border-top:1px solid #1E293B"></div>
+
+<footer>
+  <p>&copy; 2026 Moonlit Social Labs.</p>
+  <div style="margin-top:12px"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../privacy.html">Privacy</a><a href="../terms.html">Terms</a><a href="https://ko-fi.com/moonlitsociallabs" target="_blank" rel="noopener" style="background:#FF5E5B;color:#fff;padding:4px 14px;border-radius:6px;font-weight:600;text-decoration:none">&#9749; Support Us</a></div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<meta name="google-site-verification" content="IWGVEm2c0aIEJAr9l31qjz3YzIDiqVe8VdwF1FATmTw" />
+<title>Causal Inference Without Randomization &mdash; PsyStat Lab Blog</title>
+<meta name="description" content="A graduate-level introduction to causal inference from observational data: potential outcomes, DAGs, propensity scores, instrumental variables, regression discontinuity, difference-in-differences, doubly robust estimation, and sensitivity analysis.">
+<meta name="keywords" content="causal inference, potential outcomes, Rubin causal model, directed acyclic graphs, DAG, do-calculus, propensity score matching, instrumental variables, regression discontinuity, difference-in-differences, doubly robust, E-value, sensitivity analysis, PsyStat Lab">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://psystat-lab.dev/blog/causal-inference.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Causal Inference Without Randomization">
+<meta property="og:description" content="When you can't randomize, you can still reason carefully. A graduate-level tour of the modern causal inference toolkit.">
+<meta property="og:url" content="https://psystat-lab.dev/blog/causal-inference.html">
+<meta property="og:image" content="https://psystat-lab.dev/og-image.png">
+<meta property="article:published_time" content="2026-04-16">
+<meta property="article:author" content="Moonlit Social Labs">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Causal Inference Without Randomization &mdash; PsyStat Lab">
+<meta name="twitter:description" content="Potential outcomes, DAGs, IVs, RDD, DiD, doubly robust estimators, and how to quantify what hidden confounding would cost you.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Causal Inference Without Randomization",
+  "description": "A graduate-level introduction to causal inference from observational data, covering the potential outcomes framework, DAGs, propensity scores, instrumental variables, RDD, DiD, doubly robust estimators, and sensitivity analysis.",
+  "author": { "@type": "Organization", "name": "Moonlit Social Labs" },
+  "publisher": { "@type": "Organization", "name": "PsyStat Lab" },
+  "datePublished": "2026-04-16",
+  "url": "https://psystat-lab.dev/blog/causal-inference.html"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://psystat-lab.dev/"},
+    {"@type": "ListItem", "position": 2, "name": "Blog", "item": "https://psystat-lab.dev/blog/"},
+    {"@type": "ListItem", "position": 3, "name": "Causal Inference", "item": "https://psystat-lab.dev/blog/causal-inference.html"}
+  ]
+}
+</script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --bg:#0B0F1A; --surface:#131926; --elevated:#1A2236; --border:#1E293B; --text:#F1F5F9; --text2:#94A3B8; --text3:#64748B; --primary:#6366F1; --cyan:#06B6D4; --accent:#D97706; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; -webkit-font-smoothing: antialiased; }
+  a { color: var(--cyan); text-decoration: none; } a:hover { text-decoration: underline; }
+  ::selection { background: var(--primary); color: #fff; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 0; background: rgba(11,15,26,.85); backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,.04); }
+  nav .inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+  nav .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; }
+  nav .logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #6366F1, #06B6D4); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; font-weight: 800; }
+  nav .links { display: flex; align-items: center; gap: 24px; font-size: .9rem; }
+  nav .links a { color: var(--text2); } nav .links a:hover { color: var(--text); text-decoration: none; }
+  nav .cta-sm { background: var(--primary); color: #fff !important; padding: 6px 16px; border-radius: 8px; font-weight: 600; }
+  article { max-width: 740px; margin: 0 auto; padding: 120px 24px 60px; }
+  .tag { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 10px; border-radius: 100px; background: rgba(217,119,6,.15); color: var(--accent); margin-bottom: 16px; }
+  h1 { font-size: 2rem; font-weight: 800; line-height: 1.25; margin-bottom: 16px; }
+  .meta { color: var(--text3); font-size: .85rem; margin-bottom: 32px; }
+  h2 { font-size: 1.4rem; font-weight: 700; margin: 36px 0 12px; color: var(--text); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 28px 0 8px; color: #818CF8; }
+  p { color: var(--text2); margin-bottom: 16px; font-size: 1.02rem; }
+  ul, ol { color: var(--text2); margin: 0 0 16px 24px; font-size: 1.02rem; }
+  li { margin-bottom: 6px; }
+  blockquote { border-left: 3px solid var(--accent); padding: 12px 20px; margin: 20px 0; background: var(--surface); border-radius: 0 8px 8px 0; }
+  blockquote p { margin: 0; color: var(--text); font-style: italic; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: .88rem; background: var(--elevated); padding: 2px 6px; border-radius: 4px; color: #818CF8; }
+  .callout { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 24px 0; }
+  .callout-title { font-weight: 700; font-size: .9rem; color: var(--accent); margin-bottom: 8px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; color: var(--text3); font-size: .9rem; margin-bottom: 24px; }
+  .back:hover { color: var(--text); text-decoration: none; }
+  footer { border-top: 1px solid var(--border); padding: 32px 24px; text-align: center; color: var(--text3); font-size: .85rem; }
+  footer a { color: var(--text3); margin: 0 12px; } footer a:hover { color: var(--text); }
+  @media (max-width: 640px) { article { padding: 100px 16px 40px; } h1 { font-size: 1.5rem; } nav .links { display: none; } }
+</style>
+</head>
+<body>
+
+<nav><div class="inner">
+  <a href="../landing.html" class="logo" style="text-decoration:none;color:var(--text)"><div class="logo-icon">&Psi;</div><span>PsyStat <span style="background:linear-gradient(135deg,#818CF8,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Lab</span></span><span style="display:inline-block;background:#7C3AED;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;text-transform:uppercase">BETA</span></a>
+  <div class="links"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../about.html">About</a><a href="../landing.html#start" class="cta-sm">Get Started</a></div>
+</div></nav>
+
+<article>
+  <nav aria-label="Breadcrumb" style="font-size:.85rem;color:var(--text3);margin-bottom:16px">
+    <a href="../landing.html" style="color:var(--text3)">Home</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <a href="./" style="color:var(--text3)">Blog</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <span style="color:var(--text2)">Causal Inference</span>
+  </nav>
+  <a href="./" class="back">&larr; All posts</a>
+  <div class="tag">Methodology</div>
+  <h1>Causal Inference Without Randomization</h1>
+  <div class="meta">By Moonlit Social Labs &middot; April 16, 2026 &middot; 15 min read</div>
+
+  <p>"Correlation is not causation." Every undergraduate methods student learns it. Every reviewer wields it. And in a strict logical sense, it is true. But as a guide to research practice, the slogan is almost uselessly vague &mdash; because most of the questions that matter to scientists, clinicians, and policymakers are <em>causal</em> questions, and most of the data we have to answer them are <em>observational</em>.</p>
+
+  <p>Does smoking cause lung cancer? Does cognitive behavioral therapy reduce relapse? Does raising the minimum wage increase unemployment? Does early childhood adversity alter adult HPA-axis reactivity? In an ideal world we would randomize and find out. In the actual world we cannot &mdash; for ethical, financial, logistical, or temporal reasons &mdash; and yet the questions persist. The choice is not "randomize or remain agnostic." The choice is whether to reason carefully about causation from the data we can obtain, or to retreat into the false modesty of "we only describe associations" while everyone in the room reads causal claims into the discussion section anyway.</p>
+
+  <p>The modern causal inference toolkit, developed over the past five decades by Donald Rubin, Judea Pearl, James Robins, and many others, gives us a way to reason carefully. It does not eliminate the need for assumptions &mdash; nothing can. What it does is force the assumptions into the open, give them names, and tell us what would have to be true of the unobserved world for our estimates to be wrong.</p>
+
+  <h2>The Potential Outcomes Framework</h2>
+
+  <p>The conceptual foundation of contemporary causal inference is the <strong>potential outcomes</strong> or <strong>Rubin causal model</strong> (Rubin, 1974, 2005; Imbens &amp; Rubin, 2015). The idea is deceptively simple. For each unit <em>i</em> and each possible treatment value <em>a</em>, define the potential outcome <code>Y_i(a)</code> as the value that <em>Y</em> would take if unit <em>i</em> received treatment <em>a</em>.</p>
+
+  <p>If treatment is binary, every individual has two potential outcomes: <code>Y_i(1)</code>, what would happen under treatment, and <code>Y_i(0)</code>, what would happen under control. The individual causal effect is the contrast <code>Y_i(1) &minus; Y_i(0)</code>. The average causal effect (ATE) in the population is <code>E[Y(1) &minus; Y(0)]</code>.</p>
+
+  <p>The fundamental problem of causal inference, in Holland's (1986) phrasing, is that we never observe both potential outcomes for the same person. Whichever treatment <em>i</em> actually received, the other outcome is counterfactual &mdash; permanently missing data. Causal inference is, at heart, a missing data problem.</p>
+
+  <p>Randomization solves the problem by assignment design: when treatment is assigned independently of potential outcomes, the observed mean among the treated is an unbiased estimate of <code>E[Y(1)]</code>, and similarly for the control group. Without randomization, we have to <em>assume</em> something analogous &mdash; usually <strong>conditional exchangeability</strong>, also called <strong>ignorability</strong> or <strong>no unmeasured confounding</strong>: given a sufficient set of covariates <em>L</em>, treatment assignment is independent of the potential outcomes. This is the assumption that the rest of this article is, in one way or another, about.</p>
+
+  <h2>Directed Acyclic Graphs and the do-Calculus</h2>
+
+  <p>The potential outcomes framework gives us a language for what we want to estimate. Pearl's (2009) graphical framework gives us a language for the assumptions we are willing to make. A <strong>directed acyclic graph</strong> (DAG) encodes a set of qualitative causal assumptions: each node is a variable, each arrow is a direct causal influence, and the absence of an arrow is itself a claim &mdash; that no direct effect exists.</p>
+
+  <p>From a DAG plus the rules of <em>d-separation</em>, you can read off conditional independencies that the data should obey if the DAG is correct. More usefully, you can mechanically determine which sets of covariates suffice to identify a causal effect from observational data. Pearl's <strong>back-door criterion</strong> says: to estimate the effect of <em>A</em> on <em>Y</em>, find a set <em>L</em> that (a) blocks all paths from <em>A</em> to <em>Y</em> that begin with an arrow into <em>A</em>, and (b) contains no descendants of <em>A</em>. Conditioning on such an <em>L</em> identifies the causal effect &mdash; in the potential-outcomes language, it makes ignorability hold.</p>
+
+  <p>The <strong>do-calculus</strong> generalizes this to a complete algebra for translating queries about hypothetical interventions, written <code>P(Y | do(A=a))</code>, into expressions involving only observational quantities, whenever such a translation is possible. When it is not possible, the do-calculus tells you that too &mdash; which is itself valuable, because it directs you toward the additional data or design features you would need.</p>
+
+  <h2>Confounders, Mediators, Colliders</h2>
+
+  <p>The classification of "third variables" is where DAGs earn their keep, because the textbook advice to "control for everything you can measure" is not merely imperfect &mdash; it can make your estimate <em>worse</em>.</p>
+
+  <p>A <strong>confounder</strong> is a common cause of treatment and outcome. Conditioning on a confounder removes a spurious back-door association and brings you closer to the causal effect.</p>
+
+  <p>A <strong>mediator</strong> lies on the causal pathway from treatment to outcome. Conditioning on it blocks the very effect you are trying to estimate &mdash; you end up estimating the direct effect rather than the total effect, which may not be what you want.</p>
+
+  <p>A <strong>collider</strong> is a common <em>effect</em> of two variables. Conditioning on a collider opens a previously closed path and induces an association between its parents that does not exist in the population. This is the source of <em>collider bias</em>, also known as <em>selection bias</em> or <em>Berkson's paradox</em>.</p>
+
+  <blockquote><p>If you condition on a collider, you can manufacture a correlation between two genuinely independent causes &mdash; or, worse, reverse the sign of a real effect.</p></blockquote>
+
+  <h3>A concrete collider example</h3>
+
+  <p>Suppose academic ability <em>A</em> and athletic ability <em>S</em> are independent in the general population. Both increase the probability of being admitted to an elite university (<em>U</em> = 1). Now sample only admitted students. Within that sample, <em>A</em> and <em>S</em> are <em>negatively</em> correlated: a student who got in despite mediocre academics probably has impressive athletics, and vice versa. The negative correlation is entirely an artifact of conditioning on the collider <em>U</em>. A naive analyst, controlling for "university attended" in a regression, would conclude that academic and athletic ability trade off &mdash; a finding generated by the analytic decision, not by any causal mechanism in the world.</p>
+
+  <p>The same structure underlies many famous puzzles: low-birthweight babies of smoking mothers appear to have lower mortality than low-birthweight babies of non-smoking mothers; hospitalized patients with disease X show inverse correlations between two of its causes; obese cardiovascular patients sometimes appear to live longer than non-obese ones. In each case, conditioning on a downstream selection variable (low birthweight, hospitalization, having the disease at all) opens a collider path. Drawing the DAG before running the regression is the only reliable way to avoid this trap.</p>
+  <h2>Methods for Adjustment Under Ignorability</h2>
+
+  <h3>Propensity score methods</h3>
+
+  <p>Rosenbaum and Rubin (1983) showed that if treatment is ignorable given <em>L</em>, it is also ignorable given the scalar <strong>propensity score</strong> <code>e(L) = P(A=1 | L)</code>. This is a remarkable dimension reduction: instead of matching or stratifying on a high-dimensional covariate vector, you can match on a single number.</p>
+
+  <p><strong>Propensity score matching (PSM)</strong> pairs each treated unit with one or more control units that have similar estimated propensity scores, then compares outcomes within matched pairs. <strong>Inverse probability of treatment weighting (IPTW)</strong> instead reweights the sample so that the treated and control groups have the same covariate distribution &mdash; treated units are weighted by <code>1/e(L)</code> and controls by <code>1/(1&minus;e(L))</code>. The weighted means recover the ATE.</p>
+
+  <p>Both methods rely on two assumptions: ignorability (the propensity score captures all confounding) and <strong>positivity</strong>, which requires that <code>0 &lt; e(L) &lt; 1</code> for every covariate stratum of interest. Positivity fails &mdash; sometimes silently &mdash; when there are subgroups in which treatment never occurs, or never fails to occur. Estimated weights of 50, 200, or 5000 are diagnostic of positivity violations and lead to estimates dominated by a handful of influential observations. The correct response is usually to redefine the target population to one in which positivity actually holds, not to truncate the weights and hope for the best.</p>
+
+  <p>PSM has been criticized in recent years (King &amp; Nielsen, 2019) for inducing imbalance when matches are imperfect and for being sensitive to specification of the propensity model. Modern practice favors weighting, full matching, or doubly robust extensions over greedy nearest-neighbor matching.</p>
+
+  <h3>Instrumental variables</h3>
+
+  <p>When you suspect unmeasured confounding, propensity score methods are not enough &mdash; they only adjust for what you measured. <strong>Instrumental variable (IV)</strong> methods exploit a different identification strategy: find a variable <em>Z</em> that affects treatment but is unrelated to the outcome except through treatment. Then variation in <em>Y</em> driven by <em>Z</em>'s influence on <em>A</em> identifies the causal effect, even in the presence of unmeasured confounders of <em>A</em> and <em>Y</em> (Angrist &amp; Pischke, 2009).</p>
+
+  <p>An instrument must satisfy three assumptions:</p>
+  <ol>
+    <li><strong>Relevance.</strong> <em>Z</em> has a non-trivial effect on <em>A</em>. This is testable; weak instruments produce wildly biased estimates and inflated standard errors.</li>
+    <li><strong>Exclusion restriction.</strong> <em>Z</em> affects <em>Y</em> only through <em>A</em>. This is not testable from the data and must be defended substantively.</li>
+    <li><strong>Independence (or unconfoundedness of the instrument).</strong> <em>Z</em> is independent of the unmeasured confounders that bias the <em>A</em>&rarr;<em>Y</em> relationship.</li>
+  </ol>
+
+  <p>Two-stage least squares (2SLS) is the workhorse estimator. Famous applications include using <strong>distance to college</strong> as an instrument for educational attainment when estimating returns to schooling (Card, 1995), and the entire field of <strong>Mendelian randomization</strong>, which uses germline genetic variants as instruments for modifiable exposures &mdash; a sensible strategy because alleles are randomized at meiosis and fixed before exposure occurs, plausibly satisfying independence and exclusion (Davey Smith &amp; Ebrahim, 2003).</p>
+
+  <p>Under heterogeneous treatment effects, IV identifies not the ATE but the <strong>local average treatment effect (LATE)</strong> &mdash; the effect among <em>compliers</em>, those whose treatment status is shifted by the instrument (Imbens &amp; Angrist, 1994). This is a real estimand, but it is not the same as the population average, and reporting should make the distinction explicit.</p>
+
+  <h3>Regression discontinuity</h3>
+
+  <p>When treatment is assigned by a sharp cutoff on a continuous <strong>running variable</strong> &mdash; a test score, an income threshold, a birthdate &mdash; <strong>regression discontinuity design (RDD)</strong> exploits the fact that units just above and just below the cutoff are plausibly comparable on everything except treatment status. The discontinuity in mean outcomes at the cutoff identifies the local causal effect.</p>
+
+  <p>In a <strong>sharp</strong> RDD, treatment is a deterministic function of the running variable: every applicant scoring above the threshold receives the scholarship, none below. In a <strong>fuzzy</strong> RDD, the cutoff changes the <em>probability</em> of treatment but does not fully determine it &mdash; the cutoff is then used as an instrument and the analysis becomes a local 2SLS.</p>
+
+  <p>RDD is among the most credible quasi-experimental designs precisely because its assumption &mdash; smooth potential outcomes at the cutoff &mdash; is local and weak. The principal validity threat is <em>manipulation</em> of the running variable: if applicants can game their score to land just above the threshold, the comparability argument collapses. The McCrary (2008) density test checks for suspicious bunching at the cutoff.</p>
+
+  <h3>Difference-in-differences</h3>
+
+  <p>When some units adopt a treatment at a particular point in time and others do not, <strong>difference-in-differences (DiD)</strong> identifies the causal effect by comparing the change in outcomes for the treated group to the change for the control group. The identifying assumption is <strong>parallel trends</strong>: in the absence of treatment, the treated and control groups would have evolved in parallel.</p>
+
+  <p>Parallel trends is partially probed by inspecting pre-treatment outcome trajectories, but the assumption proper concerns the unobserved counterfactual post-treatment trajectory and so cannot be tested directly. The most defensible DiD applications combine visual evidence of pre-period parallelism with a substantive argument for why post-period divergence would be implausible absent the policy change.</p>
+
+  <p>The classical two-period, two-group DiD has been extended to settings where treatment is rolled out across many units at staggered times. It turned out that the standard two-way fixed-effects estimator, when applied to such staggered designs, can be badly biased &mdash; sometimes returning the wrong sign &mdash; because already-treated units serve as controls for later-treated units, contaminating the comparison (Goodman-Bacon, 2021). The recent literature has produced a new generation of estimators that handle staggered adoption properly: <strong>Callaway and Sant'Anna (2021)</strong> proposed a framework based on group-time average treatment effects with flexible aggregation; <strong>Sun and Abraham (2021)</strong> developed an interaction-weighted estimator for event studies. These methods are now standard in empirical economics and should be the default whenever treatment timing varies across units.</p>
+
+  <h3>G-computation and standardization</h3>
+
+  <p><strong>G-computation</strong>, due to Robins (1986) and a cornerstone of Hern&aacute;n and Robins's (2020) <em>What If</em>, is in some ways the most direct adjustment method. Fit an outcome model <code>E[Y | A, L]</code>. Then for each individual in the sample, predict their outcome under each treatment value, holding their covariates fixed. Average those predictions to obtain the <em>standardized</em> mean under each treatment, and contrast them.</p>
+
+  <p>G-computation generalizes far beyond a simple covariate-adjusted regression. It handles time-varying treatments, time-varying confounders that are themselves affected by prior treatment, and complex dynamic regimes &mdash; settings in which conventional regression and even standard IPTW fail. The cost is dependence on a correctly specified outcome model, which is why doubly robust extensions are appealing.</p>
+
+  <h3>Doubly robust estimation: AIPW</h3>
+
+  <p>The <strong>augmented inverse probability weighted (AIPW)</strong> estimator combines a propensity model and an outcome model in a way that is consistent if <em>either</em> model is correctly specified. This <strong>double robustness</strong> property is genuinely useful: you do not have to bet on a single specification, and the estimator achieves the semiparametric efficiency bound when both models are correct.</p>
+
+  <p>The modern incarnation of doubly robust estimation is <strong>targeted maximum likelihood estimation (TMLE)</strong> and the closely related <strong>double/debiased machine learning</strong> framework (Chernozhukov et al., 2018). These methods plug flexible machine learning estimators &mdash; random forests, gradient-boosted trees, super learners &mdash; into the propensity and outcome components, then perform a debiasing step that recovers valid confidence intervals despite the use of high-variance learners. The result is a principled marriage of modern predictive modeling with the asymptotic guarantees of classical statistics.</p>
+
+  <h2>Sensitivity Analysis: Quantifying What You Cannot Test</h2>
+
+  <p>Every observational causal estimate rests on an untestable assumption &mdash; usually no unmeasured confounding, or some variant of it. The honest response is not to pretend the assumption is satisfied, nor to abandon the estimate, but to ask: <em>how badly would the assumption have to fail for the result to disappear?</em></p>
+
+  <h3>The E-value</h3>
+
+  <p>VanderWeele and Ding (2017) introduced the <strong>E-value</strong>, which has become the most widely adopted sensitivity metric in epidemiology and is increasingly used in psychology. The E-value is the minimum strength of association, measured as a risk ratio, that an unmeasured confounder would need to have with both the treatment and the outcome &mdash; above and beyond the measured covariates &mdash; to fully explain away the observed effect.</p>
+
+  <p>An E-value of 1.5 means an unmeasured confounder would need to roughly 1.5-fold the risk of treatment <em>and</em> 1.5-fold the risk of outcome to nullify the result. An E-value of 4.0 demands a much more impressive lurking variable. Reporting an E-value reframes the conversation from "could there be unmeasured confounding?" (yes, always) to "is there plausibly an unmeasured confounder this strong?", which is a question reviewers, domain experts, and readers can substantively engage with.</p>
+
+  <h3>Rosenbaum bounds</h3>
+
+  <p>For matched designs, <strong>Rosenbaum bounds</strong> (Rosenbaum, 2002) parameterize the degree to which two matched units could differ in their odds of treatment due to unmeasured factors, summarized by a sensitivity parameter &Gamma;. The bounds report how large &Gamma; can grow before the inferential conclusion (e.g., a significant treatment effect) ceases to hold across all configurations of unmeasured confounding consistent with that &Gamma;. A study robust to &Gamma; = 2 tolerates a doubling of the odds of treatment due to hidden bias; one that breaks at &Gamma; = 1.1 is fragile.</p>
+
+  <p>Other useful tools include negative-control outcomes and exposures (Lipsitch et al., 2010), tipping-point analyses for individual covariates, and the <em>bias formulas</em> of VanderWeele and Arah (2011) that decompose how a confounder's strength on each side translates into bias.</p>
+
+  <h2>An Honest Assessment</h2>
+
+  <p>Causal inference from observational data is not a magic trick that turns associations into causes. It is a disciplined practice of stating assumptions explicitly, deriving estimators that would be valid if those assumptions held, probing the assumptions where possible, and quantifying the consequences of their failure where it is not. Done well, it produces estimates that are credible enough to act on. Done poorly &mdash; with a regression that "controls for confounders" chosen by stepwise selection, no DAG, no positivity diagnostics, no sensitivity analysis &mdash; it produces something worse than agnosticism, because it dresses up assumption-laden guesses in the borrowed authority of statistical machinery.</p>
+
+  <div class="callout">
+    <div class="callout-title">The Practical Bottom Line</div>
+    <p>Draw the DAG before you fit the model. Choose an estimand that matches your question (ATE, ATT, LATE, CATE). Pick an identification strategy that fits the data-generating process you actually believe in. Use a doubly robust estimator when you can. Report an E-value or Rosenbaum bound. Distinguish what your design rules out from what it merely cannot detect. The reader's faith in your conclusion should be a function of how hard you made it for yourself to reach.</p>
+  </div>
+
+  <h2>Try It in PsyStat Lab</h2>
+
+  <p>The <strong>Causal Inference</strong> module in PsyStat Lab walks you through observational designs end-to-end: encoding a DAG, selecting a sufficient adjustment set, estimating with IPTW or AIPW, fitting an IV or RDD or DiD specification (with Callaway&ndash;Sant'Anna for staggered adoption), and reporting an E-value alongside the point estimate. The point is not to make causal inference easy &mdash; it is not &mdash; but to make the disciplined version of it as accessible as the undisciplined version.</p>
+
+  <p><a href="../landing.html#start">Get started free &rarr;</a></p>
+
+  <h2>References</h2>
+  <ul>
+    <li>Angrist, J. D., &amp; Pischke, J.-S. (2009). <em>Mostly Harmless Econometrics: An Empiricist's Companion</em>. Princeton University Press.</li>
+    <li>Callaway, B., &amp; Sant'Anna, P. H. C. (2021). Difference-in-differences with multiple time periods. <em>Journal of Econometrics</em>, 225(2), 200&ndash;230.</li>
+    <li>Chernozhukov, V., et al. (2018). Double/debiased machine learning for treatment and structural parameters. <em>Econometrics Journal</em>, 21(1), C1&ndash;C68.</li>
+    <li>Hern&aacute;n, M. A., &amp; Robins, J. M. (2020). <em>Causal Inference: What If</em>. Chapman &amp; Hall/CRC.</li>
+    <li>Imbens, G. W., &amp; Rubin, D. B. (2015). <em>Causal Inference for Statistics, Social, and Biomedical Sciences: An Introduction</em>. Cambridge University Press.</li>
+    <li>Pearl, J. (2009). <em>Causality: Models, Reasoning, and Inference</em> (2nd ed.). Cambridge University Press.</li>
+    <li>Rosenbaum, P. R. (2002). <em>Observational Studies</em> (2nd ed.). Springer.</li>
+    <li>Rubin, D. B. (1974). Estimating causal effects of treatments in randomized and nonrandomized studies. <em>Journal of Educational Psychology</em>, 66(5), 688&ndash;701.</li>
+    <li>Rubin, D. B. (2005). Causal inference using potential outcomes. <em>Journal of the American Statistical Association</em>, 100(469), 322&ndash;331.</li>
+    <li>Sun, L., &amp; Abraham, S. (2021). Estimating dynamic treatment effects in event studies with heterogeneous treatment effects. <em>Journal of Econometrics</em>, 225(2), 175&ndash;199.</li>
+    <li>VanderWeele, T. J., &amp; Ding, P. (2017). Sensitivity analysis in observational research: Introducing the E-value. <em>Annals of Internal Medicine</em>, 167(4), 268&ndash;274.</li>
+  </ul>
+
+  <div style="margin-top:48px;padding-top:32px;border-top:1px solid #1E293B">
+    <h2 style="font-size:1.1rem;margin-bottom:16px;color:#94A3B8">Related Posts</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+      <a href="mixed-models-nested-data.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06B6D4;margin-bottom:6px">Methodology</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">Mixed Models for Nested Data</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">When observations are clustered within groups, standard regression understates uncertainty. A practical guide to multilevel modeling.</div>
+      </a>
+      <a href="bayesian-methods.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06B6D4;margin-bottom:6px">Methodology</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">When to Use Bayesian Methods (And When Not To)</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">Bayesian inference is not a religion. A pragmatic look at where priors and posteriors actually earn their keep &mdash; and where they don't.</div>
+      </a>
+    </div>
+  </div>
+</article>
+
+<div class="ad-slot" data-position="bottom" style="text-align:center;padding:16px 0;background:#0F172A;border-top:1px solid #1E293B"></div>
+
+<footer>
+  <p>&copy; 2026 Moonlit Social Labs.</p>
+  <div style="margin-top:12px"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../privacy.html">Privacy</a><a href="../terms.html">Terms</a><a href="https://ko-fi.com/moonlitsociallabs" target="_blank" rel="noopener" style="background:#FF5E5B;color:#fff;padding:4px 14px;border-radius:6px;font-weight:600;text-decoration:none">&#9749; Support Us</a></div>
+</footer>
+</body>
+</html>

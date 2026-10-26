@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<meta name="google-site-verification" content="IWGVEm2c0aIEJAr9l31qjz3YzIDiqVe8VdwF1FATmTw" />
+<title>The Replication Crisis: What Actually Happened — PsyStat Lab Blog</title>
+<meta name="description" content="A scholarly retrospective on the replication crisis in psychology and beyond: from Bem's precognition paper and the Stapel fraud to the Open Science Collaboration, Many Labs, and the reforms that followed.">
+<meta name="keywords" content="replication crisis, open science, reproducibility, pre-registration, p-hacking, HARKing, garden of forking paths, Open Science Collaboration, Many Labs, PsyStat Lab">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://psystat-lab.dev/blog/replication-crisis.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="The Replication Crisis: What Actually Happened">
+<meta property="og:description" content="From Bem's precognition paper to the Open Science Collaboration: a scholarly retrospective on the events, causes, and reforms of psychology's reckoning.">
+<meta property="og:url" content="https://psystat-lab.dev/blog/replication-crisis.html">
+<meta property="og:image" content="https://psystat-lab.dev/og-image.png">
+<meta property="article:published_time" content="2026-04-16">
+<meta property="article:author" content="Moonlit Social Labs">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Replication Crisis: What Actually Happened — PsyStat Lab">
+<meta name="twitter:description" content="A scholarly retrospective on psychology's reckoning and the reforms that followed.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "The Replication Crisis: What Actually Happened",
+  "description": "A scholarly retrospective on the replication crisis in psychology, its causes, key events, field-specific impacts, and the open-science reforms it produced.",
+  "author": { "@type": "Organization", "name": "Moonlit Social Labs" },
+  "publisher": { "@type": "Organization", "name": "PsyStat Lab" },
+  "datePublished": "2026-04-16",
+  "url": "https://psystat-lab.dev/blog/replication-crisis.html"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://psystat-lab.dev/"},
+    {"@type": "ListItem", "position": 2, "name": "Blog", "item": "https://psystat-lab.dev/blog/"},
+    {"@type": "ListItem", "position": 3, "name": "Replication Crisis", "item": "https://psystat-lab.dev/blog/replication-crisis.html"}
+  ]
+}
+</script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --bg:#0B0F1A; --surface:#131926; --elevated:#1A2236; --border:#1E293B; --text:#F1F5F9; --text2:#94A3B8; --text3:#64748B; --primary:#6366F1; --cyan:#06B6D4; --accent:#D97706; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; -webkit-font-smoothing: antialiased; }
+  a { color: var(--cyan); text-decoration: none; } a:hover { text-decoration: underline; }
+  ::selection { background: var(--primary); color: #fff; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 0; background: rgba(11,15,26,.85); backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,.04); }
+  nav .inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+  nav .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; }
+  nav .logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #6366F1, #06B6D4); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; font-weight: 800; }
+  nav .links { display: flex; align-items: center; gap: 24px; font-size: .9rem; }
+  nav .links a { color: var(--text2); } nav .links a:hover { color: var(--text); text-decoration: none; }
+  nav .cta-sm { background: var(--primary); color: #fff !important; padding: 6px 16px; border-radius: 8px; font-weight: 600; }
+  article { max-width: 740px; margin: 0 auto; padding: 120px 24px 60px; }
+  .tag { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 10px; border-radius: 100px; background: rgba(217,119,6,.15); color: var(--accent); margin-bottom: 16px; }
+  h1 { font-size: 2rem; font-weight: 800; line-height: 1.25; margin-bottom: 16px; }
+  .meta { color: var(--text3); font-size: .85rem; margin-bottom: 32px; }
+  h2 { font-size: 1.4rem; font-weight: 700; margin: 36px 0 12px; color: var(--text); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 28px 0 8px; color: #818CF8; }
+  p { color: var(--text2); margin-bottom: 16px; font-size: 1.02rem; }
+  ul, ol { color: var(--text2); margin: 0 0 16px 24px; font-size: 1.02rem; }
+  li { margin-bottom: 6px; }
+  blockquote { border-left: 3px solid var(--accent); padding: 12px 20px; margin: 20px 0; background: var(--surface); border-radius: 0 8px 8px 0; }
+  blockquote p { margin: 0; color: var(--text); font-style: italic; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: .88rem; background: var(--elevated); padding: 2px 6px; border-radius: 4px; color: #818CF8; }
+  .callout { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 24px 0; }
+  .callout-title { font-weight: 700; font-size: .9rem; color: var(--accent); margin-bottom: 8px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; color: var(--text3); font-size: .9rem; margin-bottom: 24px; }
+  .back:hover { color: var(--text); text-decoration: none; }
+  footer { border-top: 1px solid var(--border); padding: 32px 24px; text-align: center; color: var(--text3); font-size: .85rem; }
+  footer a { color: var(--text3); margin: 0 12px; } footer a:hover { color: var(--text); }
+  @media (max-width: 640px) { article { padding: 100px 16px 40px; } h1 { font-size: 1.5rem; } nav .links { display: none; } }
+</style>
+</head>
+<body>
+
+<nav><div class="inner">
+  <a href="../landing.html" class="logo" style="text-decoration:none;color:var(--text)"><div class="logo-icon">&Psi;</div><span>PsyStat <span style="background:linear-gradient(135deg,#818CF8,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Lab</span></span><span style="display:inline-block;background:#7C3AED;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;text-transform:uppercase">BETA</span></a>
+  <div class="links"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../about.html">About</a><a href="../landing.html#start" class="cta-sm">Get Started</a></div>
+</div></nav>
+
+<article>
+  <nav aria-label="Breadcrumb" style="font-size:.85rem;color:var(--text3);margin-bottom:16px">
+    <a href="../landing.html" style="color:var(--text3)">Home</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <a href="./" style="color:var(--text3)">Blog</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <span style="color:var(--text2)">Replication Crisis</span>
+  </nav>
+  <a href="./" class="back">&larr; All posts</a>
+  <div class="tag">Open Science</div>
+  <h1>The Replication Crisis: What Actually Happened</h1>
+  <div class="meta">By Moonlit Social Labs &middot; April 16, 2026 &middot; 16 min read</div>
+
+  <p>Sometime in the early 2010s, psychology &mdash; and, soon after, large parts of biomedicine, economics, and neuroscience &mdash; began to notice that many of its most cited findings could not be reproduced. The arc of that noticing, and the institutional response that followed, is what we now call the <em>replication crisis</em>. More than a decade on, the contours of the story are clear enough to tell honestly: who did what, what broke, what survived, and what the field looks like today.</p>
+
+  <p>This is a long retrospective rather than a polemic. The goal is to lay out the events in roughly the order they happened, identify the structural causes that scholars converged on, and assess where reform efforts stand in 2026. Where the evidence is genuinely contested, we say so.</p>
+
+  <h2>1. The Inciting Events (2011)</h2>
+
+  <p>Three publications in 2011 are usually credited with crystallizing the crisis, though the underlying problems were older.</p>
+
+  <h3>Bem (2011): "Feeling the Future"</h3>
+
+  <p>Daryl Bem, a respected social psychologist at Cornell, published nine experiments in the <em>Journal of Personality and Social Psychology</em> claiming evidence for precognition &mdash; the ability to be influenced by future events. Across studies on memory, attraction, and reaction time, Bem reported small but significant effects suggesting participants were detecting stimuli before they were presented (Bem, 2011).</p>
+
+  <p>The paper passed peer review at psychology's flagship journal using methods that were entirely standard for the field: <em>t</em>-tests, ANOVAs, modest sample sizes, and selective reporting of positive results across many measures. The implication was uncomfortable. Either precognition is real, or the standard methods of social psychology can produce convincing evidence for something that is almost certainly false. Most readers chose the second interpretation. As Eric-Jan Wagenmakers and colleagues argued in a Bayesian re-analysis, the methods themselves were the problem.</p>
+
+  <p>Bem's paper became a kind of natural experiment on the field's epistemic standards &mdash; and the field, by and large, failed it.</p>
+
+  <h3>The Stapel Fraud</h3>
+
+  <p>In late 2011, Tilburg University announced that the Dutch social psychologist Diederik Stapel had fabricated data across dozens of papers, some published in <em>Science</em> and <em>Psychological Science</em>. Stapel had reported eye-catching effects of environmental cues on attitudes and behavior &mdash; trash on the floor making people more likely to stereotype, for instance &mdash; and many had been celebrated.</p>
+
+  <p>What made the Stapel case more than a tabloid scandal was the diagnosis of his enabling conditions. The Levelt, Noort, and Drenth committees concluded that Stapel's results were too clean, too consistent, and too convenient, but that nobody &mdash; co-authors, reviewers, editors &mdash; had asked to see the data. A culture that treated raw data as the private property of the lead author had no immune system against fabrication.</p>
+
+  <h3>Simmons, Nelson &amp; Simonsohn (2011): "False-Positive Psychology"</h3>
+
+  <p>The most consequential 2011 paper was a methods piece. Simmons, Nelson, and Simonsohn showed via simulation that ordinary, undeclared researcher flexibility &mdash; collecting more data after peeking at <em>p</em>-values, dropping conditions, choosing among covariates, switching dependent variables &mdash; could push the false-positive rate from a nominal 5% to over 60% (Simmons, Nelson, &amp; Simonsohn, 2011). They demonstrated this by "proving" that listening to "When I'm Sixty-Four" made participants younger, an obviously absurd conclusion produced through entirely defensible analytic choices.</p>
+
+  <p>The argument was hard to dismiss because it didn't require anyone to be dishonest. It only required the everyday practices of the discipline.</p>
+
+  <h2>2. The Open Science Collaboration (2015)</h2>
+
+  <p>In 2011, Brian Nosek and colleagues launched what became the Open Science Collaboration (OSC): a coordinated, large-scale effort to attempt direct replications of 100 studies drawn from three top psychology journals (<em>Psychological Science</em>, <em>JPSP</em>, and <em>JEP: Learning, Memory, and Cognition</em>). Each replication used the original materials where possible, recruited adequate samples, and was vetted by the original authors.</p>
+
+  <p>The 2015 results, published in <em>Science</em>, were the public turning point of the crisis (Open Science Collaboration, 2015). Of the 100 attempted replications:</p>
+
+  <ul>
+    <li>Only <strong>36%</strong> produced statistically significant results in the same direction as the original.</li>
+    <li>The mean effect size in replications was roughly <strong>half</strong> the size of the originals (<em>r</em> = .197 vs. .403).</li>
+    <li>Effects from <strong>cognitive psychology</strong> replicated at higher rates (~50%) than effects from <strong>social psychology</strong> (~25%).</li>
+    <li>Studies with <em>p</em>-values just below .05 in the original almost never replicated.</li>
+  </ul>
+
+  <p>The 39% figure that circulated in news coverage referred to a slightly different criterion (subjective replication judgment); under the strict significance criterion the number was 36%. Either way, it was far below what most researchers expected, and far below the rate implied by the published literature's near-universal positive results.</p>
+
+  <h2>3. Many Labs and the Coordinated Replication Era</h2>
+
+  <p>The OSC project showed that replication failure was widespread. The Many Labs projects, led by Richard Klein and collaborators, asked a complementary question: when an effect <em>does</em> replicate, how stable is it across samples, contexts, and labs?</p>
+
+  <ul>
+    <li><strong>Many Labs 1</strong> (Klein et al., 2014) attempted 13 classic findings across 36 sites. Some classics &mdash; like anchoring &mdash; replicated robustly almost everywhere. Others, including several social-priming effects, failed almost everywhere.</li>
+    <li><strong>Many Labs 2</strong> (Klein et al., 2018) attempted 28 findings across 125 samples in 36 countries. Replication rates were similar to the original OSC estimate (about half), and crucially, effect heterogeneity across samples was small &mdash; suggesting that "hidden moderators" were not, in general, the explanation for failed replications.</li>
+    <li><strong>Many Labs 3</strong> tested whether time-of-semester moderated effects. It mostly didn't.</li>
+  </ul>
+
+  <p>The Many Labs program was important because it ruled out a comforting story. When primes failed to replicate, it wasn't because Tuesday undergraduates in Dortmund were psychologically different from Friday undergraduates at NYU. The effects, in many cases, simply weren't there.</p>
+
+  <h2>4. The Crisis Spreads: Cancer Biology and Beyond</h2>
+
+  <p>Psychology was the visible face of the crisis, but the same problems were already known in biomedicine. Begley and Ellis (2012) had reported that of 53 "landmark" preclinical cancer studies, only 6 (11%) replicated at Amgen. Prinz and colleagues at Bayer reported similarly low rates.</p>
+
+  <p>The Reproducibility Project: Cancer Biology, organized by the Center for Open Science and Science Exchange, was the systematic version of those reports. Between 2013 and 2021, the project attempted to replicate experiments from 53 high-impact cancer papers. The final reports, summarized in <em>eLife</em> in 2021, were sobering: only about a quarter of effects replicated with the predicted direction and statistical significance, effect sizes were on average 85% smaller than originals, and many experiments could not be attempted at all because the original protocols and reagents were inadequately documented.</p>
+
+  <p>Economics had its own moment with Camerer and colleagues' systematic replications of experimental economics papers in <em>Science</em> (2016) and social-science papers in <em>Nature Human Behaviour</em> (2018), with replication rates of about 60% and 62% respectively &mdash; better than psychology, worse than the field had assumed.</p>
+  <h2>5. The Causes: A Convergent Diagnosis</h2>
+
+  <p>By 2018 a consensus diagnosis had emerged. The crisis was not caused primarily by fraud, nor by stupidity, nor by any single methodological mistake. It was the predictable outcome of a system whose incentives, statistics, and publication norms quietly multiplied false positives.</p>
+
+  <h3>Underpowered designs</h3>
+
+  <p>Katherine Button and colleagues (2013) showed in <em>Nature Reviews Neuroscience</em> that the median statistical power in neuroscience was around 21%. That has two consequences: most true effects are missed, and most published significant results overestimate the true effect size (a phenomenon known as the "winner's curse" or Type M error). Low-powered studies don't just fail to detect real effects; when they do detect them, they tend to be wrong about how big they are.</p>
+
+  <h3>P-hacking</h3>
+
+  <p>Building on Simmons et al., Simonsohn, Nelson, and Simmons (2014) developed the <em>p</em>-curve as a diagnostic. The shape of the distribution of significant <em>p</em>-values in a literature reveals whether the underlying effect is real. Many literatures showed the telltale spike just below .05 that signals selective reporting and analytic flexibility.</p>
+
+  <h3>The garden of forking paths</h3>
+
+  <p>Gelman and Loken (2013) introduced a subtler concept. Even researchers who never explicitly try multiple analyses are still in trouble, because the analysis they <em>would have run</em> if the data had looked different counts as a multiple comparison. The "garden of forking paths" is the implicit multiverse of analyses contingent on the data &mdash; a problem that can arise without any conscious <em>p</em>-hacking. (We explore this in depth in our companion post on multiple comparisons.)</p>
+
+  <h3>HARKing</h3>
+
+  <p>Norbert Kerr (1998), well before the crisis broke, named one of its central practices: HARKing, or Hypothesizing After Results are Known. When researchers present a post hoc explanation as if it were an a priori prediction, the inferential math no longer works &mdash; what looks like a confirmed prediction is actually an unconstrained search across a large space of possible patterns.</p>
+
+  <h3>Publication bias</h3>
+
+  <p>Journals overwhelmingly publish positive, novel, statistically significant results. Null findings sit in file drawers. The published literature is therefore a non-random sample of the evidence, and meta-analyses built on it inherit the bias. Trim-and-fill, PET-PEESE, and selection-model corrections have become standard partly because the raw published record is known to be misleading.</p>
+
+  <h3>Questionable Research Practices (QRPs)</h3>
+
+  <p>John, Loewenstein, and Prelec (2012) anonymously surveyed psychologists on a menu of practices including selective dropping of conditions, optional stopping, and reporting only "successful" measures. Self-admission rates ranged from roughly 30% to over 60% depending on the practice. These were not rare lapses by bad actors; they were the working methods of a substantial fraction of researchers in good standing.</p>
+
+  <h2>6. Field-Specific Casualties</h2>
+
+  <h3>Social priming</h3>
+
+  <p>The most public casualty was social priming, especially the work emerging from John Bargh's lab and similar programs. The classic claim &mdash; that subtle environmental cues like words associated with elderly stereotypes could measurably slow people's walking speed &mdash; failed to replicate in well-powered direct attempts (Doyen et al., 2012). Other priming effects, including macho-related performance shifts and money primes, fared similarly. By the late 2010s most working social psychologists treated the larger social-priming literature as substantially overstated.</p>
+
+  <h3>Ego depletion</h3>
+
+  <p>The idea that self-control is a depletable resource &mdash; supported by hundreds of studies and a Roy Baumeister bestseller &mdash; was probed by a pre-registered Many Labs replication (Hagger et al., 2016) involving over 2,000 participants across 24 labs. The pooled effect was indistinguishable from zero. Subsequent registered replications produced similar results. Ego depletion is now widely regarded as either much smaller than reported or non-existent under standard conditions.</p>
+
+  <h3>Power posing</h3>
+
+  <p>Carney, Cuddy, and Yap's 2010 finding that two minutes of expansive postures raised testosterone, lowered cortisol, and increased risk-taking became a TED-talk phenomenon. By 2016, after multiple failed replications, Dana Carney publicly disavowed the original effect. A subsequent <em>p</em>-curve analysis by Simmons and Simonsohn found the literature inconsistent with a real effect on hormones or behavior, though some downstream feelings-of-power effects survive in attenuated form.</p>
+
+  <h3>What survived</h3>
+
+  <p>Crucially, not everything fell. Direct replications of the Stroop effect, the Müller-Lyer illusion, anchoring, loss aversion (in its core form), basic conditioning paradigms, and many cognitive-psychological phenomena reproduced cleanly. Daniel Lakens has called this the "shaken not stirred" pattern: the foundational findings &mdash; the ones that survived because they were robust to begin with &mdash; remain. What broke were the small, narrative-friendly effects that depended on optimal stimuli, optimal samples, and optimal analyses.</p>
+
+  <h2>7. The Reform Era</h2>
+
+  <p>The response to the crisis has been, by the standards of academic reform, fast and serious.</p>
+
+  <h3>Pre-registration and registered reports</h3>
+
+  <p>Pre-registration &mdash; depositing one's hypothesis, design, and analysis plan before seeing the data &mdash; transforms exploratory analyses into something more honest by clearly separating confirmatory from exploratory work. Nosek and colleagues (2018) summarized the rationale and practical machinery in "The preregistration revolution," documenting rapid uptake across fields. Registered Reports go further: peer review of the design happens <em>before</em> data collection, and acceptance is independent of the results. Chris Chambers and colleagues showed that Registered Reports yield null results far more often than conventional papers &mdash; about 60% versus under 10% &mdash; suggesting they are doing what they were designed to do.</p>
+
+  <h3>Multiverse and specification-curve analysis</h3>
+
+  <p>Steegen and colleagues' multiverse analysis (2016) and Simonsohn, Simmons, and Nelson's specification curves (2020) operationalize transparency for analytical decisions. Rather than picking one defensible specification, you run all of them and show the distribution. Young and Holsteen (2017) proposed summaries of the same output, such as how often the sign holds across models. Our <a href="convergent-core-analysis.html">Specification Summary</a> post describes a tool that reports summaries of this kind.</p>
+
+  <h3>Larger samples and effect-size reporting</h3>
+
+  <p>The field has shifted toward larger samples driven by formal power analysis, and toward reporting effect sizes with confidence intervals rather than bare <em>p</em>-values. The American Statistical Association's 2016 statement on <em>p</em>-values was an early formal nudge; the 2019 follow-up, with its call to stop using "statistical significance" as a binary verdict, went further.</p>
+
+  <h3>Open data, open materials, open code</h3>
+
+  <p>The Center for Open Science's badge program and the rise of platforms like the Open Science Framework, OSF Preprints, and GitHub-hosted analysis code have made it dramatically easier to share data, materials, and analytic pipelines. The TOP Guidelines (Nosek et al., 2015) gave journals concrete tiers of openness to adopt, and many leading journals now require at least Tier 1 data-availability statements.</p>
+
+  <h3>Coordinated infrastructure</h3>
+
+  <p>Many Labs, the Psychological Science Accelerator, the Reproducibility Project: Cancer Biology, and the Collaborative Replications and Education Project gave the field large-scale, distributed machinery for doing replications well. These networks turned replication from a hobby into infrastructure.</p>
+
+  <h2>8. Was It a "Crisis" or Healthy Self-Correction?</h2>
+
+  <p>The honest answer is: both, and the framing matters.</p>
+
+  <p>On one hand, "crisis" can be overstated. Daniel Gilbert and colleagues (2016) published a methodological critique of the OSC project arguing that the replication studies often diverged from the originals in ways that could plausibly explain non-replication, and that the headline 36% figure should be interpreted cautiously. Subsequent analysis suggested Gilbert et al. overstated their case &mdash; the OSC effect-size attenuation was too systematic to be explained by protocol drift &mdash; but the underlying point is fair: judging "successful replication" is harder than the binary statistic suggests, and not every failed replication is a refutation.</p>
+
+  <p>It is also true that many disciplines have always known that some fraction of their published results would not hold up. Science is supposed to self-correct, and noticing that it must self-correct is itself a sign of health. As Vazire (2018) and others have argued, the visible turbulence of the 2010s was a sign that psychology had finally become rigorous enough to embarrass itself in public.</p>
+
+  <p>On the other hand, the structural problems were severe. A field in which most published <em>p</em> &lt; .05 results from the leading journals fail to replicate, in which median power is around 20%, in which over half of researchers admit to QRPs, and in which celebrated effects later vanish on direct test, is a field with a real epistemic problem. Calling that "self-correction" without acknowledging the damage is a kind of complacency. Many real careers, real public-policy recommendations, and real undergraduate textbooks were built on findings that turned out not to exist.</p>
+
+  <blockquote><p>The right framing is probably: a real crisis that has provoked a real, ongoing correction. Whether the correction will be deep enough to change the underlying incentives is the open question of the next decade.</p></blockquote>
+
+  <h2>9. The State of Replication in 2026</h2>
+
+  <p>A decade on from the OSC paper, the landscape has changed in measurable ways.</p>
+
+  <ul>
+    <li><strong>Sample sizes are larger.</strong> Median sample sizes in social psychology have roughly doubled since 2011. Power calculations are now expected at submission to most major journals.</li>
+    <li><strong>Pre-registration is mainstream.</strong> The OSF hosts well over 100,000 pre-registrations. Major journals offer or require registered reports for at least some submission tracks.</li>
+    <li><strong>Replication studies are publishable.</strong> Journals like <em>Royal Society Open Science</em>, <em>Collabra: Psychology</em>, and <em>Meta-Psychology</em> have made direct replications a normal output rather than a career risk.</li>
+    <li><strong>Effect sizes are smaller and uncertainty is larger.</strong> Newer literatures look less spectacular &mdash; precisely because they are more honestly reported.</li>
+    <li><strong>Novel pathologies have emerged.</strong> "Pre-registration theatre," in which authors file vague pre-registrations that fail to constrain analysis, is now a known concern. Bakker and colleagues have documented that adherence to pre-registered analyses is far from universal.</li>
+    <li><strong>Generative-AI-era worries</strong> &mdash; including AI-fabricated data, AI-generated literature reviews that miss replication failures, and automated <em>p</em>-hacking through analysis-search agents &mdash; are the next frontier of methodological concern.</li>
+  </ul>
+
+  <p>Recent large-scale efforts continue to find that significant fractions of even high-profile literatures do not hold up under direct replication. Each new such report is now greeted with less shock and more institutional response &mdash; a sign of cultural change. Whether the underlying incentive structure of academic publishing has been reformed deeply enough to prevent the next crisis is less clear.</p>
+
+  <div class="callout">
+    <div class="callout-title">What working researchers can do</div>
+    <p>Plan your sample with a power analysis before you run anything. Pre-register your primary hypothesis and analysis. Report effect sizes with confidence intervals. Run a multiverse of defensible specifications and show the full distribution &mdash; not just the version that "worked." Share your data, materials, and code unless you have an explicit reason not to. None of these are heroic acts; they are the new baseline.</p>
+  </div>
+
+  <h2>Try It in PsyStat Lab</h2>
+
+  <p>PsyStat Lab was built around the lessons of the replication crisis. The <strong>Pre-Registration</strong> module helps you lock in hypotheses, primary outcomes, exclusion rules, and analytic plans before you collect data &mdash; producing a timestamped, OSF-compatible document you can deposit immediately.</p>
+
+  <p>The <strong>Multiverse Analysis</strong> tool runs your model across the full grid of defensible specifications and shows you the distribution of results, not just one cherry-picked path. The <strong>Specification Summary</strong> tool in the Robustness Checks module then describes that distribution: how many specifications share a sign, how spread out they are, and which choices reverse the result. It is a description of one dataset, not independent confirmation; for a formal test, use the specification-curve permutation test.</p>
+
+  <p><a href="../landing.html#start">Get started free &rarr;</a></p>
+
+  <h2>References</h2>
+
+  <ul style="font-size:.92rem">
+    <li>Bem, D. J. (2011). Feeling the future: Experimental evidence for anomalous retroactive influences on cognition and affect. <em>Journal of Personality and Social Psychology</em>, 100(3), 407&ndash;425.</li>
+    <li>Button, K. S., Ioannidis, J. P. A., Mokrysz, C., Nosek, B. A., Flint, J., Robinson, E. S. J., &amp; Munafò, M. R. (2013). Power failure: Why small sample size undermines the reliability of neuroscience. <em>Nature Reviews Neuroscience</em>, 14(5), 365&ndash;376.</li>
+    <li>Gelman, A., &amp; Loken, E. (2013). The garden of forking paths. Department of Statistics, Columbia University.</li>
+    <li>Kerr, N. L. (1998). HARKing: Hypothesizing after the results are known. <em>Personality and Social Psychology Review</em>, 2(3), 196&ndash;217.</li>
+    <li>Klein, R. A., et al. (2014). Investigating variation in replicability: A "Many Labs" replication project. <em>Social Psychology</em>, 45(3), 142&ndash;152.</li>
+    <li>Klein, R. A., et al. (2018). Many Labs 2: Investigating variation in replicability across samples and settings. <em>Advances in Methods and Practices in Psychological Science</em>, 1(4), 443&ndash;490.</li>
+    <li>Nosek, B. A., et al. (2018). The preregistration revolution. <em>Proceedings of the National Academy of Sciences</em>, 115(11), 2600&ndash;2606.</li>
+    <li>Open Science Collaboration. (2015). Estimating the reproducibility of psychological science. <em>Science</em>, 349(6251), aac4716.</li>
+    <li>Simmons, J. P., Nelson, L. D., &amp; Simonsohn, U. (2011). False-positive psychology: Undisclosed flexibility in data collection and analysis allows presenting anything as significant. <em>Psychological Science</em>, 22(11), 1359&ndash;1366.</li>
+    <li>Steegen, S., Tuerlinckx, F., Gelman, A., &amp; Vanpaemel, W. (2016). Increasing transparency through a multiverse analysis. <em>Perspectives on Psychological Science</em>, 11(5), 702&ndash;712.</li>
+  </ul>
+
+  <div style="margin-top:48px;padding-top:32px;border-top:1px solid #1E293B">
+    <h2 style="font-size:1.1rem;margin-bottom:16px;color:#94A3B8">Related Posts</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+      <a href="multiple-comparisons.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06B6D4;margin-bottom:6px">Methods</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">Multiple Comparisons and the Garden of Forking Paths</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">Why every analytical decision you make is implicitly a multiple comparison &mdash; and what to do about it.</div>
+      </a>
+      <a href="power-analysis.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06B6D4;margin-bottom:6px">Methods</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">Power Analysis: How Much Data Do You Actually Need?</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">A practical guide to a priori power calculation, the one habit most likely to keep you out of the next crisis.</div>
+      </a>
+    </div>
+  </div>
+</article>
+
+<div class="ad-slot" data-position="bottom" style="text-align:center;padding:16px 0;background:#0F172A;border-top:1px solid #1E293B"></div>
+
+<footer>
+  <p>&copy; 2026 Moonlit Social Labs.</p>
+  <div style="margin-top:12px"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../privacy.html">Privacy</a><a href="../terms.html">Terms</a><a href="https://ko-fi.com/moonlitsociallabs" target="_blank" rel="noopener" style="background:#FF5E5B;color:#fff;padding:4px 14px;border-radius:6px;font-weight:600;text-decoration:none">&#9749; Support Us</a></div>
+</footer>
+</body>
+</html>

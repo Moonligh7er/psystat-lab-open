@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>Validation Suite — PsyStat Lab</title>
+<meta name="description" content="Method-by-method numerical accuracy verification for PsyStat Lab. Every validated statistical method is compared against a canonical reference (NIST StRD, R, or peer-reviewed textbook) on every commit.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://psystat-lab.dev/validation.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Validation Suite — PsyStat Lab">
+<meta property="og:description" content="Method-by-method numerical accuracy verification against canonical references.">
+<meta property="og:url" content="https://psystat-lab.dev/validation.html">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Validation Suite — PsyStat Lab">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0B0F1A;
+    --surface: #131926;
+    --elevated: #1A2236;
+    --border: #1E293B;
+    --text: #F1F5F9;
+    --text2: #94A3B8;
+    --text3: #64748B;
+    --primary: #6366F1;
+    --primary-glow: rgba(99,102,241,.25);
+    --cyan: #06B6D4;
+    --emerald: #10B981;
+    --amber: #F59E0B;
+  }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.75;
+    overflow-x: hidden; -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::selection { background: var(--primary); color: #fff; }
+  code, .mono { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 0;
+    background: rgba(11,15,26,.85); backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  nav .inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+  nav .logo { font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em; display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; }
+  nav .logo:hover { text-decoration: none; }
+  nav .logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #6366F1, #06B6D4); display: flex; align-items: center; justify-content: center; font-size: .9rem; color: #fff; }
+  nav .links { display: flex; gap: 24px; align-items: center; }
+  nav .links a { color: var(--text2); font-size: .875rem; font-weight: 500; transition: color .2s; }
+  nav .links a:hover { color: var(--text); text-decoration: none; }
+
+  /* Content */
+  .page { max-width: 1080px; margin: 0 auto; padding: 120px 24px 80px; }
+  .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.03em; margin-bottom: 8px; background: linear-gradient(135deg, #818CF8, #6366F1, #06B6D4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .page-subtitle { color: var(--text2); font-size: 1.05rem; margin-bottom: 48px; }
+
+  /* Stat cards */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 48px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+  .stat-value { font-size: 2.4rem; font-weight: 800; color: var(--text); letter-spacing: -.02em; line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: .82rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+  .stat-note { font-size: .82rem; color: var(--text2); margin-top: 10px; }
+  .stat-card.accent { border-color: rgba(16,185,129,.35); background: linear-gradient(135deg, rgba(16,185,129,.06), rgba(6,182,212,.04)); }
+  .stat-card.accent .stat-value { color: var(--emerald); }
+
+  /* Sections */
+  .section { margin-bottom: 48px; }
+  .section h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 16px; color: var(--text); border-top: 1px solid var(--border); padding-top: 32px; }
+  .section h3 { font-size: 1.05rem; font-weight: 600; margin: 20px 0 10px; color: #818CF8; }
+  .section p { color: var(--text2); margin-bottom: 14px; }
+  .section ul { color: var(--text2); padding-left: 24px; margin-bottom: 14px; }
+  .section li { margin-bottom: 8px; }
+  .section strong { color: var(--text); font-weight: 600; }
+
+  /* Method table */
+  .method-table { width: 100%; border-collapse: collapse; margin: 16px 0 20px; font-size: .9rem; }
+  .method-table th, .method-table td { padding: 14px 14px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .method-table th { background: var(--elevated); color: var(--text); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; }
+  .method-table td { color: var(--text2); }
+  .method-table td strong { color: var(--text); display: block; margin-bottom: 4px; }
+  .method-table code { font-size: .8rem; color: var(--cyan); }
+  .method-table td.n-checks { font-variant-numeric: tabular-nums; text-align: right; font-weight: 700; color: var(--text); }
+
+  /* Ref-kind chip */
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: .7rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; margin-right: 4px; margin-bottom: 3px; }
+  .chip.nist { background: rgba(16,185,129,.14); color: #6EE7B7; border: 1px solid rgba(16,185,129,.35); }
+  .chip.r { background: rgba(99,102,241,.14); color: #A5B4FC; border: 1px solid rgba(99,102,241,.35); }
+  .chip.scipy-ref { background: rgba(6,182,212,.14); color: #67E8F9; border: 1px solid rgba(6,182,212,.35); }
+  .chip.analytical { background: rgba(245,158,11,.14); color: #FCD34D; border: 1px solid rgba(245,158,11,.35); }
+
+  /* Callout */
+  .callout { background: linear-gradient(135deg, rgba(99,102,241,.08), rgba(6,182,212,.06)); border: 1px solid rgba(99,102,241,.28); border-radius: 14px; padding: 24px 28px; margin: 32px 0; }
+  .callout h3 { color: var(--text); margin-top: 0; }
+  .callout p { color: var(--text2); margin-bottom: 8px; }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--border); padding: 32px 24px; text-align: center; color: var(--text3); font-size: .85rem; }
+  footer a { color: var(--text2); margin: 0 8px; }
+
+  @media (max-width: 720px) {
+    .page { padding: 100px 16px 60px; }
+    nav .links { gap: 16px; }
+    .method-table { font-size: .82rem; }
+    .method-table th, .method-table td { padding: 10px 8px; }
+    .stat-value { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <a href="landing.html" class="logo">
+      <div class="logo-icon">P</div>
+      PsyStat Lab<span style="display:inline-block;background:#7C3AED;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;text-transform:uppercase">BETA</span>
+    </a>
+    <div class="links">
+      <a href="landing.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+    </div>
+  </div>
+</nav>
+
+<main class="page">
+  <h1 class="page-title">Validation Suite</h1>
+  <p class="page-subtitle">Each method listed below is compared against an independent reference on every commit; coverage grows as modules are audited. This page reads live from the CI-generated report.</p>
+
+  <div class="stat-grid" id="stats">
+    <!-- Populated at page load from the embedded JSON below. -->
+  </div>
+
+  <div class="callout">
+    <h3>Why this page exists</h3>
+    <p>A statistical tool&rsquo;s existential requirement is <strong>demonstrated</strong> numerical correctness, not asserted correctness. It is not enough to say &ldquo;matches R.&rdquo; A citable tool has to <em>show</em> which methods match, against which reference, to how many decimal places, verified when.</p>
+    <p>Every row below is a golden-number test that runs on every commit. If we ever change a formula and the output shifts, CI breaks and this page goes red until it&rsquo;s fixed. When you cite a PsyStat Lab analysis in a paper, it&rsquo;s bound to a specific commit and a specific validation snapshot &mdash; and both are recoverable years later.</p>
+    <p style="margin-bottom:0;">A method&rsquo;s absence from this page means &ldquo;not yet validated,&rdquo; not &ldquo;wrong&rdquo;: unvalidated methods run and produce output, but they carry no independent numerical guarantee yet. The roadmap section at the bottom describes how coverage grows.</p>
+  </div>
+
+  <div class="section">
+    <h2>Reference kinds</h2>
+    <p>Each check declares which of four categories its expected value came from, in order of preference:</p>
+    <ul>
+      <li><span class="chip nist">NIST</span> A <a href="https://www.itl.nist.gov/div898/strd/" target="_blank" rel="noopener">NIST Statistical Reference Datasets</a> certified value, published by the U.S. National Institute of Standards and Technology to 15 significant figures. The strongest kind.</li>
+      <li><span class="chip r">R</span> The value R&rsquo;s canonical function (<code>stats::t.test</code>, <code>stats::lm</code>, <code>stats::wilcox.test</code>, etc.) produces on the same input. The R code that reproduces the number is documented in <a href="https://github.com/Moonligh7er/psystat-lab-open/blob/main/backend/tests/validation/references.py" target="_blank" rel="noopener">references.py</a>.</li>
+      <li><span class="chip scipy-ref">SCIPY-REF</span> The value an established Python reference implementation (scipy 1.14, statsmodels 0.14 or arch 8.0, named in each row) produces on the same input, frozen as a regression reference. The equivalent R command is documented where one exists so an independent reviewer can spot-check.</li>
+      <li><span class="chip analytical">ANALYTICAL</span> A closed-form value (e.g., mean of [1..5] = 3.0, Cramer&rsquo;s V for a 2x2 = sqrt(chi&sup2;/n)). The strongest tolerance category &mdash; typically <code>rtol=1e-10</code> or absolute equality up to floating-point.</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>Validated methods</h2>
+    <p>Each row = one endpoint, its reference source, the dataset it was checked against, and how many independent statistics were verified. Click a row&rsquo;s test ID to see the exact assertion in the source.</p>
+    <div style="overflow-x:auto;">
+      <table class="method-table" id="method-table">
+        <thead>
+          <tr>
+            <th>Method &amp; endpoint</th>
+            <th>Reference kind</th>
+            <th>Dataset</th>
+            <th style="text-align:right;">Checks</th>
+          </tr>
+        </thead>
+        <tbody id="method-rows"><!-- populated by JS --></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>How to verify independently</h2>
+    <p>You do not have to trust this page. Every reference has a citation, and every reference&rsquo;s R equivalent is documented in the source. A reasonable independent-verification workflow:</p>
+    <ol style="color:var(--text2);padding-left:24px;margin-bottom:14px;">
+      <li style="margin-bottom:8px;">Read the reference for the method you care about in <a href="https://github.com/Moonligh7er/psystat-lab-open/blob/main/backend/tests/validation/references.py" target="_blank" rel="noopener"><code>references.py</code></a>. Copy the R code from its comment.</li>
+      <li style="margin-bottom:8px;">Run that R code against the same dataset in <a href="https://github.com/Moonligh7er/psystat-lab-open/blob/main/backend/tests/validation/datasets.py" target="_blank" rel="noopener"><code>datasets.py</code></a>. Compare R&rsquo;s output to the frozen constant.</li>
+      <li style="margin-bottom:8px;">If they diverge, that&rsquo;s a live discrepancy worth reporting &mdash; open an issue on <a href="https://github.com/Moonligh7er/psystat-lab-open/issues" target="_blank" rel="noopener">GitHub</a> and it will be triaged as a validation bug, not a cosmetic one.</li>
+    </ol>
+    <p>NIST references are certified &mdash; if a NIST-referenced check diverges from PsyStat&rsquo;s output, PsyStat is wrong, full stop.</p>
+  </div>
+
+  <div class="section">
+    <h2>Roadmap and honest coverage</h2>
+    <p>PsyStat Lab currently exposes 278 endpoints across 77 routers. This page reflects <strong id="coverage-summary">10 of those</strong>. The next tranches queued for validation are, roughly:</p>
+    <ul>
+      <li><strong>Effect sizes:</strong> Cohen&rsquo;s d (both formulations), Glass&rsquo;s delta, partial &eta;&sup2;, &omega;&sup2;, rank-biserial r, Cliff&rsquo;s delta.</li>
+      <li><strong>ANOVA family:</strong> factorial ANOVA, repeated-measures ANOVA, ANCOVA, MANOVA (Wilks&rsquo; &Lambda; and Pillai&rsquo;s trace).</li>
+      <li><strong>Regression family:</strong> multiple regression coefficient inference (NIST Longley &amp; Filip datasets), logistic regression, Poisson regression, negative-binomial.</li>
+      <li><strong>Psychometrics:</strong> Cronbach&rsquo;s &alpha;, McDonald&rsquo;s &omega;, CFA fit indices (CFI/TLI/RMSEA/SRMR), 2PL/3PL IRT item parameters.</li>
+      <li><strong>Non-parametrics:</strong> Kruskal-Wallis H, Friedman&rsquo;s &chi;&sup2;, Kendall&rsquo;s W, Fisher&rsquo;s exact.</li>
+      <li><strong>Bayesian:</strong> single-population &micro; posteriors, Bayes factor for one-sample and two-sample means (vs. R <code>BayesFactor</code>).</li>
+    </ul>
+    <p>&ldquo;Not on the roadmap&rdquo; does not mean &ldquo;not validated later&rdquo;; it means we haven&rsquo;t written the check yet. The pattern for adding one is documented in <a href="https://github.com/Moonligh7er/psystat-lab-open/blob/main/backend/tests/validation/README.md" target="_blank" rel="noopener">the validation README</a> &mdash; contributions welcome.</p>
+  </div>
+
+  <p style="color:var(--text3); font-size:.82rem; margin-top: 48px;">
+    Report last generated <span id="gen-time" class="mono">unknown</span>.
+    CI runs: <a href="https://github.com/Moonligh7er/psystat-lab-open/actions/workflows/validation.yml" target="_blank" rel="noopener">GitHub Actions</a>.
+  </p>
+</main>
+
+<!-- Embedded validation report. Populated at build time by scripts/copy-static.js.
+     If %%VALIDATION_JSON%% is still visible below, either the build step didn't run
+     or backend/validation-results.json is missing. -->
+<script id="validation-data" type="application/json">%%VALIDATION_JSON%%</script>
+
+<script>
+  (function() {
+    var raw = document.getElementById('validation-data').textContent.trim();
+    var report;
+    try {
+      // Guard against the un-substituted placeholder still being present
+      // (happens on `open validation.html` before any build ran).
+      if (raw.indexOf('%%') === 0) throw new Error('placeholder not substituted');
+      report = JSON.parse(raw);
+    } catch (e) {
+      document.getElementById('stats').innerHTML =
+        '<div class="stat-card" style="grid-column:1/-1"><div class="stat-label" style="color:#F87171">Validation report not available</div>' +
+        '<div class="stat-note">Run <code>pytest -m validation</code> in the backend to generate <code>backend/validation-results.json</code>, then rebuild the site.</div></div>';
+      return;
+    }
+
+    // ── Stat cards ──
+    var d = new Date(report.generated_at);
+    var dateStr = isNaN(d.getTime()) ? report.generated_at : d.toISOString().slice(0,10);
+    var stats = [
+      { value: report.n_methods_validated, label: 'Methods validated', accent: true },
+      { value: report.n_total_checks, label: 'Independent checks' },
+      { value: dateStr, label: 'Last verified' },
+    ];
+    document.getElementById('stats').innerHTML = stats.map(function(s){
+      return '<div class="stat-card' + (s.accent ? ' accent' : '') + '">' +
+             '<div class="stat-value">' + s.value + '</div>' +
+             '<div class="stat-label">' + s.label + '</div>' +
+             '</div>';
+    }).join('');
+
+    // ── Coverage note ──
+    var covEl = document.getElementById('coverage-summary');
+    if (covEl) covEl.textContent = report.n_methods_validated + ' of those';
+
+    // ── Table rows ──
+    var kindClass = function(k) {
+      return String(k).toLowerCase().replace(/[^a-z]+/g, '-');
+    };
+    var rows = report.methods.map(function(m) {
+      var kinds = (m.reference_kinds || []).map(function(k) {
+        var cls = kindClass(k);
+        var label = k === 'nist' ? 'NIST' : k === 'r' ? 'R' : k === 'scipy-ref' ? 'scipy-ref' : 'analytical';
+        return '<span class="chip ' + cls + '">' + label + '</span>';
+      }).join('');
+      var datasets = (m.datasets || []).map(function(x){
+        return '<div style="font-size:.82rem;color:var(--text3)">' + x + '</div>';
+      }).join('');
+      var references = (m.references || []).map(function(x){
+        return '<div style="font-size:.75rem;color:var(--text3);margin-top:4px;">' + x + '</div>';
+      }).join('');
+      return '<tr>' +
+        '<td><strong>' + m.method + '</strong>' +
+        '<code>' + m.endpoint + '</code>' +
+        references +
+        '</td>' +
+        '<td>' + kinds + '</td>' +
+        '<td>' + datasets + '</td>' +
+        '<td class="n-checks">' + m.n_checks + '</td>' +
+      '</tr>';
+    }).join('');
+    document.getElementById('method-rows').innerHTML = rows;
+
+    // ── Footer gen-time ──
+    document.getElementById('gen-time').textContent =
+      isNaN(d.getTime()) ? report.generated_at : d.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+  })();
+</script>
+
+<footer>
+  <p>&copy; 2026 Moonlit Social Labs. Built for the researchers the software industry forgot.</p>
+  <div style="margin-top:12px">
+    <a href="landing.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="terms.html">Terms</a>
+    <a href="https://github.com/Moonligh7er/psystat-lab-open" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</footer>
+
+</body>
+</html>

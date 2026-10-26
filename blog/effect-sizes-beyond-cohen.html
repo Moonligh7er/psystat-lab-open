@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<meta name="google-site-verification" content="IWGVEm2c0aIEJAr9l31qjz3YzIDiqVe8VdwF1FATmTw" />
+<title>Effect Sizes Beyond Cohen's d &mdash; PsyStat Lab Blog</title>
+<meta name="description" content="A reference-quality guide to effect sizes: Cohen's d, Hedges' g, Glass's delta, eta-squared, omega-squared, Cliff's delta, odds ratios, NNT, CLES, and field-specific benchmarks.">
+<meta name="keywords" content="effect size, Cohen's d, Hedges' g, omega-squared, Cliff's delta, CLES, odds ratio, NNT, statistical reporting, PsyStat Lab">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://psystat-lab.dev/blog/effect-sizes-beyond-cohen.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Effect Sizes Beyond Cohen's d">
+<meta property="og:description" content="Cohen's d is just the beginning. A scholarly tour of the effect size landscape and when each metric earns its keep.">
+<meta property="og:url" content="https://psystat-lab.dev/blog/effect-sizes-beyond-cohen.html">
+<meta property="og:image" content="https://psystat-lab.dev/og-image.png">
+<meta property="article:published_time" content="2026-04-16">
+<meta property="article:author" content="Moonlit Social Labs">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Effect Sizes Beyond Cohen's d &mdash; PsyStat Lab">
+<meta name="twitter:description" content="The effect size landscape, from Hedges' g to Cliff's delta to NNT.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Effect Sizes Beyond Cohen's d",
+  "description": "A reference-quality tour of the effect size landscape, from Cohen's d through omega-squared and beyond.",
+  "author": { "@type": "Organization", "name": "Moonlit Social Labs" },
+  "publisher": { "@type": "Organization", "name": "PsyStat Lab" },
+  "datePublished": "2026-04-16",
+  "url": "https://psystat-lab.dev/blog/effect-sizes-beyond-cohen.html"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://psystat-lab.dev/"},
+    {"@type": "ListItem", "position": 2, "name": "Blog", "item": "https://psystat-lab.dev/blog/"},
+    {"@type": "ListItem", "position": 3, "name": "Effect Sizes Beyond Cohen's d", "item": "https://psystat-lab.dev/blog/effect-sizes-beyond-cohen.html"}
+  ]
+}
+</script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --bg:#0B0F1A; --surface:#131926; --elevated:#1A2236; --border:#1E293B; --text:#F1F5F9; --text2:#94A3B8; --text3:#64748B; --primary:#6366F1; --cyan:#06B6D4; --accent:#D97706; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; -webkit-font-smoothing: antialiased; }
+  a { color: var(--cyan); text-decoration: none; } a:hover { text-decoration: underline; }
+  ::selection { background: var(--primary); color: #fff; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 0; background: rgba(11,15,26,.85); backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,.04); }
+  nav .inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+  nav .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; }
+  nav .logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #6366F1, #06B6D4); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; font-weight: 800; }
+  nav .links { display: flex; align-items: center; gap: 24px; font-size: .9rem; }
+  nav .links a { color: var(--text2); } nav .links a:hover { color: var(--text); text-decoration: none; }
+  nav .cta-sm { background: var(--primary); color: #fff !important; padding: 6px 16px; border-radius: 8px; font-weight: 600; }
+  article { max-width: 740px; margin: 0 auto; padding: 120px 24px 60px; }
+  .tag { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 10px; border-radius: 100px; background: rgba(217,119,6,.15); color: var(--accent); margin-bottom: 16px; }
+  h1 { font-size: 2rem; font-weight: 800; line-height: 1.25; margin-bottom: 16px; }
+  .meta { color: var(--text3); font-size: .85rem; margin-bottom: 32px; }
+  h2 { font-size: 1.4rem; font-weight: 700; margin: 36px 0 12px; color: var(--text); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 28px 0 8px; color: #818CF8; }
+  p { color: var(--text2); margin-bottom: 16px; font-size: 1.02rem; }
+  ul, ol { color: var(--text2); margin: 0 0 16px 24px; font-size: 1.02rem; }
+  li { margin-bottom: 6px; }
+  blockquote { border-left: 3px solid var(--accent); padding: 12px 20px; margin: 20px 0; background: var(--surface); border-radius: 0 8px 8px 0; }
+  blockquote p { margin: 0; color: var(--text); font-style: italic; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: .88rem; background: var(--elevated); padding: 2px 6px; border-radius: 4px; color: #818CF8; }
+  .callout { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 24px 0; }
+  .callout-title { font-weight: 700; font-size: .9rem; color: var(--accent); margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: .92rem; background: var(--surface); border-radius: 10px; overflow: hidden; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); color: var(--text2); }
+  th { background: var(--elevated); color: var(--text); font-weight: 700; font-size: .85rem; letter-spacing: .02em; }
+  tr:last-child td { border-bottom: none; }
+  .back { display: inline-flex; align-items: center; gap: 6px; color: var(--text3); font-size: .9rem; margin-bottom: 24px; }
+  .back:hover { color: var(--text); text-decoration: none; }
+  footer { border-top: 1px solid var(--border); padding: 32px 24px; text-align: center; color: var(--text3); font-size: .85rem; }
+  footer a { color: var(--text3); margin: 0 12px; } footer a:hover { color: var(--text); }
+  @media (max-width: 640px) { article { padding: 100px 16px 40px; } h1 { font-size: 1.5rem; } nav .links { display: none; } table { font-size: .82rem; } th, td { padding: 8px; } }
+</style>
+</head>
+<body>
+
+<nav><div class="inner">
+  <a href="../landing.html" class="logo" style="text-decoration:none;color:var(--text)"><div class="logo-icon">&Psi;</div><span>PsyStat <span style="background:linear-gradient(135deg,#818CF8,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Lab</span></span><span style="display:inline-block;background:#7C3AED;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;text-transform:uppercase">BETA</span></a>
+  <div class="links"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../about.html">About</a><a href="../landing.html#start" class="cta-sm">Get Started</a></div>
+</div></nav>
+
+<article>
+  <nav aria-label="Breadcrumb" style="font-size:.85rem;color:var(--text3);margin-bottom:16px">
+    <a href="../landing.html" style="color:var(--text3)">Home</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <a href="./" style="color:var(--text3)">Blog</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <span style="color:var(--text2)">Effect Sizes Beyond Cohen's d</span>
+  </nav>
+  <a href="./" class="back">&larr; All posts</a>
+  <div class="tag">Methodology</div>
+  <h1>Effect Sizes Beyond Cohen's d</h1>
+  <div class="meta">By Moonlit Social Labs &middot; April 16, 2026 &middot; 11 min read</div>
+
+  <p>Ask a working researcher to name an effect size and you will, with near certainty, hear "Cohen's <em>d</em>." Ask them to name a second one and the room often gets quiet. That silence is a problem. Cohen's <em>d</em> is a useful summary, but it is one of perhaps a dozen widely used effect-size metrics, each suited to a different design, distribution, or question. Choosing well &mdash; and reporting transparently &mdash; matters more than most introductory courses suggest.</p>
+
+  <p>This guide is intended as a working reference for behavioral and biomedical researchers. We start with why effect sizes matter at all, walk through the most common metrics, and finish with the field-specific benchmarks debate that has reshaped how the discipline interprets "small," "medium," and "large."</p>
+
+  <h2>Why Effect Sizes Matter (More Than p-Values)</h2>
+
+  <p>A p-value answers a single, narrow question: assuming the null is true, how surprising is this data? It does not tell you how big the effect is, how clinically meaningful it is, or whether anyone should care. With a large enough sample, trivially small differences become "highly significant." With a small sample, real and important effects are routinely missed.</p>
+
+  <p>An effect size answers a different and ultimately more useful question: <em>how large is the thing we found?</em> Reporting effect sizes alongside test statistics has been required by APA-style journals for two decades and is now standard in CONSORT, STROBE, and most major reporting guidelines. The American Statistical Association's 2016 statement on p-values made the same point bluntly: a p-value, divorced from effect size and uncertainty, is barely an analysis at all.</p>
+
+  <blockquote><p>"Statistical significance is not equivalent to scientific, human, or economic significance. The effect size is what determines practical importance." &mdash; Wasserstein &amp; Lazar, 2016 (ASA statement)</p></blockquote>
+
+  <h2>Cohen's d: The Default, and Its Discontents</h2>
+
+  <p>Cohen's <em>d</em> is the standardized mean difference between two groups. The standard formulation divides the raw mean difference by the pooled within-group standard deviation:</p>
+
+  <p><code>d = (M&#8321; &minus; M&#8322;) / SD<sub>pooled</sub></code></p>
+
+  <p>It is intuitive, it has been around since the 1960s, and it is the input most meta-analysts expect. But Cohen's <em>d</em> has three well-documented limitations.</p>
+
+  <p>First, it is <strong>upwardly biased in small samples</strong>. The pooled SD is computed from sample standard deviations, which underestimate the population SD when <em>n</em> is small; this inflates <em>d</em>. The bias becomes non-trivial below roughly <em>n</em> = 50 per group and is severe in pilot studies.</p>
+
+  <p>Second, it <strong>assumes equal variances</strong>. Pooling SDs from groups with very different spreads produces a value that is mathematically defined but conceptually muddled &mdash; the standardizer is a weighted average of two things that are not the same.</p>
+
+  <p>Third, the popular <strong>0.2 / 0.5 / 0.8 cutpoints are not laws of nature</strong>. Cohen himself proposed them as last-resort heuristics for fields that had no empirical benchmarks of their own, and he repeatedly cautioned against treating them as universal. We will return to this in the section on field-specific norms.</p>
+
+  <h2>Hedges' g: The Small-Sample Correction</h2>
+
+  <p>Hedges and Olkin (1985) showed that multiplying Cohen's <em>d</em> by a correction factor <em>J</em> &mdash; approximately <code>1 &minus; 3 / (4 df &minus; 1)</code> &mdash; produces an unbiased estimator of the population standardized mean difference. The corrected statistic is called Hedges' <em>g</em>.</p>
+
+  <p>For large samples, <em>g</em> and <em>d</em> are nearly identical. For small samples (especially <em>n</em> &lt; 20 per group), they can differ by 5&ndash;10%. Most modern meta-analytic software defaults to <em>g</em> precisely because the bias matters when synthesizing many small studies. If you are running a study with modest <em>n</em> &mdash; which is to say, most psychology studies &mdash; you should be reporting <em>g</em>, not <em>d</em>.</p>
+
+  <h2>Glass's Delta: When Variances Don't Match</h2>
+
+  <p>Glass's &Delta; (delta) sidesteps the equal-variance problem by standardizing on the control group's SD alone:</p>
+
+  <p><code>&Delta; = (M<sub>treatment</sub> &minus; M<sub>control</sub>) / SD<sub>control</sub></code></p>
+
+  <p>This is the right choice when the intervention itself changes variability &mdash; which it often does. A successful psychotherapy may compress the spread of depression scores, making the treatment group's SD genuinely smaller than the control's. Pooling those SDs would muddy the standardizer; using only the control SD preserves a clean reference scale.</p>
+
+  <p>Glass's &Delta; is also the right choice when one group is a published normative sample and you do not have raw scores to pool. Its drawbacks are that it discards information from the treatment group's variability and tends to have wider confidence intervals than <em>d</em> or <em>g</em>.</p>
+
+  <h2>Correlation r and Its Cousins</h2>
+
+  <p>For continuous bivariate relationships, the Pearson correlation <em>r</em> is itself an effect size &mdash; bounded between &minus;1 and 1, scale-free, and easily understood. It converts cleanly to and from <em>d</em>:</p>
+
+  <p><code>r = d / &radic;(d&sup2; + 4)</code> &nbsp; and &nbsp; <code>d = 2r / &radic;(1 &minus; r&sup2;)</code></p>
+
+  <p>For ranked or ordinal data, Spearman's &rho; and Kendall's &tau; are the analogous effect sizes. They are less efficient than <em>r</em> when assumptions of bivariate normality hold, but considerably more robust when they do not. For 2&times;2 tables, the phi coefficient is mathematically equivalent to Pearson's <em>r</em> on dichotomous variables.</p>
+
+  <h2>Eta-Squared, Partial Eta-Squared, and the Trap</h2>
+
+  <p>For ANOVA designs, eta-squared (&eta;&sup2;) reports the proportion of total variance explained by an effect:</p>
+
+  <p><code>&eta;&sup2; = SS<sub>effect</sub> / SS<sub>total</sub></code></p>
+
+  <p>It is intuitive but problematic in factorial designs: as you add factors to your model, the denominator grows, mechanically shrinking the &eta;&sup2; for any single effect even if the underlying relationship is unchanged. Partial eta-squared (&eta;&sup2;<sub>p</sub>) was introduced to fix this:</p>
+
+  <p><code>&eta;&sup2;<sub>p</sub> = SS<sub>effect</sub> / (SS<sub>effect</sub> + SS<sub>error</sub>)</code></p>
+
+  <p>By removing variance attributable to other factors from the denominator, partial &eta;&sup2; gives a cleaner answer to "how much of the variance left over after controlling for everything else does this factor explain?"</p>
+
+  <div class="callout">
+    <div class="callout-title">Why partial eta-squared can mislead</div>
+    <p>Partial &eta;&sup2; values from different studies are not directly comparable, because each study's denominator depends on which other factors happened to be in that particular model. SPSS, until quite recently, mislabeled partial &eta;&sup2; as &eta;&sup2; in its output, which led to a generation of papers reporting inflated effect sizes. If you see a paper reporting "&eta;&sup2; = .35" from a 2&times;3 ANOVA, treat it as suspect &mdash; that is almost always partial &eta;&sup2;, and the unstandardized &eta;&sup2; would be considerably smaller. Always state explicitly which version you are reporting.</p>
+  </div>
+  <h2>Omega-Squared: The Less Biased Alternative</h2>
+
+  <p>Both eta-squared and partial eta-squared are biased upward in small samples, sometimes substantially. Omega-squared (&omega;&sup2;) corrects for this by adjusting both numerator and denominator with degrees-of-freedom terms:</p>
+
+  <p><code>&omega;&sup2; = (SS<sub>effect</sub> &minus; df<sub>effect</sub> &times; MS<sub>error</sub>) / (SS<sub>total</sub> + MS<sub>error</sub>)</code></p>
+
+  <p>Omega-squared is essentially always smaller than eta-squared and approaches it as <em>n</em> grows. Lakens (2013) and many subsequent methodologists recommend &omega;&sup2; (or its partial counterpart, &omega;&sup2;<sub>p</sub>) as the default reporting metric for ANOVA-style designs. The cost is a slight loss of interpretive simplicity; the gain is a substantially more honest estimate.</p>
+
+  <h2>Cohen's f: For Power Analysis on ANOVA</h2>
+
+  <p>Cohen's <em>f</em> is a convenience reparameterization for use in power analysis software like G*Power. It is functionally <em>r</em>-like for ANOVA:</p>
+
+  <p><code>f = &radic;(&eta;&sup2; / (1 &minus; &eta;&sup2;))</code></p>
+
+  <p>You will rarely see <em>f</em> reported in a results section, but you will use it constantly when planning sample sizes for ANOVA-based studies. Cohen's tentative benchmarks for <em>f</em> are 0.10 (small), 0.25 (medium), and 0.40 (large). Same caveats apply.</p>
+
+  <h2>Effect Sizes for Non-Parametric Tests</h2>
+
+  <p>When your data violate the assumptions of parametric tests &mdash; ordinal scales, heavy skew, ceiling and floor effects &mdash; you need effect sizes built for ranks rather than means.</p>
+
+  <h3>Cliff's delta</h3>
+
+  <p>Cliff's <em>d</em> (sometimes &delta;) is the probability that a randomly drawn observation from group 1 exceeds one from group 2, minus the probability of the reverse. It ranges from &minus;1 to +1, requires no distributional assumptions, and is robust to outliers and ceiling effects. Romano et al. (2006) suggested |d| &lt; 0.147 = negligible, &lt; 0.33 = small, &lt; 0.474 = medium, otherwise large &mdash; but again, treat thresholds as field-dependent.</p>
+
+  <h3>Rank-biserial correlation</h3>
+
+  <p>The rank-biserial correlation <em>r</em><sub>rb</sub> is the standard effect size for the Mann&ndash;Whitney <em>U</em> and Wilcoxon signed-rank tests. It can be computed directly from <em>U</em>:</p>
+
+  <p><code>r<sub>rb</sub> = 1 &minus; (2U / (n&#8321; &times; n&#8322;))</code></p>
+
+  <p>It has the same &minus;1 to +1 interpretation as Pearson's <em>r</em>, but operates on ranks rather than raw values.</p>
+
+  <h2>Effect Sizes for Categorical Outcomes</h2>
+
+  <p>When the dependent variable is a count, a category, or a binary event, the right effect sizes look very different from <em>d</em> or &eta;&sup2;.</p>
+
+  <h3>Odds ratios and risk ratios</h3>
+
+  <p>The odds ratio (OR) is the ratio of odds of an event in two groups; the risk ratio (RR) is the ratio of probabilities. Both are bounded below by zero with no upper bound, and both equal 1.0 under the null. ORs are returned by logistic regression and are appropriate for case-control studies; RRs are interpretable for cohort and intervention studies but cannot be estimated from case-control sampling.</p>
+
+  <p>Critically, <strong>ORs and RRs are not interchangeable</strong>. For rare outcomes (event probability under ~10%), OR and RR are numerically close. For common outcomes, OR can be substantially larger than RR, and journalists and even researchers routinely confuse them. When the base rate is high, prefer RR or absolute risk difference for plain-language interpretation.</p>
+
+  <h3>Number Needed to Treat (NNT)</h3>
+
+  <p>NNT is the number of patients who must receive a treatment for one additional patient to benefit. It is computed as the reciprocal of the absolute risk reduction:</p>
+
+  <p><code>NNT = 1 / (p<sub>control</sub> &minus; p<sub>treatment</sub>)</code></p>
+
+  <p>NNT is the most clinically intuitive of all effect sizes &mdash; "you need to treat 12 patients to prevent one stroke" is something a physician, a patient, and a policymaker can all reason about. It is also asymmetric: NNT for harm (NNH) is computed the same way for adverse events. The catch is that NNT depends heavily on the baseline event rate; the same relative risk reduction yields wildly different NNTs in low- versus high-risk populations.</p>
+
+  <h2>Common Language Effect Size (CLES)</h2>
+
+  <p>McGraw and Wong's (1992) common language effect size translates a standardized difference into a probability statement: <em>what is the probability that a randomly chosen score from group 1 exceeds a randomly chosen score from group 2?</em> For a Cohen's <em>d</em> of 0.5, CLES is approximately 0.64 &mdash; meaning if you randomly pair members of the two groups, the higher-mean group will win about 64% of the time.</p>
+
+  <p>CLES is exceptional for communicating effects to non-technical audiences. "There is a 64% chance our drug recipient outperforms the placebo recipient" lands harder than "<em>d</em> = 0.5." It is also closely related to the area under the ROC curve and to the probability of superiority in non-parametric contexts.</p>
+
+  <h2>A Worked Comparison</h2>
+
+  <p>Suppose a randomized trial compares a new cognitive-behavioral intervention against a wait-list control on the Beck Depression Inventory. The treatment group (<em>n</em> = 40) has M = 14.2, SD = 6.1; the control group (<em>n</em> = 40) has M = 18.7, SD = 7.4. The base rate of "clinical remission" (BDI &lt; 10) is 35% in treatment, 15% in control.</p>
+
+  <table>
+    <tr><th>Metric</th><th>Value</th><th>Interpretation</th></tr>
+    <tr><td>Cohen's <em>d</em></td><td>&minus;0.66</td><td>Standardized mean difference, pooled SD</td></tr>
+    <tr><td>Hedges' <em>g</em></td><td>&minus;0.65</td><td>Small-sample bias correction (~1.5% shrinkage)</td></tr>
+    <tr><td>Glass's &Delta;</td><td>&minus;0.61</td><td>Standardized on control SD only</td></tr>
+    <tr><td>Pearson <em>r</em></td><td>&minus;0.31</td><td>Point-biserial correlation</td></tr>
+    <tr><td>CLES</td><td>0.68</td><td>68% chance treatment recipient has lower BDI than control</td></tr>
+    <tr><td>Risk ratio (remission)</td><td>2.33</td><td>Treatment patients 2.3&times; more likely to remit</td></tr>
+    <tr><td>Risk difference</td><td>0.20</td><td>20 percentage points more remit on treatment</td></tr>
+    <tr><td>NNT</td><td>5</td><td>Treat 5 patients to produce 1 additional remission</td></tr>
+  </table>
+
+  <p>Every row above describes the same data. Each tells a slightly different story, suited to a different audience. A meta-analyst wants <em>g</em>; a clinician wants NNT and risk difference; a peer reviewer wants <em>d</em> with its 95% CI; a journalist wants the CLES.</p>
+
+  <h2>Confidence Intervals on Effect Sizes</h2>
+
+  <p>An effect size without a confidence interval is not a finished analysis &mdash; it is an unmoored point estimate. APA reporting standards have required CIs since 2010, yet a depressing share of papers still report bare effect sizes. The CI tells your reader how precisely you have measured the effect, which is essential for judging replication potential and for downstream meta-analysis.</p>
+
+  <p>Most effect sizes have non-symmetric sampling distributions, so CIs should be computed using non-central <em>t</em>, <em>F</em>, or chi-squared distributions rather than the simple symmetric formula <code>estimate &plusmn; 1.96 SE</code>. For Cohen's <em>d</em> and Hedges' <em>g</em>, non-central <em>t</em> intervals (Cumming, 2014) are standard. For correlations, the Fisher <em>z</em> transformation is appropriate. For odds ratios, log-transform before computing CIs and then back-transform. PsyStat Lab and most modern packages handle these transformations automatically.</p>
+
+  <h2>The "Small / Medium / Large" Trap</h2>
+
+  <p>Cohen's 1988 textbook offered tentative benchmarks (<em>d</em> = 0.2 / 0.5 / 0.8) for fields that had no empirical guidance of their own. He framed them as last-resort defaults and explicitly warned against universal application. Three decades later, those defaults have hardened into something between conventional wisdom and law &mdash; a reviewer dismisses <em>d</em> = 0.15 as "small" without asking what is normal in that subfield.</p>
+
+  <p>Two recent empirical re-examinations have shifted the conversation. Funder and Ozer (2019) reviewed effect sizes across personality and social psychology and concluded that Cohen's anchors are too generous: in those fields, <em>r</em> = 0.10 represents a meaningful effect, <em>r</em> = 0.20 is moderate, and <em>r</em> = 0.30 is large. A correlation of 0.40 &mdash; "medium" by Cohen's translation &mdash; is in fact very large for individual-difference research.</p>
+
+  <p>Lovakov and Agadullina (2021) ran a parallel exercise on social psychology and proposed similar thresholds: <em>d</em> = 0.15 / 0.36 / 0.65 as small, medium, and large benchmarks empirically derived from the field's own literature. Both papers make the same broader point: <strong>benchmarks should be calibrated to the actual distribution of effect sizes in your field, not imported wholesale from a textbook published when behaviorism was still respectable</strong>.</p>
+
+  <table>
+    <tr><th>Source</th><th>Field</th><th>Small</th><th>Medium</th><th>Large</th></tr>
+    <tr><td>Cohen (1988)</td><td>General default</td><td>d = 0.2</td><td>d = 0.5</td><td>d = 0.8</td></tr>
+    <tr><td>Funder &amp; Ozer (2019)</td><td>Personality / social</td><td>r = 0.10</td><td>r = 0.20</td><td>r = 0.30</td></tr>
+    <tr><td>Lovakov &amp; Agadullina (2021)</td><td>Social psychology</td><td>d = 0.15</td><td>d = 0.36</td><td>d = 0.65</td></tr>
+    <tr><td>Hemphill (2003)</td><td>Psych assessment</td><td>r = 0.20</td><td>r = 0.30</td><td>r = 0.30+</td></tr>
+  </table>
+
+  <blockquote><p>"Effect-size labels are useful for orientation only. The substantive importance of an effect depends on the cost of intervention, the consequences of the outcome, and the prior literature in the relevant domain &mdash; never on a single textbook table." &mdash; Funder &amp; Ozer (2019), paraphrased</p></blockquote>
+
+  <h2>Practical Reporting Checklist</h2>
+
+  <ol>
+    <li><strong>Report at least one effect size for every test.</strong> p-values alone are insufficient and have been since 2010.</li>
+    <li><strong>Report a 95% CI on the effect size</strong>, computed with the appropriate non-central distribution.</li>
+    <li><strong>Specify which version you are reporting.</strong> Cohen's <em>d</em> with pooled SD? Hedges' <em>g</em>? Partial eta-squared or eta-squared? Be explicit; do not let SPSS labels speak for you.</li>
+    <li><strong>Match the metric to the design.</strong> Glass's &Delta; for unequal variances; <em>g</em> for small <em>n</em>; &omega;&sup2; for ANOVA; Cliff's <em>d</em> for non-parametric tests; OR/RR/NNT for binary outcomes.</li>
+    <li><strong>Interpret against field-specific benchmarks</strong>, not Cohen's 1988 defaults. Cite the empirical source for your benchmark.</li>
+    <li><strong>Report multiple complementary metrics when audiences differ.</strong> A clinical paper benefits from both <em>d</em> (for meta-analysis) and NNT (for practice).</li>
+  </ol>
+
+  <h2>Try It in PsyStat Lab</h2>
+
+  <p>The <strong>Effect Sizes</strong> module in PsyStat Lab computes every metric discussed in this article from raw data, summary statistics, or test output. It returns Cohen's <em>d</em>, Hedges' <em>g</em>, Glass's &Delta;, Pearson and rank-biserial correlations, eta-squared, partial eta-squared, omega-squared, Cohen's <em>f</em>, Cliff's <em>d</em>, odds ratios, risk ratios, NNT, and CLES &mdash; each with appropriate non-central confidence intervals and field-specific benchmark comparisons drawn from Funder &amp; Ozer (2019) and Lovakov &amp; Agadullina (2021).</p>
+
+  <p><a href="../landing.html#start">Get started free &rarr;</a></p>
+
+  <h2>References</h2>
+
+  <ul>
+    <li>Cohen, J. (1988). <em>Statistical Power Analysis for the Behavioral Sciences</em> (2nd ed.). Lawrence Erlbaum.</li>
+    <li>Cumming, G. (2014). The new statistics: Why and how. <em>Psychological Science, 25</em>(1), 7&ndash;29.</li>
+    <li>Funder, D. C., &amp; Ozer, D. J. (2019). Evaluating effect size in psychological research: Sense and nonsense. <em>Advances in Methods and Practices in Psychological Science, 2</em>(2), 156&ndash;168.</li>
+    <li>Hedges, L. V., &amp; Olkin, I. (1985). <em>Statistical Methods for Meta-Analysis</em>. Academic Press.</li>
+    <li>Hemphill, J. F. (2003). Interpreting the magnitudes of correlation coefficients. <em>American Psychologist, 58</em>(1), 78&ndash;79.</li>
+    <li>Lakens, D. (2013). Calculating and reporting effect sizes to facilitate cumulative science. <em>Frontiers in Psychology, 4</em>, 863.</li>
+    <li>Lovakov, A., &amp; Agadullina, E. R. (2021). Empirically derived guidelines for effect size interpretation in social psychology. <em>European Journal of Social Psychology, 51</em>(3), 485&ndash;504.</li>
+    <li>McGraw, K. O., &amp; Wong, S. P. (1992). A common language effect size statistic. <em>Psychological Bulletin, 111</em>(2), 361&ndash;365.</li>
+    <li>Romano, J., Kromrey, J. D., Coraggio, J., &amp; Skowronek, J. (2006). Appropriate statistics for ordinal level data. <em>Annual Meeting of the Florida Association of Institutional Research</em>.</li>
+    <li>Wasserstein, R. L., &amp; Lazar, N. A. (2016). The ASA's statement on p-values. <em>The American Statistician, 70</em>(2), 129&ndash;133.</li>
+  </ul>
+
+  <div style="margin-top:48px;padding-top:32px;border-top:1px solid #1E293B">
+    <h2 style="font-size:1.1rem;margin-bottom:16px;color:#94A3B8">Related Posts</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+      <a href="power-analysis.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06B6D4;margin-bottom:6px">Methodology</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">Power Analysis: How Much Data Do You Actually Need?</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">Underpowered studies are the engine of the replication crisis. A practical guide to calculating sample sizes that actually deliver answers.</div>
+      </a>
+      <a href="replication-crisis.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06B6D4;margin-bottom:6px">Methodology</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">The Replication Crisis: What Actually Happened</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">A clear-eyed account of how the social sciences discovered that many of their canonical findings would not replicate &mdash; and what changed.</div>
+      </a>
+    </div>
+  </div>
+</article>
+
+<div class="ad-slot" data-position="bottom" style="text-align:center;padding:16px 0;background:#0F172A;border-top:1px solid #1E293B"></div>
+
+<footer>
+  <p>&copy; 2026 Moonlit Social Labs.</p>
+  <div style="margin-top:12px"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../privacy.html">Privacy</a><a href="../terms.html">Terms</a><a href="https://ko-fi.com/moonlitsociallabs" target="_blank" rel="noopener" style="background:#FF5E5B;color:#fff;padding:4px 14px;border-radius:6px;font-weight:600;text-decoration:none">&#9749; Support Us</a></div>
+</footer>
+</body>
+</html>

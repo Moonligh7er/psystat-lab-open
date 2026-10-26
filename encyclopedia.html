@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta name="google-site-verification" content="IWGVEm2c0aIEJAr9l31qjz3YzIDiqVe8VdwF1FATmTw" />
+<title>Statistical Methods Encyclopedia | PsyStat Lab</title>
+<meta name="description" content="60+ statistical methods explained: hypothesis testing, regression, Bayesian inference, mixed models, psychometrics, causal inference, meta-analysis &amp; more.">
+<meta name="keywords" content="statistics encyclopedia, statistical methods reference, psychology statistics, ANOVA, regression, Bayesian, meta-analysis, multilevel models, psychometrics, causal inference, p-values, effect sizes">
+<meta name="author" content="Moonlit Social Labs">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://psystat-lab.dev/encyclopedia.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Statistical Methods Encyclopedia &mdash; PsyStat Lab">
+<meta property="og:description" content="A comprehensive scholarly reference for statistical methods in behavioral and social science research. From t-tests to multilevel Bayesian models.">
+<meta property="og:url" content="https://psystat-lab.dev/encyclopedia.html">
+<meta property="og:image" content="https://psystat-lab.dev/og-image.png">
+<meta property="og:site_name" content="PsyStat Lab">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Statistical Methods Encyclopedia">
+<meta name="twitter:description" content="A scholarly reference for the statistical methods that power modern behavioral science research.">
+<meta name="twitter:image" content="https://psystat-lab.dev/og-image.png">
+
+<!-- Schema.org -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Statistical Methods Encyclopedia",
+  "description": "A comprehensive, scholarly encyclopedia of statistical methods for behavioral and social science research.",
+  "author": {
+    "@type": "Organization",
+    "name": "Moonlit Social Labs"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Moonlit Social Labs",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://psystat-lab.dev/og-image.png"
+    }
+  },
+  "datePublished": "2026-04-26",
+  "dateModified": "2026-04-26",
+  "mainEntityOfPage": "https://psystat-lab.dev/encyclopedia.html"
+}
+</script>
+
+<!-- FAQ Schema for rich snippet eligibility -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is statistical power?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Statistical power is the probability that a test will correctly reject a false null hypothesis, given a specified true effect size. It equals 1 minus beta and is determined by alpha, the true effect size, sample size, and the variability of the outcome. Cohen recommended a minimum of .80 power for most psychological research."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a p-value?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A p-value is the probability of observing a test statistic at least as extreme as the one obtained, assuming the null hypothesis is true. It does not directly tell you the probability that the null is true, that the effect is real, or that a replication will succeed. The American Statistical Association cautions that p-values should never be the sole basis for scientific conclusions."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is ANOVA?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "ANOVA (Analysis of Variance) is a test of whether three or more group means differ on a continuous outcome. The F-statistic is the ratio of between-group variance to within-group variance. A significant F tells you the groups are not all equal, but post-hoc tests like Tukey's HSD are needed to identify which specific groups differ."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is Cohen's d?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Cohen's d is a standardized effect size for the difference between two means, expressed in standard deviation units. Cohen's classic benchmarks are small d = 0.2, medium = 0.5, and large = 0.8, though these are field-specific. APA reporting standards require effect sizes alongside test statistics."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is Bayesian inference?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Bayesian inference treats parameters as random variables described by probability distributions. It combines prior beliefs with observed data via Bayes' theorem to produce a posterior distribution that quantifies what you should believe about a parameter given everything you knew before plus the data you collected."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a Bayes factor?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A Bayes factor is the ratio of the marginal likelihood of the data under one model to the marginal likelihood under another, quantifying relative evidence for competing hypotheses. Unlike p-values, Bayes factors can quantify evidence for the null hypothesis, distinguishing 'evidence of absence' from 'absence of evidence.'"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is Cronbach's alpha?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Cronbach's alpha is an estimate of internal-consistency reliability based on the average inter-item correlations and the number of items in a scale. Values of .70-.79 are considered acceptable, .80-.89 good, and .90+ excellent. Modern recommendations favor McDonald's omega as a more accurate alternative."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is propensity score matching?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Propensity score matching is a method for estimating causal effects from observational data by matching treated and control units with similar probabilities of receiving treatment. It can only adjust for observed confounders; hidden confounders bias the estimate just as in any non-randomized comparison."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is meta-analysis?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Meta-analysis is the quantitative synthesis of effect sizes across multiple studies. A well-conducted meta-analysis can yield more precise and generalizable estimates than any single study by pooling data, but it can also propagate the biases of the underlying literature if conducted carelessly."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a confidence interval?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A confidence interval is a range of plausible values for a population parameter, constructed so that the procedure captures the true value at a specified long-run rate (e.g., 95%). A 95% CI is a property of the method, not of any single interval. CIs communicate both magnitude and precision, making them preferable to bare p-values."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is regression analysis?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Regression analysis models an outcome variable as a function of one or more predictors. Simple linear regression fits Y = b0 + b1*X + e by minimizing squared residuals. Multiple regression extends this to several predictors simultaneously, where each coefficient represents the predicted change in Y for a one-unit change in that predictor holding others constant."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the Bonferroni correction?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Bonferroni correction is the simplest method for adjusting alpha when running multiple statistical tests. It divides alpha by the number of tests (alpha/k) to control the family-wise error rate. It is famously conservative; Holm's step-down procedure is uniformly more powerful and should generally be preferred."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a mixed model?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A mixed model (multilevel or hierarchical model) is used when data are nested—students within classrooms, repeated measures within people, patients within clinics. It partitions variance across levels using random intercepts and/or random slopes, honoring the nested structure that ordinary regression would ignore, and producing accurate standard errors."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is statistical significance?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Statistical significance is a decision in null hypothesis testing that the observed data are surprising enough under the null hypothesis to warrant rejecting it. Conventionally this means a p-value below .05. Significance does not equal practical importance and should always be reported alongside effect sizes and confidence intervals."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is effect size?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Effect size is a standardized index of the magnitude of a phenomenon, independent of sample size. Common effect sizes include Cohen's d and Hedges' g for mean differences, eta-squared for ANOVA, R-squared for regression, and Pearson's r for correlation. Where p-values answer 'is there an effect?', effect sizes answer 'how big is it?'"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a DAG (Directed Acyclic Graph)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A Directed Acyclic Graph (DAG) is a graphical formalism, popularized by Judea Pearl, for representing causal assumptions as a network of variables connected by directed arrows representing direct causal influences. DAGs determine, via the backdoor criterion, which variables must be adjusted for to estimate a target causal effect without bias."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the false discovery rate (FDR)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The false discovery rate (FDR) is the expected proportion of rejected null hypotheses that are actually false positives. The Benjamini-Hochberg (1995) FDR procedure is the standard in genomics, neuroimaging, and high-throughput contexts where some false positives are acceptable in exchange for greater discovery power."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is logistic regression?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Logistic regression models a binary outcome (yes/no, success/failure) as a function of predictors using the logit link, returning coefficients on the log-odds scale. Exponentiating coefficients gives odds ratios. It is fit by maximum likelihood and is appropriate when linear regression would predict probabilities outside [0,1]."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is mediation analysis?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Mediation analysis decomposes a total effect of X on Y into a direct effect and an indirect effect transmitted through a mediator M. Modern practice uses bias-corrected bootstrap confidence intervals on the indirect effect (a*b), which are more powerful than the legacy Sobel test and do not require normality."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a confounder?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A confounder is a variable that is a common cause of both exposure and outcome (e.g., age affects both smoking and lung cancer). To estimate the causal effect of an exposure, you must adjust for confounders. Confounders are causally distinct from mediators (which lie on the causal pathway) and colliders (which are common effects)."
+      }
+    }
+  ]
+}
+</script>
+
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0B0F1A;
+    --surface: #131926;
+    --elevated: #1A2236;
+    --border: #1E293B;
+    --text: #F1F5F9;
+    --text2: #94A3B8;
+    --text3: #64748B;
+    --primary: #6366F1;
+    --primary-glow: rgba(99,102,241,.25);
+    --cyan: #06B6D4;
+    --indigo-light: #818CF8;
+  }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.7;
+    overflow-x: hidden; -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::selection { background: var(--primary); color: #fff; }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 0;
+    background: rgba(11,15,26,.85); backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  nav .inner {
+    max-width: 1280px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  nav .logo {
+    display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem;
+  }
+  nav .logo-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, #6366F1, #06B6D4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; color: #fff; font-weight: 800;
+  }
+  nav .links { display: flex; align-items: center; gap: 24px; font-size: .9rem; }
+  nav .links a { color: var(--text2); }
+  nav .links a:hover { color: var(--text); text-decoration: none; }
+  nav .cta-sm {
+    background: var(--primary); color: #fff !important; padding: 6px 16px;
+    border-radius: 8px; font-weight: 600;
+  }
+  nav .cta-sm:hover { background: #4F46E5; }
+
+  /* Hero */
+  .hero {
+    max-width: 1100px; margin: 0 auto; padding: 130px 24px 40px; text-align: center;
+  }
+  .hero .eyebrow {
+    display: inline-block; padding: 6px 14px; border-radius: 999px;
+    background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.3);
+    color: var(--indigo-light); font-size: .8rem; font-weight: 600;
+    letter-spacing: .04em; text-transform: uppercase; margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.15;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #818CF8, #6366F1, #06B6D4);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .hero p.lede {
+    font-size: 1.15rem; color: var(--text2); max-width: 780px; margin: 0 auto 24px;
+    line-height: 1.7;
+  }
+  .hero .stats {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 32px; margin-top: 32px;
+    color: var(--text3); font-size: .9rem;
+  }
+  .hero .stats strong { color: var(--text); display: block; font-size: 1.4rem; font-weight: 700; }
+
+  /* Search bar */
+  .search-wrap {
+    max-width: 800px; margin: 40px auto 24px; padding: 0 24px;
+  }
+  .search-box {
+    width: 100%; padding: 14px 20px; border-radius: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); font-size: 1rem; font-family: inherit;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .search-box:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+  }
+  .search-box::placeholder { color: var(--text3); }
+
+  /* Category nav (sticky tabs) */
+  .cat-nav {
+    position: sticky; top: 64px; z-index: 50;
+    background: rgba(11,15,26,.92); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0; margin-bottom: 32px;
+  }
+  .cat-nav .scroll {
+    max-width: 1280px; margin: 0 auto; padding: 0 24px;
+    display: flex; gap: 8px; overflow-x: auto; scrollbar-width: thin;
+  }
+  .cat-nav .scroll::-webkit-scrollbar { height: 4px; }
+  .cat-nav .scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .cat-nav a {
+    flex-shrink: 0; padding: 8px 14px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text2); font-size: .85rem; font-weight: 500;
+    white-space: nowrap; transition: all .15s;
+  }
+  .cat-nav a:hover {
+    color: var(--text); border-color: var(--primary); text-decoration: none;
+  }
+
+  /* Main content */
+  .container {
+    max-width: 1280px; margin: 0 auto; padding: 0 24px 60px;
+  }
+
+  /* Category sections */
+  .cat-section { margin-bottom: 56px; scroll-margin-top: 130px; }
+  .cat-section h2 {
+    font-size: 1.7rem; font-weight: 700; margin-bottom: 8px;
+    color: var(--text); display: flex; align-items: center; gap: 12px;
+  }
+  .cat-section h2 .badge {
+    font-size: .7rem; padding: 4px 10px; border-radius: 6px;
+    background: rgba(99,102,241,.15); color: var(--indigo-light);
+    font-weight: 600; letter-spacing: .03em;
+  }
+  .cat-section .cat-intro {
+    color: var(--text2); margin-bottom: 24px; font-size: 1rem; max-width: 900px;
+  }
+
+  /* Grid of entries */
+  .entries {
+    display: grid; gap: 20px;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 720px) {
+    .entries { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1080px) {
+    .entries { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .entry {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px; transition: all .2s;
+    display: flex; flex-direction: column;
+  }
+  .entry:hover {
+    border-color: rgba(99,102,241,.4);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0,0,0,.4);
+  }
+  .entry h3 {
+    font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; color: var(--indigo-light);
+    line-height: 1.3;
+  }
+  .entry .definition {
+    font-size: .92rem; color: var(--text); margin-bottom: 12px; font-weight: 500;
+  }
+  .entry .body {
+    font-size: .88rem; color: var(--text2); line-height: 1.65; margin-bottom: 12px;
+  }
+  .entry .body p { margin-bottom: 10px; }
+  .entry .body p:last-child { margin-bottom: 0; }
+  .entry .meta {
+    margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; gap: 8px; font-size: .75rem;
+  }
+  .entry .meta span {
+    padding: 3px 8px; border-radius: 6px;
+    background: var(--elevated); color: var(--text3);
+  }
+  .entry .meta span.module {
+    background: rgba(6,182,212,.1); color: var(--cyan); border: 1px solid rgba(6,182,212,.2);
+  }
+  .entry strong { color: var(--text); font-weight: 600; }
+  .entry em { color: var(--indigo-light); font-style: normal; font-weight: 500; }
+  /* Highlight the entry when navigated to via anchor link */
+  .entry:target {
+    border-color: var(--indigo);
+    box-shadow: 0 0 0 3px rgba(99,102,241,.2), 0 12px 32px rgba(0,0,0,.5);
+    animation: entry-flash 2s ease-out;
+  }
+  @keyframes entry-flash {
+    0%   { background: rgba(99,102,241,.14); }
+    100% { background: var(--surface); }
+  }
+  /* Permalink icon next to each entry heading */
+  .entry h3 .permalink {
+    opacity: 0; margin-left: 8px; font-size: .85rem; color: var(--text3);
+    text-decoration: none; transition: opacity .15s;
+  }
+  .entry:hover h3 .permalink { opacity: 1; }
+  .entry h3 .permalink:hover { color: var(--indigo-light); text-decoration: none; }
+
+  .no-results {
+    text-align: center; padding: 60px 24px; color: var(--text3);
+    background: var(--surface); border: 1px dashed var(--border); border-radius: 12px;
+    display: none;
+  }
+
+  /* Ad container */
+  .ad-container {
+    max-width: 970px; margin: 40px auto; padding: 0 24px; text-align: center;
+  }
+  .ad-label {
+    font-size: .7rem; color: var(--text3); margin-bottom: 8px;
+    text-transform: uppercase; letter-spacing: .08em;
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border); padding: 40px 24px; text-align: center;
+    color: var(--text3); font-size: .85rem; margin-top: 40px;
+  }
+  footer p { margin-bottom: 12px; }
+  footer .footer-links a { color: var(--text3); margin: 0 12px; }
+  footer .footer-links a:hover { color: var(--text); }
+  footer .ko-fi {
+    display: inline-block; margin-top: 16px; padding: 8px 18px;
+    background: linear-gradient(135deg, #6366F1, #06B6D4); color: #fff !important;
+    border-radius: 8px; font-weight: 600; font-size: .85rem;
+  }
+  footer .ko-fi:hover { text-decoration: none; opacity: .9; }
+
+  @media (max-width: 640px) {
+    .hero { padding: 100px 16px 30px; }
+    .container { padding: 0 16px 40px; }
+    nav .links a:not(.cta-sm) { display: none; }
+    .cat-section h2 { font-size: 1.35rem; }
+    .cat-nav { top: 60px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="inner">
+    <a href="landing.html" class="logo" style="text-decoration:none;color:var(--text)">
+      <div class="logo-icon">&Psi;</div>
+      <span>PsyStat <span style="background:linear-gradient(135deg,#818CF8,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Lab</span></span><span style="display:inline-block;background:#7C3AED;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;text-transform:uppercase">BETA</span>
+    </a>
+    <div class="links">
+      <a href="landing.html">Home</a>
+      <a href="features.html">Features</a>
+      <a href="blog/">Blog</a>
+      <a href="about.html">About</a>
+      <a href="landing.html#start" class="cta-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header class="hero">
+  <span class="eyebrow">Reference Library</span>
+  <h1>The Statistical Methods Encyclopedia</h1>
+  <p class="lede">A scholarly, working reference for the statistical procedures that drive contemporary psychology, sociology, education, criminology, and the broader behavioral sciences. Each entry explains what the method is, when to use it, the assumptions it leans on, and where you can run it in PsyStat Lab today.</p>
+  <div class="stats">
+    <div><strong>9</strong> Categories</div>
+    <div><strong>60+</strong> Methods</div>
+    <div><strong>240+</strong> Modules in PsyStat</div>
+    <div><strong>~8,000</strong> Words of Reference Content</div>
+  </div>
+</header>
+
+<!-- Search -->
+<div class="search-wrap">
+  <input type="text" id="searchBox" class="search-box" placeholder="Search methods (e.g. 'ANOVA', 'mediation', 'Bayes factor')..." aria-label="Search statistical methods">
+</div>
+
+<!-- Category nav -->
+<div class="cat-nav">
+  <div class="scroll">
+    <a href="#hypothesis">A. Hypothesis Testing</a>
+    <a href="#parametric">B. Parametric Tests</a>
+    <a href="#regression">C. Regression</a>
+    <a href="#nonparametric">D. Non-Parametric</a>
+    <a href="#bayesian">E. Bayesian</a>
+    <a href="#psychometrics">F. Psychometrics</a>
+    <a href="#multilevel">G. Multilevel & Mixed</a>
+    <a href="#causal">H. Causal Inference</a>
+    <a href="#metaanalysis">I. Meta-Analysis</a>
+  </div>
+</div>
+
+<div class="container">
+
+<div class="no-results" id="noResults">No methods match your search. Try a different keyword.</div>
+
+<!-- ============================================================ -->
+<!-- A. HYPOTHESIS TESTING & INFERENCE -->
+<!-- ============================================================ -->
+<section class="cat-section" id="hypothesis">
+  <h2>A. Hypothesis Testing & Inference <span class="badge">8 Entries</span></h2>
+  <p class="cat-intro">The grammar of inferential statistics. These are the conceptual building blocks that govern how we move from a sample to a claim about a population, and how we quantify the uncertainty that necessarily comes with that move.</p>
+
+  <div class="entries">
+
+    <article class="entry" data-title="Null Hypothesis Significance Testing NHST" data-content="null hypothesis significance testing NHST Fisher Neyman Pearson alpha rejection region p value significance test" id="null-hypothesis-significance-testing-nhst">
+      <h3>Null Hypothesis Significance Testing (NHST) <a href="#null-hypothesis-significance-testing-nhst" class="permalink" aria-label="Permalink to Null Hypothesis Significance Testing (NHST)" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A formal procedure for deciding whether observed data are surprising enough under a "no effect" assumption to warrant rejecting that assumption.</div>
+      <div class="body">
+        <p>NHST emerged from a fusion of <strong>Fisher's significance testing</strong> and the <strong>Neyman-Pearson decision framework</strong>. The analyst specifies a null hypothesis (H<sub>0</sub>), typically of "no effect" or "no difference," and computes a test statistic whose sampling distribution under H<sub>0</sub> is known. If the observed statistic falls in the rejection region (defined by an alpha level, conventionally .05), the null is rejected.</p>
+        <p>NHST is appropriate when you have a clear comparison and a well-defined sampling model, but it has been heavily criticized for encouraging dichotomous "significant vs. not" thinking and for being misinterpreted as the probability that H<sub>0</sub> is true (Wasserstein & Lazar, 2016). <em>Use it as a screening tool, not a verdict.</em></p>
+        <p><strong>Worked example:</strong> A clinical trial compares a new SSRI to placebo on depression scores. With H<sub>0</sub>: mean<sub>drug</sub> = mean<sub>placebo</sub> and a two-sample t-test yielding p = .003, you reject H<sub>0</sub> at alpha = .05.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: T-Test &amp; ANOVA modules</span><span>Inference</span></div>
+    </article>
+
+    <article class="entry" data-title="p-values" data-content="p value probability extreme test statistic null hypothesis Wasserstein Lazar ASA misinterpretation" id="p-values">
+      <h3>p-values <a href="#p-values" class="permalink" aria-label="Permalink to p-values" title="Copy link to this entry">#</a></h3>
+      <div class="definition">The probability of observing a test statistic at least as extreme as the one obtained, assuming the null hypothesis is true.</div>
+      <div class="body">
+        <p>A p-value answers a narrow conditional question: <em>given that H<sub>0</sub> is exactly true, how often would chance alone produce a result this extreme or more so?</em> A small p-value means the observed data are unusual under H<sub>0</sub>, but it does not directly tell you the probability that H<sub>0</sub> is true, that the effect is real, or that a replication will succeed.</p>
+        <p>The American Statistical Association's 2016 statement explicitly cautioned that p-values should never be the sole basis for scientific conclusions and that the .05 threshold has no inherent epistemic meaning. Modern best practice reports exact p-values alongside effect sizes and confidence intervals, and treats p as one piece of evidence among many.</p>
+        <p>Two common misreadings: (1) p = .04 does <strong>not</strong> mean there is a 96% chance the effect is real; (2) p &gt; .05 does <strong>not</strong> mean "no effect" &mdash; it means the data are insufficient to distinguish the observed effect from zero.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: All inferential modules</span><span>Inference</span></div>
+    </article>
+
+    <article class="entry" data-title="Type I and Type II errors" data-content="type I type II error alpha beta false positive false negative power Neyman Pearson" id="type-i-and-type-ii-errors">
+      <h3>Type I and Type II Errors <a href="#type-i-and-type-ii-errors" class="permalink" aria-label="Permalink to Type I and Type II Errors" title="Copy link to this entry">#</a></h3>
+      <div class="definition">The two ways a hypothesis test can mislead you: rejecting a true null (Type I, alpha) or failing to reject a false null (Type II, beta).</div>
+      <div class="body">
+        <p>In the Neyman-Pearson framework, every test trades off these two errors. The <strong>Type I error rate (alpha)</strong> is the long-run frequency of false positives if you ran the same study many times under a true H<sub>0</sub>. Researchers fix this in advance, classically at .05 or .01.</p>
+        <p>The <strong>Type II error rate (beta)</strong> is the probability of missing a real effect of a given size. It depends on alpha, the true effect size, the sample size, and the variability of the data. <em>Statistical power</em>, defined as 1 &minus; beta, quantifies your test's sensitivity to detect effects when they exist.</p>
+        <p><strong>Use case:</strong> A diagnostic study using a Type I rate of .01 to avoid falsely flagging healthy patients accepts a higher Type II rate &mdash; meaning some sick patients will be missed unless the sample is large. Designing studies is fundamentally about balancing these error rates against the cost of each kind of mistake.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Power Analysis suite</span><span>Inference</span></div>
+    </article>
+
+    <article class="entry" data-title="Confidence intervals" data-content="confidence interval CI coverage frequentist range plausible values estimation precision Cumming" id="confidence-intervals">
+      <h3>Confidence Intervals <a href="#confidence-intervals" class="permalink" aria-label="Permalink to Confidence Intervals" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A range of plausible values for a population parameter, constructed so that the procedure captures the true value at a specified long-run rate (e.g., 95%).</div>
+      <div class="body">
+        <p>A 95% confidence interval is a property of the <em>method</em>, not of any single interval. If you repeated the study an infinite number of times and constructed a 95% CI each time, 95% of those intervals would contain the true parameter. The interval you actually obtained either does or does not &mdash; you cannot say there is a 95% probability the true value falls inside it (that's a Bayesian credible interval).</p>
+        <p>CIs are increasingly preferred over bare p-values because they communicate <strong>both magnitude and precision</strong>. A narrow CI suggests a precise estimate; a wide one signals high uncertainty. Geoff Cumming and others have championed "the new statistics" precisely because CIs make estimation, rather than yes/no testing, the central activity.</p>
+        <p><strong>Worked example:</strong> A study reports a mean difference of 4.2 IQ points (95% CI [1.1, 7.3]). The interval excludes zero (so a two-sided test would be significant), but the lower bound suggests the effect could be as small as 1 point.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Estimation &amp; Bootstrap CI modules</span><span>Estimation</span></div>
+    </article>
+
+    <article class="entry" data-title="Effect sizes" data-content="effect size Cohen's d Hedges g eta squared omega squared r magnitude practical significance APA" id="effect-sizes">
+      <h3>Effect Sizes <a href="#effect-sizes" class="permalink" aria-label="Permalink to Effect Sizes" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Standardized indices of the magnitude of a phenomenon, independent of sample size.</div>
+      <div class="body">
+        <p>Where p-values answer "is there an effect?", effect sizes answer "how big is it?" Common standardized effect sizes include <strong>Cohen's d</strong> and <strong>Hedges' g</strong> for mean differences, <strong>eta-squared</strong> and <strong>omega-squared</strong> for ANOVA, <strong>R<sup>2</sup></strong> and <strong>f<sup>2</sup></strong> for regression, and <strong>Pearson's r</strong> for correlation.</p>
+        <p>Cohen's classic benchmarks (small d = 0.2, medium = 0.5, large = 0.8) are convenient but field-specific; in some areas of social psychology, "small" effects can have substantial practical impact. Always interpret effect sizes against domain norms and against the cost-benefit of the intervention being studied.</p>
+        <p>APA's Publication Manual now <em>requires</em> effect sizes alongside test statistics. PsyStat reports them automatically with bootstrap or non-central CIs whenever applicable, and offers Hedges' correction for small samples.</p>
+        <div style="margin-top:8px"><a href="../blog/effect-sizes-beyond-cohen.html" style="font-size:.85rem">&rarr; Deep dive: Effect Sizes Beyond Cohen's d</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Effect Size Calculator (every test)</span><span>Reporting</span></div>
+    </article>
+
+    <article class="entry" data-title="Statistical power" data-content="statistical power 1 minus beta a priori sensitivity sample size G*Power Cohen prospective post-hoc" id="statistical-power">
+      <h3>Statistical Power <a href="#statistical-power" class="permalink" aria-label="Permalink to Statistical Power" title="Copy link to this entry">#</a></h3>
+      <div class="definition">The probability that a test will correctly reject a false null hypothesis, given a specified true effect size.</div>
+      <div class="body">
+        <p>Power = 1 &minus; beta. It is determined by four interacting quantities: <strong>alpha</strong>, the <strong>true effect size</strong>, the <strong>sample size</strong>, and the <strong>variability</strong> of the outcome. Increase any one (or shrink variability) and power goes up.</p>
+        <p>Cohen recommended a minimum of .80 power for most psychological research. Studies with low power are not just unlikely to detect real effects &mdash; the effects they <em>do</em> detect are systematically inflated, a phenomenon known as the <em>winner's curse</em> or Type M (magnitude) error (Gelman & Carlin, 2014).</p>
+        <p><strong>Use case:</strong> Before running a 2x2 between-subjects experiment expecting a medium-sized interaction (f = .25), an a priori power analysis at alpha = .05 and power = .80 returns N = 128 &mdash; 32 per cell. Skipping this step is the single most common reason underpowered psychology studies fail to replicate.</p>
+        <p><em>Avoid post-hoc "observed power" calculations</em> &mdash; they are mathematically redundant with the p-value and provide no additional information.</p>
+        <div style="margin-top:8px"><a href="../blog/power-analysis.html" style="font-size:.85rem">&rarr; Deep dive: Power Analysis</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Power Analysis (a priori, sensitivity, compromise)</span><span>Design</span></div>
+    </article>
+
+    <article class="entry" data-title="Multiple comparisons correction" data-content="multiple comparisons correction Bonferroni Holm FDR Benjamini Hochberg family wise error rate FWER false discovery" id="multiple-comparisons-correction">
+      <h3>Multiple Comparisons Correction <a href="#multiple-comparisons-correction" class="permalink" aria-label="Permalink to Multiple Comparisons Correction" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Statistical adjustments that control the inflated false-positive rate that arises when many tests are run on the same data.</div>
+      <div class="body">
+        <p>Run 20 independent tests at alpha = .05 against a true null and you expect, on average, one "significant" result by chance alone. Multiple comparisons procedures protect against this by either controlling the <strong>family-wise error rate (FWER)</strong> &mdash; the probability of any false positive &mdash; or the <strong>false discovery rate (FDR)</strong> &mdash; the expected proportion of rejected nulls that are actually false.</p>
+        <p>The <strong>Bonferroni correction</strong> is the simplest FWER procedure (alpha / k) but is famously conservative. <strong>Holm's step-down</strong> is uniformly more powerful and should generally be preferred. The <strong>Benjamini-Hochberg (1995) FDR</strong> procedure is the standard in genomics, neuroimaging, and high-throughput contexts where some false positives are acceptable in exchange for greater discovery power.</p>
+        <p><strong>Worked example:</strong> An fMRI study testing 50,000 voxels uses BH-FDR at q = .05; significant voxels are those whose p-values fall below the line p<sub>(i)</sub> &le; (i/m) &times; q after sorting.</p>
+        <div style="margin-top:8px"><a href="../blog/multiple-comparisons.html" style="font-size:.85rem">&rarr; Deep dive: Multiple Comparisons (Bonferroni, Holm, FDR)</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Post-Hoc &amp; Multiple Testing module</span><span>Inference</span></div>
+    </article>
+
+    <article class="entry" data-title="One-tailed vs two-tailed tests" data-content="one tailed two tailed directional non directional alternative hypothesis sided test pre registration" id="one-tailed-vs-two-tailed-tests">
+      <h3>One-Tailed vs Two-Tailed Tests <a href="#one-tailed-vs-two-tailed-tests" class="permalink" aria-label="Permalink to One-Tailed vs Two-Tailed Tests" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A choice about whether the alternative hypothesis specifies a direction (one-tailed) or only that the parameters differ (two-tailed).</div>
+      <div class="body">
+        <p>A <strong>two-tailed</strong> test rejects H<sub>0</sub> if the observed statistic is extreme in <em>either</em> direction. A <strong>one-tailed</strong> test commits in advance to a specific direction (e.g., the new drug improves outcomes), placing the entire alpha in one tail. This makes it more powerful for detecting effects in the predicted direction but blind to effects in the opposite direction.</p>
+        <p>One-tailed tests are appropriate when (a) a directional prediction is genuinely justified by theory and (b) an effect in the opposite direction would be treated identically to no effect &mdash; both would lead to the same decision. They become inappropriate (and a form of researcher degrees of freedom) if the analyst chooses tailedness <em>after</em> seeing the data.</p>
+        <p><strong>Best practice:</strong> Pre-register your tail choice. When in doubt, use two-tailed: a one-tailed test that turns out to point the "wrong" way produces a counterintuitive non-significant result that is hard to publish honestly.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: T-Test &amp; Z-Test modules</span><span>Inference</span></div>
+    </article>
+
+  </div>
+</section>
+
+
+
+<!-- ============================================================ -->
+<!-- B. PARAMETRIC TESTS -->
+<!-- ============================================================ -->
+<section class="cat-section" id="parametric">
+  <h2>B. Parametric Tests <span class="badge">7 Entries</span></h2>
+  <p class="cat-intro">The classical workhorses of group-comparison statistics. These methods assume the data are drawn from specific (usually normal) distributions and that variance behaves predictably across groups. When their assumptions hold, they are maximally powerful.</p>
+
+  <div class="entries">
+
+    <article class="entry" data-title="Independent samples t-test" data-content="independent samples t-test Welch Student two group mean difference unequal variance Levene normality" id="independent-samples-t-test">
+      <h3>Independent Samples t-Test <a href="#independent-samples-t-test" class="permalink" aria-label="Permalink to Independent Samples t-Test" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A test of whether two unrelated groups differ on the mean of a continuous outcome.</div>
+      <div class="body">
+        <p>The independent-samples (or "two-sample") t-test compares the means of two groups by dividing the observed mean difference by the standard error of that difference. Two flavors exist: the <strong>Student t-test</strong> assumes equal variances across groups, while <strong>Welch's t-test</strong> relaxes that assumption and is generally recommended as the default (Delacre, Lakens, & Leys, 2017).</p>
+        <p><strong>Assumptions:</strong> independence of observations, approximate normality of the outcome within each group (or large enough samples for the Central Limit Theorem to apply), and either equal variances (Student) or no assumption about variance (Welch). Levene's test is sometimes used to check variance equality, but the safer move is to use Welch's by default.</p>
+        <p><strong>Worked example:</strong> Comparing extraversion scores between 80 musicians (M = 4.2) and 75 accountants (M = 3.6), Welch's t(149.3) = 3.85, p &lt; .001, d = 0.62 [0.30, 0.94]. Pair this with effect size and CI for full APA reporting.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: T-Test module</span><span>Two groups</span></div>
+    </article>
+
+    <article class="entry" data-title="Paired samples t-test" data-content="paired samples t-test dependent within subjects difference scores repeated measures pre post" id="paired-samples-t-test">
+      <h3>Paired Samples t-Test <a href="#paired-samples-t-test" class="permalink" aria-label="Permalink to Paired Samples t-Test" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A test of whether the mean of within-subject difference scores is non-zero.</div>
+      <div class="body">
+        <p>When each subject contributes two measurements &mdash; pre/post, left/right, twin pairs &mdash; the paired t-test analyzes the <em>differences</em> rather than the raw scores. This dramatically increases power because between-subject variability cancels out: you're testing whether the typical individual changed.</p>
+        <p><strong>Assumptions:</strong> the pairs are independent of each other, and the difference scores are approximately normally distributed. Note that it is the <em>differences</em>, not the raw scores in either condition, that need to be normal.</p>
+        <p><strong>Worked example:</strong> Forty patients are weighed before and after an 8-week intervention. Mean weight loss = 3.2 kg (SD = 2.1), t(39) = 9.64, p &lt; .001, d<sub>z</sub> = 1.52. Report the paired Cohen's d<sub>z</sub> (mean difference / SD of differences), not d for between-groups comparisons &mdash; the two are not interchangeable and confusion is rampant in the literature.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Paired T-Test module</span><span>Within-subjects</span></div>
+    </article>
+
+    <article class="entry" data-title="One-way ANOVA" data-content="one way ANOVA analysis of variance F test omnibus three or more groups between subjects Tukey post hoc" id="one-way-anova">
+      <h3>One-Way ANOVA <a href="#one-way-anova" class="permalink" aria-label="Permalink to One-Way ANOVA" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A test of whether three or more group means differ on a continuous outcome, controlling the family-wise error rate of pairwise comparisons.</div>
+      <div class="body">
+        <p>One-way ANOVA generalizes the t-test to more than two groups. The F-statistic is the ratio of <strong>between-group variance to within-group variance</strong>. A significant F tells you the groups are not all equal, but not <em>which</em> ones differ &mdash; that requires post-hoc tests like Tukey's HSD, Scheffe, or planned contrasts.</p>
+        <p><strong>Assumptions:</strong> independence of observations, normality of residuals within each group, and homogeneity of variance across groups (the latter is often violated; <em>Welch's ANOVA</em> is a robust alternative). The Brown-Forsythe and Welch corrections handle heteroscedasticity well.</p>
+        <p><strong>Worked example:</strong> Comparing memory recall across four study conditions (massed, spaced, interleaved, control), F(3, 196) = 7.42, p &lt; .001, eta<sup>2</sup> = .102. Tukey HSD reveals spaced &gt; massed (p = .003) and interleaved &gt; massed (p &lt; .001).</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: One-Way ANOVA module</span><span>Three+ groups</span></div>
+    </article>
+
+    <article class="entry" data-title="Repeated measures ANOVA" data-content="repeated measures ANOVA RM ANOVA within subjects sphericity Mauchly Greenhouse Geisser Huynh Feldt" id="repeated-measures-anova">
+      <h3>Repeated Measures ANOVA <a href="#repeated-measures-anova" class="permalink" aria-label="Permalink to Repeated Measures ANOVA" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A within-subjects extension of ANOVA used when each participant is measured under three or more conditions or time points.</div>
+      <div class="body">
+        <p>RM-ANOVA gains power over between-subjects designs by partitioning out individual differences. It tests whether the mean response varies across the within-subject factor while accounting for the correlated structure of the data.</p>
+        <p><strong>The sphericity assumption</strong> is unique and important: the variances of the differences between all pairs of conditions must be equal. <strong>Mauchly's test</strong> assesses this; if violated, apply the <strong>Greenhouse-Geisser</strong> (conservative) or <strong>Huynh-Feldt</strong> (less conservative) corrections to the degrees of freedom. Many statisticians now recommend skipping Mauchly entirely and applying Greenhouse-Geisser by default, or moving to a linear mixed model.</p>
+        <p><strong>Use case:</strong> A working memory study measures 30 participants at 4 retention intervals. RM-ANOVA, F(3, 87) = 24.1, p &lt; .001 with Greenhouse-Geisser epsilon = .82, eta<sub>p</sub><sup>2</sup> = .45. Pairwise comparisons with Bonferroni adjustment localize the decline.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Repeated Measures ANOVA module</span><span>Within-subjects</span></div>
+    </article>
+
+    <article class="entry" data-title="Factorial ANOVA" data-content="factorial ANOVA two way three way main effects interaction simple effects 2x2 design" id="factorial-anova">
+      <h3>Factorial ANOVA <a href="#factorial-anova" class="permalink" aria-label="Permalink to Factorial ANOVA" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A multi-factor ANOVA that decomposes variance into main effects of each factor and the interactions among them.</div>
+      <div class="body">
+        <p>A factorial design crosses two or more independent variables (e.g., a 2x3 design with two levels of Condition and three levels of Difficulty). Factorial ANOVA partitions the total variance into main effects (does Condition matter overall? does Difficulty?) and an interaction (does the effect of Condition depend on Difficulty?).</p>
+        <p><strong>The interaction is usually the scientifically interesting result.</strong> If a significant interaction exists, main effects must be interpreted with caution &mdash; "Condition matters, but only when Difficulty is high." Follow up with simple-effects analyses to characterize the interaction pattern.</p>
+        <p><strong>Worked example:</strong> A 2 (Reward: present/absent) x 2 (Task: easy/hard) design on persistence yields a significant Reward x Task interaction, F(1, 116) = 8.91, p = .003, eta<sub>p</sub><sup>2</sup> = .071. Simple effects: reward boosts persistence on hard tasks (p &lt; .001) but not easy ones (p = .42). The interaction tells the actual story.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Factorial ANOVA module</span><span>Multi-factor</span></div>
+    </article>
+
+    <article class="entry" data-title="ANCOVA Analysis of Covariance" data-content="ANCOVA analysis of covariance covariate adjustment baseline pre-test homogeneity of regression slopes" id="ancova-analysis-of-covariance">
+      <h3>ANCOVA <a href="#ancova-analysis-of-covariance" class="permalink" aria-label="Permalink to ANCOVA" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A hybrid of ANOVA and regression that compares group means after statistically adjusting for one or more continuous covariates.</div>
+      <div class="body">
+        <p>ANCOVA increases power and reduces bias by removing variance attributable to a covariate that is correlated with the outcome but, ideally, independent of the grouping variable. The classic use case is adjusting post-test scores for pre-test scores in a randomized experiment.</p>
+        <p><strong>Critical assumption:</strong> homogeneity of regression slopes &mdash; the relationship between the covariate and outcome must be the same across groups. If the covariate-by-group interaction is significant, ANCOVA is misleading and you should report the interaction itself. Also, the covariate must be measured before treatment (or at least be unaffected by it) to avoid removing real treatment variance &mdash; a phenomenon known as <em>Lord's Paradox</em>.</p>
+        <p><strong>Use case:</strong> An RCT of a tutoring program adjusts post-test math scores for pre-test scores. Adjusted treatment effect = 4.7 points (95% CI [2.1, 7.3]) vs. an unadjusted estimate of 4.9 points &mdash; the small change reflects baseline equivalence from successful randomization.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: ANCOVA module</span><span>Adjusted comparison</span></div>
+    </article>
+
+    <article class="entry" data-title="MANOVA Multivariate ANOVA" data-content="MANOVA multivariate analysis of variance Wilks lambda Pillai Hotelling multiple dependent variables follow up discriminant" id="manova-multivariate-anova">
+      <h3>MANOVA <a href="#manova-multivariate-anova" class="permalink" aria-label="Permalink to MANOVA" title="Copy link to this entry">#</a></h3>
+      <div class="definition">An extension of ANOVA to multiple, conceptually related dependent variables analyzed simultaneously.</div>
+      <div class="body">
+        <p>MANOVA tests whether group means differ on a <em>linear combination</em> of multiple outcomes. It is appropriate when the dependent variables are theoretically related (e.g., subscales of the same construct) and you want to control the Type I error rate that would arise from running separate ANOVAs.</p>
+        <p>Test statistics include <strong>Wilks' Lambda</strong> (the most common), <strong>Pillai's Trace</strong> (most robust to assumption violations), <strong>Hotelling's Trace</strong>, and <strong>Roy's Largest Root</strong>. Pillai is generally recommended when assumptions are uncertain.</p>
+        <p><strong>Assumptions:</strong> multivariate normality, homogeneity of variance-covariance matrices (Box's M), and linearity among DVs. A significant MANOVA is typically followed by univariate ANOVAs or descriptive discriminant analysis to interpret which DVs are driving the multivariate effect. <em>Do not interpret MANOVA as a simple "fancier ANOVA"</em> &mdash; it answers a fundamentally multivariate question.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: MANOVA module</span><span>Multivariate</span></div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- C. REGRESSION -->
+<!-- ============================================================ -->
+<section class="cat-section" id="regression">
+  <h2>C. Regression <span class="badge">9 Entries</span></h2>
+  <p class="cat-intro">Regression methods model an outcome variable as a function of one or more predictors. They are the foundation of nearly all modern statistical inference &mdash; ANOVA, t-tests, and ANCOVA are all special cases of the linear model.</p>
+
+  <div class="entries">
+
+    <article class="entry" data-title="Simple linear regression" data-content="simple linear regression OLS slope intercept line of best fit one predictor R squared bivariate" id="simple-linear-regression">
+      <h3>Simple Linear Regression <a href="#simple-linear-regression" class="permalink" aria-label="Permalink to Simple Linear Regression" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Models a continuous outcome as a linear function of a single predictor by minimizing the sum of squared residuals.</div>
+      <div class="body">
+        <p>Simple regression fits the equation Y = b<sub>0</sub> + b<sub>1</sub>X + e, where b<sub>1</sub> is the predicted change in Y for a one-unit change in X. Ordinary Least Squares (OLS) chooses b<sub>0</sub> and b<sub>1</sub> to minimize the sum of squared vertical distances from each point to the line.</p>
+        <p><strong>Assumptions (LINE):</strong> Linearity of the X-Y relationship, Independence of errors, Normality of residuals, and Equality of error variance (homoscedasticity). Diagnostic plots &mdash; residuals vs. fitted, Q-Q plot, scale-location &mdash; reveal violations more clearly than any single test.</p>
+        <p><strong>Worked example:</strong> Predicting GPA from study hours per week with N = 200, b<sub>1</sub> = 0.08 (95% CI [0.05, 0.11]), R<sup>2</sup> = .14, F(1, 198) = 32.4, p &lt; .001. Each additional study hour is associated with a 0.08-point GPA increase, accounting for 14% of GPA variance.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Linear Regression module</span><span>Continuous outcome</span></div>
+    </article>
+
+    <article class="entry" data-title="Multiple regression" data-content="multiple regression OLS multiple predictors partial regression coefficients standardized beta semi partial r2 adjusted" id="multiple-regression">
+      <h3>Multiple Regression <a href="#multiple-regression" class="permalink" aria-label="Permalink to Multiple Regression" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Extends simple regression to model an outcome as a linear function of multiple predictors simultaneously.</div>
+      <div class="body">
+        <p>The model Y = b<sub>0</sub> + b<sub>1</sub>X<sub>1</sub> + b<sub>2</sub>X<sub>2</sub> + ... + e estimates each coefficient as the predicted change in Y for a one-unit change in that predictor <em>holding all other predictors constant</em>. This conditioning interpretation is what gives regression its analytic power &mdash; and what makes it dangerous if predictors are highly correlated or causally tangled.</p>
+        <p>Standardized coefficients (betas) put all predictors on a common scale and are useful for comparing relative importance, but they should not be over-interpreted: a beta of .30 is not "larger" than a beta of .25 in any deep sense. Report unstandardized coefficients with CIs as the primary effect estimates.</p>
+        <p><strong>Use case:</strong> Predicting depression scores from neuroticism, sleep quality, and social support, N = 412. Each is a significant unique predictor; semi-partial r<sup>2</sup> reveals neuroticism uniquely accounts for 12% of variance, sleep 4%, and support 3%.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Multiple Regression module</span><span>Multivariable</span></div>
+    </article>
+
+    <article class="entry" data-title="Logistic regression" data-content="logistic regression binary outcome logit odds ratio maximum likelihood Hosmer Lemeshow classification" id="logistic-regression">
+      <h3>Logistic Regression <a href="#logistic-regression" class="permalink" aria-label="Permalink to Logistic Regression" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Models a binary outcome as a function of predictors using the logit link, returning coefficients on the log-odds scale.</div>
+      <div class="body">
+        <p>When the outcome is dichotomous (yes/no, dropout/retain, recidivate/desist), linear regression is inappropriate &mdash; it can predict probabilities outside [0, 1] and violates homoscedasticity. Logistic regression instead models log(p / (1 &minus; p)) as a linear function of predictors, fit by maximum likelihood.</p>
+        <p>Coefficients are interpretable as <strong>log-odds ratios</strong>; exponentiating gives <strong>odds ratios</strong>. An OR of 1.5 means a one-unit increase in X is associated with 50% greater odds of the outcome. Effect sizes include McFadden's pseudo-R<sup>2</sup>, Nagelkerke's R<sup>2</sup>, and the area under the ROC curve (AUC) for predictive accuracy.</p>
+        <p><strong>Assumptions:</strong> independence of observations, linearity of predictors with the logit, no extreme multicollinearity, and adequate sample size (typically 10-20 events per predictor). Hosmer-Lemeshow tests model calibration.</p>
+        <p><strong>Use case:</strong> Predicting graduation (1) vs. dropout (0) from GPA, attendance, and SES; OR for GPA = 2.4 (95% CI [1.8, 3.2]).</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Logistic Regression module</span><span>Binary outcome</span></div>
+    </article>
+
+    <article class="entry" data-title="Poisson regression" data-content="Poisson regression count outcome rate exposure offset overdispersion negative binomial zero inflated" id="poisson-regression">
+      <h3>Poisson Regression <a href="#poisson-regression" class="permalink" aria-label="Permalink to Poisson Regression" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A generalized linear model for count outcomes, using a log link and an assumed Poisson distribution.</div>
+      <div class="body">
+        <p>When the outcome is a count of discrete events (number of drinks per week, hospital visits per year, errors per task), Poisson regression is the natural starting point. Coefficients exponentiate to <strong>incidence rate ratios</strong> &mdash; an IRR of 1.3 means the rate increases by 30% per unit of X.</p>
+        <p><strong>Critical caveat:</strong> Poisson assumes the variance equals the mean (equidispersion). Real count data are often <em>overdispersed</em>, in which case standard errors are too small and tests become anti-conservative. Check the deviance/df ratio &mdash; if it is much greater than 1, switch to <strong>negative binomial regression</strong> or use quasi-Poisson standard errors.</p>
+        <p>For data with excess zeros (e.g., counts of risky behaviors where many participants report zero), <strong>zero-inflated</strong> or <strong>hurdle models</strong> separate the structural zero process from the count process.</p>
+        <p><strong>Use case:</strong> Modeling annual ER visits as a function of chronic condition count and insurance status, with population at risk as an offset.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: GLM &amp; Count Models module</span><span>Count outcome</span></div>
+    </article>
+
+    <article class="entry" data-title="Hierarchical regression" data-content="hierarchical regression block entry sequential incremental variance R squared change theory driven nested models" id="hierarchical-regression">
+      <h3>Hierarchical Regression <a href="#hierarchical-regression" class="permalink" aria-label="Permalink to Hierarchical Regression" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A theory-driven sequential approach in which predictors are entered in pre-specified blocks to assess incremental variance explained.</div>
+      <div class="body">
+        <p>Distinct from "stepwise" regression (which is largely discredited), hierarchical regression entries are decided by the analyst based on theory or temporal logic. Each new block's contribution is judged by the <strong>change in R<sup>2</sup></strong> and an associated F-test.</p>
+        <p>Common pattern: enter demographic controls in Block 1, established predictors in Block 2, and the novel theoretical predictor in Block 3. A significant delta-R<sup>2</sup> for Block 3 demonstrates incremental validity over and above what was already known.</p>
+        <p><strong>Worked example:</strong> Predicting job performance, Block 1 (age, tenure) R<sup>2</sup> = .08; Block 2 (cognitive ability) delta-R<sup>2</sup> = .14, p &lt; .001; Block 3 (emotional intelligence) delta-R<sup>2</sup> = .03, p = .04. EI provides modest but significant incremental prediction beyond cognitive ability.</p>
+        <p><em>Note: "hierarchical regression" in this sense should not be confused with "hierarchical linear modeling" (HLM), which refers to multilevel models for nested data &mdash; see Section G.</em></p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Hierarchical Regression module</span><span>Theory-driven</span></div>
+    </article>
+
+    <article class="entry" data-title="Moderation interaction" data-content="moderation interaction effect simple slopes Johnson Neyman pick a point centering Aiken West" id="moderation-interaction">
+      <h3>Moderation <a href="#moderation-interaction" class="permalink" aria-label="Permalink to Moderation" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Tests whether the relationship between a predictor and an outcome depends on the level of a third variable.</div>
+      <div class="body">
+        <p>Moderation is implemented by adding an interaction term (X * W) to the regression model. A significant interaction indicates the slope of X on Y differs across levels of W. The classic interpretation is "the effect of X depends on W."</p>
+        <p>Two follow-up techniques characterize the interaction: <strong>simple slopes</strong> (pick-a-point) compute and test the slope of X at low (-1 SD), mean, and high (+1 SD) values of W; the <strong>Johnson-Neyman procedure</strong> identifies the regions of W in which the X-Y relationship is significant. Always mean-center continuous predictors before computing the interaction term to reduce non-essential multicollinearity (Aiken & West, 1991).</p>
+        <p><strong>Use case:</strong> Does social support (W) moderate the effect of stress (X) on depression (Y)? Significant Stress x Support interaction (b = -0.14, p = .002). Simple slopes show stress strongly predicts depression at low support (b = 0.43) but not at high support (b = 0.08).</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Moderation &amp; PROCESS-style module</span><span>Conditional effects</span></div>
+    </article>
+
+    <article class="entry" data-title="Mediation indirect effect" data-content="mediation indirect effect Baron Kenny Sobel bootstrap PROCESS Hayes Preacher confidence interval" id="mediation-indirect-effect">
+      <h3>Mediation <a href="#mediation-indirect-effect" class="permalink" aria-label="Permalink to Mediation" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Decomposes a total effect of X on Y into a direct effect and an indirect effect transmitted through a mediator M.</div>
+      <div class="body">
+        <p>The classic Baron and Kenny (1986) causal-steps approach has been superseded by direct estimation and inference on the <strong>indirect effect (a*b)</strong>, where a is the X &rarr; M path and b is the M &rarr; Y path controlling for X. Inference uses the <strong>bias-corrected bootstrap confidence interval</strong> (Preacher & Hayes, 2008), which does not require the indirect effect to be normally distributed and is far more powerful than the legacy Sobel test.</p>
+        <p>Critically, mediation is a <em>causal claim</em>. Cross-sectional mediation analyses can describe statistical patterns but cannot establish causal mechanism without temporal precedence and (ideally) experimental manipulation of the mediator. The presence of unmeasured confounders of M and Y is the most common threat to validity.</p>
+        <p><strong>Use case:</strong> Does self-efficacy mediate the effect of training on performance? Indirect effect = 0.21 (95% bootstrap CI [0.09, 0.34]), significant; direct effect = 0.12 (CI [-0.03, 0.27]), suggesting full mediation.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Mediation &amp; SEM module</span><span>Process</span></div>
+    </article>
+
+    <article class="entry" data-title="Multicollinearity VIF" data-content="multicollinearity VIF variance inflation factor tolerance condition number ridge correlated predictors instability" id="multicollinearity-vif">
+      <h3>Multicollinearity <a href="#multicollinearity-vif" class="permalink" aria-label="Permalink to Multicollinearity" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A condition in which predictors in a regression model are highly correlated with each other, inflating standard errors and destabilizing coefficient estimates.</div>
+      <div class="body">
+        <p>Multicollinearity does not bias coefficients but it inflates their variance, making individual predictors appear non-significant even when their joint contribution is large. The <strong>Variance Inflation Factor (VIF)</strong> is the standard diagnostic: a VIF of 1 indicates no inflation, values above 5 warrant attention, and values above 10 are typically considered problematic. The condition number of the design matrix is a more rigorous global indicator.</p>
+        <p>Solutions include: dropping one of the redundant predictors, combining them via a composite score or PCA, mean-centering interaction components, or using <strong>ridge regression</strong> (which adds an L2 penalty that stabilizes estimates at the cost of small bias). Lasso and elastic net regularization are popular when many candidate predictors are correlated.</p>
+        <p><strong>Use case:</strong> A model includes height (cm), height (in), and BMI. VIF for the two height variables is &gt; 100 &mdash; trivially redundant. Drop one; the model becomes well-conditioned.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Regression Diagnostics module</span><span>Diagnostic</span></div>
+    </article>
+
+    <article class="entry" data-title="Robust regression" data-content="robust regression M-estimator Huber MM-estimator outliers influential observations leverage Cook's distance bisquare" id="robust-regression">
+      <h3>Robust Regression <a href="#robust-regression" class="permalink" aria-label="Permalink to Robust Regression" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Regression methods that down-weight outlying observations to produce coefficient estimates resistant to violations of normality.</div>
+      <div class="body">
+        <p>OLS is highly sensitive to outliers because it squares residuals &mdash; a single extreme point can dominate the fit. Robust regression replaces the squared-error loss with a function that grows more slowly for large residuals, such as <strong>Huber's M-estimator</strong> (linear beyond a threshold) or the <strong>MM-estimator</strong> (which combines high breakdown with high efficiency).</p>
+        <p>Diagnostics like <strong>Cook's distance</strong>, leverage (hat values), and DFFITS identify influential cases; a robust fit and an OLS fit that disagree substantially is a strong signal that the OLS results are being driven by a small number of points.</p>
+        <p><strong>Use case:</strong> A regression of CEO compensation on firm performance shows OLS b = 0.04 (n.s.), while MM-estimator b = 0.21 (p &lt; .001). The OLS estimate was being pulled toward zero by three founder-CEOs with anomalous compensation structures.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Robust Regression module</span><span>Outlier-resistant</span></div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- D. NON-PARAMETRIC TESTS -->
+<!-- ============================================================ -->
+<section class="cat-section" id="nonparametric">
+  <h2>D. Non-Parametric Tests <span class="badge">7 Entries</span></h2>
+  <p class="cat-intro">Methods that make minimal assumptions about the underlying distribution of the data, typically operating on ranks or frequencies. Use these when sample sizes are small, distributions are heavily skewed, or the outcome is genuinely ordinal.</p>
+
+  <div class="entries">
+
+    <article class="entry" data-title="Mann-Whitney U test Wilcoxon rank sum" data-content="Mann Whitney U Wilcoxon rank sum nonparametric two groups ordinal stochastic dominance" id="mann-whitney-u-test-wilcoxon-rank-sum">
+      <h3>Mann-Whitney U Test <a href="#mann-whitney-u-test-wilcoxon-rank-sum" class="permalink" aria-label="Permalink to Mann-Whitney U Test" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A non-parametric alternative to the independent-samples t-test that compares the distributions of two groups using ranks.</div>
+      <div class="body">
+        <p>Sometimes called the Wilcoxon rank-sum test, Mann-Whitney U pools the data from two groups, ranks the combined values, then asks whether the rank sums differ more than expected by chance. It tests stochastic dominance &mdash; whether values in one group tend to be larger than values in the other &mdash; rather than literal mean differences.</p>
+        <p><strong>Assumptions:</strong> independence of observations and (for a strict mean-difference interpretation) similar distribution shapes across groups. With dissimilar shapes it remains a valid test of stochastic dominance.</p>
+        <p>The effect size is typically reported as <strong>r = Z / sqrt(N)</strong> or as the rank-biserial correlation. Common language effect size (CLES) &mdash; the probability that a randomly chosen value from group A exceeds one from group B &mdash; is increasingly preferred for interpretability.</p>
+        <p><strong>Use case:</strong> Comparing self-reported pain ratings (1-10) between two surgical techniques with N = 28 per group; the highly skewed distributions argue against a t-test, so U = 312, p = .04, r = .27.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Non-Parametric module</span><span>Two groups</span></div>
+    </article>
+
+    <article class="entry" data-title="Wilcoxon signed-rank test" data-content="Wilcoxon signed rank paired nonparametric within subjects matched difference scores symmetric" id="wilcoxon-signed-rank-test">
+      <h3>Wilcoxon Signed-Rank Test <a href="#wilcoxon-signed-rank-test" class="permalink" aria-label="Permalink to Wilcoxon Signed-Rank Test" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A non-parametric alternative to the paired t-test that ranks the absolute differences between paired observations.</div>
+      <div class="body">
+        <p>The Wilcoxon signed-rank test handles within-subject comparisons when the difference scores are not normally distributed or when the outcome is ordinal. Differences are computed for each pair, ranked by absolute value, and the signs reattached. The test statistic compares the sum of positive ranks to the sum of negative ranks.</p>
+        <p><strong>Assumption:</strong> the distribution of difference scores is symmetric about its median. If symmetry is implausible, the simpler <em>sign test</em> can be used, though it has lower power.</p>
+        <p><strong>Use case:</strong> A study asks 22 participants to rate two product designs on a 7-point scale. The differences are heavily skewed; Wilcoxon V = 178, p = .008. Effect size r = .51 indicates a large preference for Design B.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Non-Parametric module</span><span>Within-subjects</span></div>
+    </article>
+
+    <article class="entry" data-title="Kruskal-Wallis test" data-content="Kruskal Wallis nonparametric ANOVA three or more groups ranks Dunn post hoc chi-square approximation" id="kruskal-wallis-test">
+      <h3>Kruskal-Wallis Test <a href="#kruskal-wallis-test" class="permalink" aria-label="Permalink to Kruskal-Wallis Test" title="Copy link to this entry">#</a></h3>
+      <div class="definition">The non-parametric extension of one-way ANOVA, comparing the rank distributions of three or more independent groups.</div>
+      <div class="body">
+        <p>Kruskal-Wallis ranks all observations across groups, sums the ranks within each group, and compares them to the expected sum under the null hypothesis of identical distributions. The test statistic is approximately chi-square distributed with k &minus; 1 degrees of freedom.</p>
+        <p>A significant Kruskal-Wallis is typically followed by <strong>Dunn's test</strong> with Bonferroni or Holm correction to identify which pairs of groups differ. Effect size is reported as <strong>epsilon-squared</strong> or eta-squared based on the H statistic.</p>
+        <p><strong>Use case:</strong> Comparing time-to-recovery (heavily right-skewed) across three rehab programs, H(2) = 11.4, p = .003, epsilon<sup>2</sup> = .14. Dunn's test with Holm correction reveals Program C recovers faster than Program A (p<sub>adj</sub> = .002).</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Non-Parametric module</span><span>Three+ groups</span></div>
+    </article>
+
+    <article class="entry" data-title="Friedman test" data-content="Friedman nonparametric repeated measures ANOVA blocks ranks within subjects Nemenyi Conover" id="friedman-test">
+      <h3>Friedman Test <a href="#friedman-test" class="permalink" aria-label="Permalink to Friedman Test" title="Copy link to this entry">#</a></h3>
+      <div class="definition">The non-parametric counterpart to repeated-measures ANOVA, comparing three or more related conditions by ranking observations within each subject.</div>
+      <div class="body">
+        <p>Friedman ranks each subject's observations across the within-subject conditions and tests whether the average ranks differ across conditions. It avoids the sphericity assumption of RM-ANOVA entirely and is robust to outliers.</p>
+        <p>Significant Friedman tests are followed by post-hoc procedures such as <strong>Nemenyi</strong>, <strong>Conover-Iman</strong>, or pairwise Wilcoxon tests with multiple-comparisons correction. Effect size is the Kendall's W coefficient of concordance, ranging 0 (no agreement) to 1 (perfect agreement among rankings).</p>
+        <p><strong>Use case:</strong> Forty raters evaluate four AI-generated essays on a 5-point quality scale. Friedman chi<sup>2</sup>(3) = 28.7, p &lt; .001, W = .24. Pairwise Wilcoxon with Holm reveals Essays 2 and 4 are rated higher than Essays 1 and 3.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Non-Parametric module</span><span>Within-subjects</span></div>
+    </article>
+
+    <article class="entry" data-title="Spearman correlation" data-content="Spearman rank correlation rho monotonic nonparametric Pearson alternative ordinal tied ranks" id="spearman-correlation">
+      <h3>Spearman Rank Correlation <a href="#spearman-correlation" class="permalink" aria-label="Permalink to Spearman Rank Correlation" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A non-parametric measure of the strength and direction of a monotonic relationship between two variables, computed as the Pearson correlation of their ranks.</div>
+      <div class="body">
+        <p>Spearman's rho ranges from &minus;1 to +1 and equals 1 when the two variables are perfectly monotonically related &mdash; i.e., one is a strictly increasing function of the other &mdash; even if the relationship is not linear. It is more robust to outliers than Pearson's r and is appropriate for ordinal data.</p>
+        <p>Use Spearman when the bivariate scatter shows a clear monotonic but non-linear pattern, when one or both variables are ordinal, or when extreme outliers are pulling Pearson's r in misleading directions. <strong>Kendall's tau</strong> is an alternative that handles ties more gracefully and has a more direct probabilistic interpretation.</p>
+        <p><strong>Use case:</strong> Correlating SES rank with happiness rating (1-7), n = 412. Spearman rho = .31 (95% bootstrap CI [.22, .40]), p &lt; .001. Pearson r = .19 was attenuated by ceiling effects in the happiness measure.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Correlation module</span><span>Association</span></div>
+    </article>
+
+    <article class="entry" data-title="Chi-square tests" data-content="chi square goodness of fit independence contingency table expected observed frequencies Pearson Yates correction" id="chi-square-tests">
+      <h3>Chi-Square Tests <a href="#chi-square-tests" class="permalink" aria-label="Permalink to Chi-Square Tests" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A family of tests comparing observed and expected frequencies in categorical data, used for goodness-of-fit and independence of two categorical variables.</div>
+      <div class="body">
+        <p>The two main flavors are the <strong>chi-square goodness-of-fit test</strong> (does the observed distribution of one categorical variable match an expected distribution?) and the <strong>chi-square test of independence</strong> (are two categorical variables associated in a contingency table?). Both compute Sum[(O &minus; E)<sup>2</sup> / E] and compare to a chi-square distribution.</p>
+        <p><strong>Assumptions:</strong> independent observations, mutually exclusive categories, and adequate expected cell counts (commonly all E &ge; 5; some advise &ge; 1 with no more than 20% below 5). Yates' continuity correction is sometimes applied to 2x2 tables but is generally over-conservative; Fisher's exact test is preferred for small samples. Effect sizes include <strong>Cramer's V</strong> for general r x c tables and the <strong>phi coefficient</strong> for 2x2 tables.</p>
+        <p><strong>Use case:</strong> Testing whether voting preference is independent of region in a 4 x 3 contingency table, chi<sup>2</sup>(6) = 24.1, p &lt; .001, Cramer's V = .14.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Categorical Tests module</span><span>Frequencies</span></div>
+    </article>
+
+    <article class="entry" data-title="Fisher's exact test" data-content="Fisher exact test 2x2 small samples hypergeometric contingency rare events conditional inference" id="fisher-s-exact-test">
+      <h3>Fisher's Exact Test <a href="#fisher-s-exact-test" class="permalink" aria-label="Permalink to Fisher's Exact Test" title="Copy link to this entry">#</a></h3>
+      <div class="definition">An exact test of independence in contingency tables, computed from the hypergeometric distribution rather than relying on the chi-square approximation.</div>
+      <div class="body">
+        <p>When expected cell counts are small (a common situation in clinical trials of rare events or small-sample social science), the chi-square approximation breaks down. Fisher's exact test conditions on the marginal totals and computes the exact probability of obtaining the observed table or one more extreme.</p>
+        <p>Originally developed for 2x2 tables, Fisher's exact test extends to larger r x c tables via Monte Carlo or network algorithms. It is always valid and is the gold standard for small samples; with large samples, results converge with the chi-square test.</p>
+        <p><strong>Use case:</strong> A pilot drug trial with 8 responders out of 12 in the treatment arm versus 2 of 11 in the placebo arm. The expected count in one cell is below 5, ruling out chi-square. Fisher's exact p = .009, OR = 9.0 (95% CI [1.4, 78.4]). The wide CI reflects the small sample &mdash; the test is significant but the precision is poor.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Categorical Tests module</span><span>Small samples</span></div>
+    </article>
+
+  </div>
+</section>
+
+
+
+<!-- ============================================================ -->
+<!-- E. BAYESIAN STATISTICS -->
+<!-- ============================================================ -->
+<section class="cat-section" id="bayesian">
+  <h2>E. Bayesian Statistics <span class="badge">6 Entries</span></h2>
+  <p class="cat-intro">An alternative inferential paradigm that treats parameters as random variables described by probability distributions. Bayesian methods quantify what you should believe given the data and your prior knowledge, and have surged in popularity as computational power has made them practical.</p>
+
+  <div class="entries">
+
+    <article class="entry" data-title="Bayes factors" data-content="Bayes factor BF10 BF01 evidence model comparison Jeffreys Wagenmakers default prior null" id="bayes-factors">
+      <h3>Bayes Factors <a href="#bayes-factors" class="permalink" aria-label="Permalink to Bayes Factors" title="Copy link to this entry">#</a></h3>
+      <div class="definition">The ratio of the marginal likelihood of the data under one model to the marginal likelihood under another, quantifying relative evidence for competing hypotheses.</div>
+      <div class="body">
+        <p>BF<sub>10</sub> = P(data | H<sub>1</sub>) / P(data | H<sub>0</sub>). A BF<sub>10</sub> of 10 means the data are 10 times more likely under H<sub>1</sub> than under H<sub>0</sub>; BF<sub>01</sub> = 1/BF<sub>10</sub> reverses the comparison. Unlike p-values, Bayes factors can quantify <strong>evidence for the null</strong>, distinguishing "evidence of absence" from "absence of evidence."</p>
+        <p>Jeffreys' (1961) interpretive scale &mdash; later refined by Lee and Wagenmakers &mdash; calls BFs of 1-3 anecdotal, 3-10 moderate, 10-30 strong, 30-100 very strong, and &gt;100 extreme. These are heuristics, not laws.</p>
+        <p>Bayes factors require specifying a prior on the effect size under H<sub>1</sub>. The JZS (Jeffreys-Zellner-Siow) Cauchy prior with scale .707 is the default in the BayesFactor R package and is generally well-behaved. Sensitivity analysis &mdash; reporting BFs across multiple prior scales &mdash; is best practice.</p>
+        <p><strong>Use case:</strong> A replication of a marginally significant original study returns BF<sub>01</sub> = 8.4: substantial evidence <em>in favor of</em> the null relative to the original effect size hypothesis.</p>
+        <div style="margin-top:8px"><a href="../blog/bayesian-methods.html" style="font-size:.85rem">&rarr; Deep dive: Bayesian Methods in Psychology</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Bayesian Inference module</span><span>Model comparison</span></div>
+    </article>
+
+    <article class="entry" data-title="Posterior distributions" data-content="posterior distribution Bayes theorem update prior likelihood credible interval HDI marginal" id="posterior-distributions">
+      <h3>Posterior Distributions <a href="#posterior-distributions" class="permalink" aria-label="Permalink to Posterior Distributions" title="Copy link to this entry">#</a></h3>
+      <div class="definition">The probability distribution of a parameter after combining prior beliefs with observed data via Bayes' theorem.</div>
+      <div class="body">
+        <p>Bayes' theorem states posterior &prop; likelihood &times; prior. The posterior is the central object of Bayesian inference: it answers "what should I believe about this parameter, given everything I knew before plus the data I just collected?"</p>
+        <p>Summaries of the posterior include the <strong>posterior mean or median</strong> (point estimate), the <strong>95% credible interval</strong> or <strong>highest density interval (HDI)</strong> (range containing 95% of posterior probability), and the <strong>posterior probability of direction</strong> (e.g., P(b &gt; 0 | data)). Unlike a frequentist CI, a 95% credible interval <em>can</em> be interpreted as "there is a 95% probability the parameter lies in this range, given the data and prior."</p>
+        <p><strong>Use case:</strong> A Bayesian regression yields a posterior on the slope with median = 0.34, 95% HDI [0.18, 0.51], P(b &gt; 0 | data) = 0.999. The full posterior &mdash; not just the point estimate &mdash; is the inference.</p>
+        <div style="margin-top:8px"><a href="../blog/bayesian-methods.html" style="font-size:.85rem">&rarr; Deep dive: Bayesian Methods in Psychology</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Bayesian Regression module</span><span>Inference</span></div>
+    </article>
+
+    <article class="entry" data-title="Prior selection" data-content="prior selection informative weakly informative non informative flat Jeffreys conjugate elicitation sensitivity analysis" id="prior-selection">
+      <h3>Prior Selection <a href="#prior-selection" class="permalink" aria-label="Permalink to Prior Selection" title="Copy link to this entry">#</a></h3>
+      <div class="definition">The process of choosing a probability distribution to encode beliefs about a parameter before observing the current data.</div>
+      <div class="body">
+        <p>Priors range from <strong>non-informative</strong> (uniform, Jeffreys) to <strong>weakly informative</strong> (centered on plausible values with broad spread) to <strong>informative</strong> (sharply concentrated on previous estimates from prior research). The current consensus, championed by Andrew Gelman and others, is that <em>weakly informative priors</em> are usually preferable: they regularize estimates and avoid pathological behavior with small samples without imposing strong substantive commitments.</p>
+        <p>For regression coefficients on standardized predictors, a Normal(0, 2.5) or Cauchy(0, 2.5) prior is a common weakly informative default. For variance components, Half-Normal or Half-t priors are well-behaved.</p>
+        <p>Always conduct a <strong>sensitivity analysis</strong>: refit the model with several plausible priors and report whether substantive conclusions change. If the data are informative, the posterior is robust to reasonable prior choices; if it isn't, that itself is the headline finding.</p>
+        <div style="margin-top:8px"><a href="../blog/bayesian-methods.html" style="font-size:.85rem">&rarr; Deep dive: Bayesian Methods in Psychology</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Bayesian Inference module</span><span>Modeling choice</span></div>
+    </article>
+
+    <article class="entry" data-title="MCMC Markov Chain Monte Carlo" data-content="MCMC Markov Chain Monte Carlo Metropolis Hastings Gibbs Hamiltonian Stan NUTS R-hat ESS convergence diagnostics" id="mcmc-markov-chain-monte-carlo">
+      <h3>Markov Chain Monte Carlo (MCMC) <a href="#mcmc-markov-chain-monte-carlo" class="permalink" aria-label="Permalink to Markov Chain Monte Carlo (MCMC)" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A class of algorithms for sampling from complex posterior distributions when analytical solutions are unavailable.</div>
+      <div class="body">
+        <p>MCMC constructs a Markov chain whose stationary distribution is the posterior of interest. After a burn-in period, the chain produces samples that can be summarized to estimate posterior means, intervals, and any function of the parameters. Key algorithms include <strong>Metropolis-Hastings</strong>, <strong>Gibbs sampling</strong>, and modern gradient-based methods like <strong>Hamiltonian Monte Carlo (HMC)</strong> and the <strong>No-U-Turn Sampler (NUTS)</strong> implemented in Stan and PyMC.</p>
+        <p><strong>Convergence diagnostics</strong> are essential. <strong>R-hat (Gelman-Rubin)</strong> compares within-chain to between-chain variance; values close to 1.00 (commonly &lt; 1.01) indicate convergence. <strong>Effective sample size (ESS)</strong> measures how much information the autocorrelated chain provides relative to independent samples; aim for ESS &gt; 400 for stable inference. Trace plots should look like fuzzy caterpillars with no drift or stickiness.</p>
+        <p><strong>Use case:</strong> Fitting a multilevel logistic model with crossed random effects via NUTS. After 4 chains x 2,000 iterations (1,000 warmup), all R-hats &lt; 1.005 and bulk ESS &gt; 1,200 &mdash; safe to interpret.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Bayesian Modeling backend</span><span>Computation</span></div>
+    </article>
+
+    <article class="entry" data-title="Bayesian regression" data-content="Bayesian regression posterior on coefficients shrinkage regularization brms rstanarm horseshoe" id="bayesian-regression">
+      <h3>Bayesian Regression <a href="#bayesian-regression" class="permalink" aria-label="Permalink to Bayesian Regression" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A regression framework that returns full posterior distributions for every coefficient, naturally incorporating uncertainty and prior information.</div>
+      <div class="body">
+        <p>Bayesian regression uses the same likelihood as classical regression but updates a prior on each coefficient to produce a posterior. Benefits include: principled uncertainty quantification, natural shrinkage (regularization) toward prior means, the ability to incorporate previous research as informative priors, and graceful handling of hierarchical structures and missing data.</p>
+        <p>Sparse-prior variants like the <strong>horseshoe prior</strong> (Carvalho, Polson, & Scott, 2010) provide a Bayesian analog to the Lasso, shrinking irrelevant predictors strongly toward zero while leaving important ones nearly unbiased. Hierarchical priors enable partial pooling across groups, an alternative to mixed-effects models in many use cases.</p>
+        <p><strong>Use case:</strong> A small-sample (N = 60) study fits a Bayesian linear model with weakly informative priors. The posterior distribution shows the slope is "probably positive" (P(b &gt; 0 | data) = 0.93) but with substantial uncertainty &mdash; a more honest summary than a frequentist p = .07 with no effect-size CI.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Bayesian Regression module</span><span>Estimation</span></div>
+    </article>
+
+    <article class="entry" data-title="Posterior predictive checks" data-content="posterior predictive checks PPC model fit replication graphical Gelman discrepancy simulated data" id="posterior-predictive-checks">
+      <h3>Posterior Predictive Checks <a href="#posterior-predictive-checks" class="permalink" aria-label="Permalink to Posterior Predictive Checks" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A graphical diagnostic in which simulated datasets generated from the posterior are compared to the observed data to assess model adequacy.</div>
+      <div class="body">
+        <p>If the model captures the structure of the data, datasets simulated from the posterior should look similar to the observed data on key features &mdash; the mean, the variance, the proportion of zeros, the maximum, the shape of the histogram. Systematic mismatches reveal model misspecification.</p>
+        <p>Common implementations include overlaying density plots of observed vs. simulated data (using the bayesplot R package or arviz in Python), comparing test statistics (e.g., the proportion of zeros) between observed and simulated, and computing posterior predictive p-values.</p>
+        <p>PPCs are especially valuable because they evaluate the model on the scale of the data &mdash; "does this thing actually look like my data?" &mdash; rather than abstract goodness-of-fit metrics. Gelman has argued they should be the default model-checking tool in applied Bayesian work.</p>
+        <p><strong>Use case:</strong> A Poisson regression PPC reveals the model massively under-predicts zeros in observed counts &mdash; clear evidence to switch to a zero-inflated negative binomial.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Bayesian Diagnostics module</span><span>Diagnostics</span></div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- F. PSYCHOMETRICS & MEASUREMENT -->
+<!-- ============================================================ -->
+<section class="cat-section" id="psychometrics">
+  <h2>F. Psychometrics & Measurement <span class="badge">6 Entries</span></h2>
+  <p class="cat-intro">The science of measuring psychological constructs. These methods address how well your instruments capture the latent traits you intend to measure, and whether they do so consistently across people, time, and contexts.</p>
+
+  <div class="entries">
+
+    <article class="entry" data-title="Cronbach's alpha reliability" data-content="Cronbach alpha reliability internal consistency item correlation McDonald omega tau equivalent" id="cronbach-s-alpha-reliability">
+      <h3>Cronbach's Alpha <a href="#cronbach-s-alpha-reliability" class="permalink" aria-label="Permalink to Cronbach's Alpha" title="Copy link to this entry">#</a></h3>
+      <div class="definition">An estimate of internal-consistency reliability based on the average inter-item correlations and the number of items in a scale.</div>
+      <div class="body">
+        <p>Cronbach's alpha ranges from 0 to 1, with values commonly interpreted as: .70-.79 acceptable, .80-.89 good, .90+ excellent for established measures. However, alpha rests on the often-violated assumption of <strong>tau-equivalence</strong> (all items measure the same construct with equal loadings); when violated, alpha typically <em>underestimates</em> true reliability.</p>
+        <p>Modern recommendations (Sijtsma, 2009; McNeish, 2018) favor <strong>McDonald's omega</strong>, computed from the factor loadings of a confirmatory factor model, as a more accurate reliability estimate. Omega does not assume tau-equivalence and is now the default in many psychometrics packages.</p>
+        <p><strong>Caveats:</strong> alpha is heavily influenced by scale length &mdash; adding items mechanically inflates it. A high alpha does not establish unidimensionality (you can get high alpha from a multifactor scale). Always supplement alpha with factor analysis to interpret what is actually being measured.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Psychometrics module</span><span>Reliability</span></div>
+    </article>
+
+    <article class="entry" data-title="Confirmatory factor analysis CFA" data-content="confirmatory factor analysis CFA SEM lavaan loadings fit indices CFI TLI RMSEA SRMR chi square model fit" id="confirmatory-factor-analysis-cfa">
+      <h3>Confirmatory Factor Analysis (CFA) <a href="#confirmatory-factor-analysis-cfa" class="permalink" aria-label="Permalink to Confirmatory Factor Analysis (CFA)" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A theory-driven method for testing whether observed indicators reflect a hypothesized latent factor structure.</div>
+      <div class="body">
+        <p>Whereas exploratory factor analysis (EFA) discovers structure inductively, CFA tests a pre-specified model: which items load on which factors, which loadings are fixed, which residuals are correlated. Estimation is typically by maximum likelihood (or robust ML for non-normal data) within a structural equation modeling framework.</p>
+        <p><strong>Fit is judged by multiple indices:</strong> CFI &ge; .95, TLI &ge; .95, RMSEA &le; .06 with 90% CI upper bound &le; .08, SRMR &le; .08 (Hu & Bentler, 1999). The chi-square test of exact fit is sensitive to sample size and is rarely satisfied in real data with N &gt; 200.</p>
+        <p><strong>Use case:</strong> Testing whether a 20-item Big Five inventory has the expected 5-factor structure. CFA yields chi<sup>2</sup>(160) = 387, CFI = .94, RMSEA = .055 [.048, .062], SRMR = .051. The 5-factor model fits adequately; modification indices suggest two pairs of items with similar wording have correlated residuals.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: SEM/CFA module</span><span>Latent variables</span></div>
+    </article>
+
+    <article class="entry" data-title="Item response theory IRT" data-content="item response theory IRT Rasch 1PL 2PL 3PL discrimination difficulty information function ability theta" id="item-response-theory-irt">
+      <h3>Item Response Theory (IRT) <a href="#item-response-theory-irt" class="permalink" aria-label="Permalink to Item Response Theory (IRT)" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A family of latent-trait models that describe how the probability of a particular response to an item depends on the respondent's ability and item parameters.</div>
+      <div class="body">
+        <p>IRT shifts the focus from the test score to the underlying latent trait (theta). The <strong>Rasch / 1PL model</strong> estimates only item difficulty; the <strong>2PL model</strong> adds item discrimination; the <strong>3PL model</strong> adds a guessing parameter. For polytomous items there are graded-response and partial-credit models.</p>
+        <p>IRT enables key psychometric advances: invariant measurement (item parameters and ability are on the same scale, not test-dependent), item information functions that reveal where each item is most informative, and <strong>computerized adaptive testing</strong> in which each next item is chosen to maximize information about the current ability estimate.</p>
+        <p><strong>Use case:</strong> A graduate admissions test uses 3PL IRT to score examinees. Item information functions identify items that primarily discriminate around the cutoff score, and CAT delivers a ~30-item test with the same precision as a fixed 80-item test.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: IRT module</span><span>Latent trait</span></div>
+    </article>
+
+    <article class="entry" data-title="Measurement invariance" data-content="measurement invariance configural metric scalar strict equivalence multi-group CFA cross cultural comparison" id="measurement-invariance">
+      <h3>Measurement Invariance <a href="#measurement-invariance" class="permalink" aria-label="Permalink to Measurement Invariance" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A property of a measurement instrument indicating that it measures the same construct in the same way across groups or time points.</div>
+      <div class="body">
+        <p>Without measurement invariance, observed group differences could reflect either substantive differences in the construct or differences in how the instrument operates &mdash; an existential threat to cross-cultural research, longitudinal designs, and any group comparison. Invariance is tested in nested CFA models with progressively stricter constraints:</p>
+        <p><strong>Configural invariance:</strong> the same factor structure across groups. <strong>Metric (weak) invariance:</strong> equal factor loadings &mdash; necessary for comparing covariances and regression slopes. <strong>Scalar (strong) invariance:</strong> equal loadings and intercepts &mdash; required for meaningful comparison of latent means. <strong>Strict invariance:</strong> equal residual variances &mdash; rarely required.</p>
+        <p>A model qualifies as invariant at a level if constraining parameters does not produce a meaningful drop in fit (e.g., delta-CFI &lt; .010, delta-RMSEA &lt; .015; Chen, 2007). When full invariance fails, partial invariance with a few freed parameters often suffices for comparison of those parameters that remain constrained.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Multi-Group CFA module</span><span>Cross-group</span></div>
+    </article>
+
+    <article class="entry" data-title="Test-retest reliability" data-content="test retest reliability stability ICC intraclass correlation Pearson temporal consistency interval" id="test-retest-reliability">
+      <h3>Test-Retest Reliability <a href="#test-retest-reliability" class="permalink" aria-label="Permalink to Test-Retest Reliability" title="Copy link to this entry">#</a></h3>
+      <div class="definition">The consistency of scores when the same instrument is administered to the same respondents at two time points.</div>
+      <div class="body">
+        <p>Test-retest reliability is typically quantified by the Pearson correlation or, more rigorously, the <strong>intraclass correlation coefficient (ICC)</strong>, which captures both consistency and absolute agreement. Acceptable values are context-dependent but generally ICC &ge; .70 for research, &ge; .80 for clinical decisions, &ge; .90 for high-stakes individual decisions.</p>
+        <p><strong>The retest interval is critical.</strong> Too short and memory effects inflate the estimate; too long and genuine change in the trait deflates it. Reporting the interval and a justification for it is essential. For traits expected to be stable over months (e.g., personality), 4-8 weeks is typical; for state measures (mood), much shorter intervals or alternate-form designs are preferred.</p>
+        <p>Pearson r ignores systematic shifts (e.g., everyone scores higher at Time 2); ICC variants &mdash; ICC(2,1), ICC(3,1) &mdash; do not. Choose based on whether absolute agreement matters or only consistency of rank order.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Reliability module</span><span>Stability</span></div>
+    </article>
+
+    <article class="entry" data-title="Convergent and discriminant validity" data-content="convergent discriminant validity Campbell Fiske MTMM HTMT AVE construct validity nomological network" id="convergent-and-discriminant-validity">
+      <h3>Convergent and Discriminant Validity <a href="#convergent-and-discriminant-validity" class="permalink" aria-label="Permalink to Convergent and Discriminant Validity" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Two complementary forms of construct validity. Convergent validity is correlation with measures of the same construct; discriminant validity is the absence of correlation with measures of different constructs.</div>
+      <div class="body">
+        <p>Campbell and Fiske's (1959) <strong>multi-trait multi-method (MTMM) matrix</strong> remains the conceptual gold standard: assess multiple constructs with multiple methods and inspect whether same-construct correlations across methods exceed different-construct correlations within methods.</p>
+        <p>In SEM, convergent validity is often summarized by the <strong>Average Variance Extracted (AVE)</strong> &mdash; the mean of squared loadings on a factor &mdash; with values above .50 considered adequate. Discriminant validity is supported when the square root of AVE for each construct exceeds its correlation with other constructs (Fornell-Larcker criterion). The newer <strong>HTMT (heterotrait-monotrait ratio)</strong> proposed by Henseler et al. (2015) is now widely recommended, with values below .85 indicating adequate discriminant validity.</p>
+        <p><strong>Use case:</strong> A new mindfulness scale correlates r = .68 with an established mindfulness measure (convergent) but only r = .12 with a measure of executive function (discriminant) &mdash; supporting that it taps mindfulness specifically rather than general cognitive ability.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Validity module</span><span>Construct validity</span></div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- G. MULTILEVEL & MIXED MODELS -->
+<!-- ============================================================ -->
+<section class="cat-section" id="multilevel">
+  <h2>G. Multilevel & Mixed Models <span class="badge">5 Entries</span></h2>
+  <p class="cat-intro">When data are nested &mdash; students within classrooms, repeated measures within people, patients within clinics &mdash; ordinary regression underestimates standard errors and inflates Type I error. Multilevel models honor the nested structure by partitioning variance across levels.</p>
+
+  <div class="entries">
+
+    <article class="entry" data-title="Intraclass correlation ICC" data-content="intraclass correlation ICC nested data clustering design effect rho variance partitioning between within" id="intraclass-correlation-icc">
+      <h3>Intraclass Correlation (ICC) <a href="#intraclass-correlation-icc" class="permalink" aria-label="Permalink to Intraclass Correlation (ICC)" title="Copy link to this entry">#</a></h3>
+      <div class="definition">The proportion of total variance in an outcome that lies between higher-level units (e.g., classrooms, clinics, families).</div>
+      <div class="body">
+        <p>The unconditional (null model) ICC = sigma<sup>2</sup><sub>between</sub> / (sigma<sup>2</sup><sub>between</sub> + sigma<sup>2</sup><sub>within</sub>). An ICC of .15 means 15% of the variance in the outcome is between groups and 85% is within groups. ICCs of even .05 can produce substantial inflation of Type I error if ignored, especially with large within-cluster sample sizes.</p>
+        <p>The <strong>design effect</strong> = 1 + (n &minus; 1) * ICC, where n is the average cluster size, quantifies how much the effective sample size is reduced by clustering. With ICC = .10 and clusters of size 30, the design effect is 3.9 &mdash; meaning a sample of 600 has the effective inferential power of only 154 independent observations.</p>
+        <p>Whenever you suspect nested data, fit an unconditional multilevel model and report the ICC as a justification for the modeling approach. ICCs above ~.05 typically warrant multilevel analysis.</p>
+        <div style="margin-top:8px"><a href="../blog/mixed-models-nested-data.html" style="font-size:.85rem">&rarr; Deep dive: Mixed Models for Nested Data</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Multilevel Modeling module</span><span>Nested data</span></div>
+    </article>
+
+    <article class="entry" data-title="Random intercepts model" data-content="random intercepts mixed model lmer cluster level varying baseline pooling shrinkage" id="random-intercepts-model">
+      <h3>Random Intercepts <a href="#random-intercepts-model" class="permalink" aria-label="Permalink to Random Intercepts" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A multilevel model in which the intercept varies across higher-level units, capturing baseline differences across groups.</div>
+      <div class="body">
+        <p>The simplest mixed model: y<sub>ij</sub> = beta<sub>0</sub> + u<sub>0j</sub> + beta<sub>1</sub>X<sub>ij</sub> + e<sub>ij</sub>, where u<sub>0j</sub> is a normally distributed random deviation of group j's intercept from the overall mean. The slope of X is fixed across groups; only the baseline level differs.</p>
+        <p>Random intercepts produce <strong>partial pooling</strong>: estimates for each group are shrunk toward the grand mean, with the degree of shrinkage proportional to within-group sample size. Small groups borrow strength from the larger sample; large groups are estimated nearly independently. This shrinkage typically improves out-of-sample prediction.</p>
+        <p><strong>Use case:</strong> Modeling student test scores nested in 50 schools, with a random intercept for school. The model estimates an overall intercept of 72.4 and a school-level SD of 6.1 &mdash; meaning a school one SD above average has expected scores ~6 points higher.</p>
+        <div style="margin-top:8px"><a href="../blog/mixed-models-nested-data.html" style="font-size:.85rem">&rarr; Deep dive: Mixed Models for Nested Data</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Multilevel Modeling module</span><span>Varying baseline</span></div>
+    </article>
+
+    <article class="entry" data-title="Random slopes model" data-content="random slopes varying coefficients mixed model interaction cross-level Snijders Bosker" id="random-slopes-model">
+      <h3>Random Slopes <a href="#random-slopes-model" class="permalink" aria-label="Permalink to Random Slopes" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A multilevel extension in which the slope of a level-1 predictor is allowed to vary across higher-level units, capturing heterogeneity in the within-group relationship.</div>
+      <div class="body">
+        <p>Specifying y<sub>ij</sub> = beta<sub>0</sub> + u<sub>0j</sub> + (beta<sub>1</sub> + u<sub>1j</sub>) X<sub>ij</sub> + e<sub>ij</sub> means the relationship between X and Y differs from group to group. The variance of u<sub>1j</sub> quantifies how much the slope varies across groups, and a covariance between u<sub>0j</sub> and u<sub>1j</sub> indicates whether high-baseline groups also tend to have steeper or shallower slopes.</p>
+        <p>Random slopes are essential when the research question concerns variability in effects across contexts &mdash; e.g., whether an intervention works equally well in all schools or whether the dose-response relationship is uniform across patients. Cross-level interactions explain that variability with level-2 predictors.</p>
+        <p><strong>Use case:</strong> Studying within-person practice effects on a cognitive task across 100 people. Random intercept and slope reveal substantial individual differences in learning rate (slope SD = 0.22), which a baseline working-memory measure partially explains as a cross-level interaction.</p>
+        <div style="margin-top:8px"><a href="../blog/mixed-models-nested-data.html" style="font-size:.85rem">&rarr; Deep dive: Mixed Models for Nested Data</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Multilevel Modeling module</span><span>Varying effects</span></div>
+    </article>
+
+    <article class="entry" data-title="Cross-classified models" data-content="cross classified multiple membership non hierarchical multilevel students teachers neighborhoods schools" id="cross-classified-models">
+      <h3>Cross-Classified Models <a href="#cross-classified-models" class="permalink" aria-label="Permalink to Cross-Classified Models" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Multilevel models for data nested in two or more non-hierarchical grouping factors that cross each other rather than nest cleanly.</div>
+      <div class="body">
+        <p>Strictly hierarchical nesting (students in classrooms in schools) is the textbook case, but real data often violate it: students attend a primary school and then a secondary school, residents belong to a neighborhood and visit a particular doctor, raters evaluate multiple targets and each target is evaluated by multiple raters. Cross-classified models include random effects for both grouping factors simultaneously.</p>
+        <p>Estimation is computationally intensive but routine in modern software (lme4 in R, MixedModels.jl in Julia, brms for Bayesian). Cross-classified random effects are often misdiagnosed as "complicated" interactions in standard regression; the multilevel formulation is more honest about the data structure.</p>
+        <p><strong>Use case:</strong> A judgment study where each of 60 raters evaluates a randomly selected subset of 100 photographs. A cross-classified model with random intercepts for raters and photos correctly partitions variance and produces honest standard errors that a wrongly nested or fully crossed ANOVA would miss.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Multilevel Modeling module</span><span>Non-nested</span></div>
+    </article>
+
+    <article class="entry" data-title="Growth curve modeling" data-content="growth curve model latent trajectory longitudinal time slope intercept polynomial spline change" id="growth-curve-modeling">
+      <h3>Growth Curve Modeling <a href="#growth-curve-modeling" class="permalink" aria-label="Permalink to Growth Curve Modeling" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A multilevel or latent-variable framework for modeling individual trajectories of change over repeated measurements.</div>
+      <div class="body">
+        <p>Each individual has their own intercept (initial level) and slope (rate of change) over time, both treated as random effects with normal distributions. The model partitions trajectory variance into mean trajectory parameters (the average growth pattern) and individual differences in those parameters. Polynomial, piecewise, or spline functions extend the model beyond linear change.</p>
+        <p>Growth curve modeling can be implemented as a multilevel model (with time as a level-1 predictor) or as a latent growth curve model in SEM (with intercept and slope as latent variables). The two are mathematically equivalent for many specifications but differ in extensibility &mdash; SEM more easily incorporates time-varying predictors and parallel processes.</p>
+        <p><strong>Use case:</strong> Tracking depression scores at 6 timepoints over a year for 200 patients. The model estimates a mean linear decrease of 1.4 points per month with substantial individual variation (slope SD = 0.9), and treatment group is added as a predictor of slope to test intervention efficacy on rate of recovery.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Growth Modeling module</span><span>Longitudinal</span></div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- H. CAUSAL INFERENCE -->
+<!-- ============================================================ -->
+<section class="cat-section" id="causal">
+  <h2>H. Causal Inference <span class="badge">6 Entries</span></h2>
+  <p class="cat-intro">A toolkit for moving from association to causation when randomized experiments are impossible. These methods make causal assumptions explicit, encode them in graphs or design choices, and exploit features of the data that would only arise under particular causal structures.</p>
+
+  <div class="entries">
+
+    <article class="entry" data-title="Directed acyclic graphs DAGs" data-content="directed acyclic graph DAG Pearl backdoor adjustment confounding causal diagram dagitty d-separation" id="directed-acyclic-graphs-dags">
+      <h3>Directed Acyclic Graphs (DAGs) <a href="#directed-acyclic-graphs-dags" class="permalink" aria-label="Permalink to Directed Acyclic Graphs (DAGs)" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A graphical formalism for representing causal assumptions as a network of variables connected by directed arrows representing direct causal influences.</div>
+      <div class="body">
+        <p>Developed and popularized by Judea Pearl, DAGs make causal assumptions visible and testable. Each arrow represents a hypothesized direct causal effect; the absence of an arrow is also a substantive claim &mdash; that no direct causal effect exists. The graph then determines, via the <strong>backdoor criterion</strong>, which variables must be adjusted for to estimate a target causal effect without bias.</p>
+        <p>DAGs clarify common confusions: a variable can be a confounder (must adjust for it), a mediator (adjusting blocks the effect of interest), or a collider (adjusting <em>creates</em> bias by opening a previously closed backdoor path). The infamous <strong>Berkson's bias</strong> and <strong>Table 2 fallacy</strong> are special cases of mishandled colliders.</p>
+        <p>Tools like dagitty.net let researchers draw a DAG and automatically derive the minimal sufficient adjustment set for any causal query. Drawing the DAG <em>before</em> data analysis is a transparency practice that the field is increasingly adopting.</p>
+        <div style="margin-top:8px"><a href="../blog/causal-inference.html" style="font-size:.85rem">&rarr; Deep dive: Causal Inference in Observational Data</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: DAG Builder module</span><span>Causal modeling</span></div>
+    </article>
+
+    <article class="entry" data-title="Propensity score matching" data-content="propensity score matching PSM Rosenbaum Rubin balance covariate observational treatment effect ATT IPTW weighting" id="propensity-score-matching">
+      <h3>Propensity Score Matching <a href="#propensity-score-matching" class="permalink" aria-label="Permalink to Propensity Score Matching" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A method for estimating causal effects from observational data by matching treated and control units with similar probabilities of receiving treatment.</div>
+      <div class="body">
+        <p>The propensity score, introduced by Rosenbaum and Rubin (1983), is the probability of treatment assignment given observed covariates. Its key result: conditioning on the propensity score is sufficient to remove confounding from those covariates, even though it is a single number rather than a high-dimensional vector. Methods include 1:1 nearest-neighbor matching, optimal matching, kernel matching, and inverse probability of treatment weighting (IPTW).</p>
+        <p>The critical limitation: propensity scores can only adjust for <em>observed</em> confounders. Hidden confounders bias the estimate just as in any non-randomized comparison &mdash; matching does not solve confounding, it just makes the matched sample look like a randomized trial on the variables you measured.</p>
+        <p>Always check <strong>covariate balance</strong> after matching (standardized mean differences below .10 are a common target) and the <strong>region of common support</strong> (units outside the overlap range cannot be matched and must be discarded, narrowing the population to which the result generalizes).</p>
+        <div style="margin-top:8px"><a href="../blog/causal-inference.html" style="font-size:.85rem">&rarr; Deep dive: Causal Inference in Observational Data</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Propensity Matching module</span><span>Observational</span></div>
+    </article>
+
+    <article class="entry" data-title="Instrumental variables" data-content="instrumental variables IV two stage least squares 2SLS Mendelian randomization exclusion restriction relevance LATE Wald" id="instrumental-variables">
+      <h3>Instrumental Variables <a href="#instrumental-variables" class="permalink" aria-label="Permalink to Instrumental Variables" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A technique for estimating causal effects when treatment is endogenous, using a third variable that affects the outcome only through its effect on treatment.</div>
+      <div class="body">
+        <p>An instrument Z must satisfy three conditions: (1) <strong>relevance</strong> &mdash; Z is associated with treatment X; (2) <strong>exclusion restriction</strong> &mdash; Z affects the outcome Y <em>only</em> through X; (3) <strong>independence</strong> &mdash; Z is independent of unmeasured confounders. The classical estimator is two-stage least squares (2SLS): regress X on Z to get predicted X, then regress Y on the predicted X.</p>
+        <p>IV identifies the <strong>local average treatment effect (LATE)</strong> for "compliers" &mdash; the units whose treatment status would have changed had the instrument changed. This is not the average treatment effect for the whole population, a subtlety often glossed over in applied work.</p>
+        <p>Weak instruments (low relevance) produce wildly unstable IV estimates with bias toward OLS. The first-stage F-statistic should be at least 10, and ideally much higher. Recent advances (Mendelian randomization in epidemiology) leverage genetic variants as instruments under explicit causal assumptions.</p>
+        <div style="margin-top:8px"><a href="../blog/causal-inference.html" style="font-size:.85rem">&rarr; Deep dive: Causal Inference in Observational Data</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Causal Inference module</span><span>Endogeneity</span></div>
+    </article>
+
+    <article class="entry" data-title="Regression discontinuity design RDD" data-content="regression discontinuity RDD sharp fuzzy cutoff bandwidth local linear running variable Imbens Lemieux" id="regression-discontinuity-design-rdd">
+      <h3>Regression Discontinuity Design <a href="#regression-discontinuity-design-rdd" class="permalink" aria-label="Permalink to Regression Discontinuity Design" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A quasi-experimental design that estimates causal effects by exploiting a known cutoff that determines treatment assignment.</div>
+      <div class="body">
+        <p>RDD applies when treatment is assigned based on whether a continuous "running variable" exceeds a threshold &mdash; a scholarship awarded above a test score cutoff, a Medicare benefit eligibility starting at age 65, a class-size limit triggering an extra teacher. Units just above and below the cutoff are presumed comparable except for treatment, allowing local causal inference.</p>
+        <p>Two flavors: <strong>sharp RDD</strong> (treatment is a deterministic function of the running variable) and <strong>fuzzy RDD</strong> (the cutoff changes the probability of treatment but not deterministically; estimated via IV with the cutoff as instrument). Estimation is typically by local linear regression within an optimally chosen bandwidth (Imbens & Kalyanaraman, 2012).</p>
+        <p><strong>Validity checks:</strong> covariates should not jump at the cutoff, the density of the running variable should not show manipulation around the cutoff (McCrary test), and the result should be robust to bandwidth choice. RDD has the strongest internal validity among observational designs &mdash; close to a randomized trial &mdash; but the result only generalizes to units near the cutoff.</p>
+        <div style="margin-top:8px"><a href="../blog/causal-inference.html" style="font-size:.85rem">&rarr; Deep dive: Causal Inference in Observational Data</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: RDD module</span><span>Quasi-experiment</span></div>
+    </article>
+
+    <article class="entry" data-title="Difference-in-differences" data-content="difference in differences DiD parallel trends two way fixed effects pre post treatment control panel data event study" id="difference-in-differences">
+      <h3>Difference-in-Differences <a href="#difference-in-differences" class="permalink" aria-label="Permalink to Difference-in-Differences" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A causal-inference design that estimates a treatment effect by comparing the before-after change in a treated group to the before-after change in an untreated group.</div>
+      <div class="body">
+        <p>DiD subtracts out two sources of bias simultaneously: time-invariant differences between groups (via the within-group difference) and common time trends (via the comparison to the control group's change). Implemented as a regression with group, time, and group-by-time interaction terms, where the interaction coefficient is the DiD estimate.</p>
+        <p>The crucial identifying assumption is <strong>parallel trends</strong>: in the absence of treatment, the two groups would have evolved similarly. Pre-treatment data should be inspected for parallel trajectories, and event-study plots showing leads and lags around the treatment date are now standard for transparency.</p>
+        <p>Recent econometric work (Goodman-Bacon, 2021; Callaway & Sant'Anna, 2021) has shown that the standard two-way fixed effects estimator can be badly biased when treatment is staggered across units and effects are heterogeneous. New estimators address this and are increasingly the norm.</p>
+        <p><strong>Use case:</strong> A state raises its minimum wage in 2020. DiD compares wage and employment changes in that state vs. neighboring states pre- and post-2020.</p>
+        <div style="margin-top:8px"><a href="../blog/causal-inference.html" style="font-size:.85rem">&rarr; Deep dive: Causal Inference in Observational Data</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: DiD module</span><span>Panel data</span></div>
+    </article>
+
+    <article class="entry" data-title="Confounders mediators colliders" data-content="confounder mediator collider Pearl backdoor frontdoor adjustment table 2 fallacy bias selection" id="confounders-mediators-colliders">
+      <h3>Confounders, Mediators, and Colliders <a href="#confounders-mediators-colliders" class="permalink" aria-label="Permalink to Confounders, Mediators, and Colliders" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Three causally distinct roles a variable can play relative to an exposure-outcome relationship, each requiring different statistical handling.</div>
+      <div class="body">
+        <p>A <strong>confounder</strong> is a common cause of both exposure and outcome (e.g., age affects both smoking and lung cancer). To estimate the causal effect of exposure, you must adjust for confounders. A <strong>mediator</strong> lies on the causal pathway from exposure to outcome (e.g., tar deposition mediates smoking's effect on cancer). Adjusting for it removes part of the very effect you're trying to estimate.</p>
+        <p>A <strong>collider</strong> is a common <em>effect</em> of two variables (e.g., a hospital admission caused jointly by injury and illness). Adjusting for a collider opens a non-causal path between its parents and induces spurious association &mdash; the famous <strong>collider stratification bias</strong>. Restricting analysis to a subset based on a collider (e.g., studying only hospitalized patients) creates the same bias.</p>
+        <p>The <strong>Table 2 fallacy</strong> (Westreich & Greenland, 2013) is the practice of interpreting all coefficients in a multivariable regression as causal effects of their respective predictors, when in fact only the target exposure has its causal effect identified by the chosen adjustment set; the other coefficients reflect a confused mix of direct and indirect paths.</p>
+        <div style="margin-top:8px"><a href="../blog/causal-inference.html" style="font-size:.85rem">&rarr; Deep dive: Causal Inference in Observational Data</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: DAG Builder module</span><span>Conceptual</span></div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- I. META-ANALYSIS -->
+<!-- ============================================================ -->
+<section class="cat-section" id="metaanalysis">
+  <h2>I. Meta-Analysis <span class="badge">5 Entries</span></h2>
+  <p class="cat-intro">The quantitative synthesis of effect sizes across studies. A well-conducted meta-analysis can yield more precise and generalizable estimates than any single study, but it can also propagate the biases of the underlying literature if conducted carelessly.</p>
+
+  <div class="entries">
+
+    <article class="entry" data-title="Fixed vs random effects meta-analysis" data-content="fixed effects random effects meta analysis common effect heterogeneity DerSimonian Laird Hedges Vevea" id="fixed-vs-random-effects-meta-analysis">
+      <h3>Fixed vs Random Effects Models <a href="#fixed-vs-random-effects-meta-analysis" class="permalink" aria-label="Permalink to Fixed vs Random Effects Models" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Two competing assumptions about the population of studies being synthesized: a single common true effect (fixed) versus a distribution of true effects (random).</div>
+      <div class="body">
+        <p>A <strong>fixed-effect (or common-effect) model</strong> assumes that every included study estimates the same true effect, with observed differences arising solely from sampling error. Each study is weighted by the inverse of its variance, giving large studies a dominant role.</p>
+        <p>A <strong>random-effects model</strong> assumes the studies' true effects are themselves drawn from a distribution &mdash; methodologically diverse studies may genuinely target slightly different populations, contexts, or operationalizations. The model adds a between-study variance component (tau<sup>2</sup>) and broadens confidence intervals accordingly. The DerSimonian-Laird estimator is classic; REML and Paule-Mandel are now generally preferred.</p>
+        <p>Random-effects is the safer default for behavioral science meta-analyses, where heterogeneity is the rule rather than the exception. <strong>Always report the implied prediction interval</strong> alongside the summary effect &mdash; it tells readers the range of true effects that future similar studies are likely to find, which is often dramatically wider than the summary CI.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Meta-Analysis module</span><span>Synthesis</span></div>
+    </article>
+
+    <article class="entry" data-title="Heterogeneity Q I-squared tau-squared" data-content="heterogeneity Q test I squared tau squared variance between study Higgins Thompson prediction interval" id="heterogeneity-q-i-squared-tau-squared">
+      <h3>Heterogeneity (Q, I&sup2;, &tau;&sup2;) <a href="#heterogeneity-q-i-squared-tau-squared" class="permalink" aria-label="Permalink to Heterogeneity (Q, I&sup2;, &tau;&sup2;)" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Statistics quantifying the variability of effect sizes across studies in a meta-analysis beyond what would be expected from sampling error alone.</div>
+      <div class="body">
+        <p><strong>Cochran's Q</strong> tests whether the observed variation exceeds what sampling error predicts; it is sensitive to the number of studies (low power with few, hyper-significant with many) and so should not drive modeling choices on its own. <strong>I<sup>2</sup></strong> (Higgins & Thompson, 2002) expresses the proportion of total variance attributable to between-study heterogeneity rather than sampling error; conventional benchmarks are 25% (low), 50% (moderate), 75% (high), but these are rough heuristics.</p>
+        <p><strong>&tau;<sup>2</sup></strong> is the actual variance of true effects across studies, on the same scale as the effect size itself. It is arguably the most interpretable heterogeneity statistic because it directly informs the prediction interval. A &tau; (the standard deviation) of 0.20 on a Cohen's d scale means substantial real-world variability in effects across study contexts.</p>
+        <p>High heterogeneity is not a flaw to be eliminated but a signal that the question "what is the average effect?" needs to be supplemented with "what moderates it?" &mdash; leading to meta-regression and subgroup analyses.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Meta-Analysis module</span><span>Heterogeneity</span></div>
+    </article>
+
+    <article class="entry" data-title="Publication bias funnel plot Egger trim and fill" data-content="publication bias funnel plot Egger test trim and fill PET PEESE p-curve selection model file drawer" id="publication-bias-funnel-plot-egger-trim-and-fill">
+      <h3>Publication Bias <a href="#publication-bias-funnel-plot-egger-trim-and-fill" class="permalink" aria-label="Permalink to Publication Bias" title="Copy link to this entry">#</a></h3>
+      <div class="definition">Systematic distortion in a meta-analytic estimate caused by the selective publication of studies based on their results &mdash; typically, studies with significant or large effects.</div>
+      <div class="body">
+        <p>The classic diagnostic is the <strong>funnel plot</strong>: effect sizes plotted against precision (or its inverse). Without bias, the plot should be symmetric around the summary effect. Asymmetry &mdash; a gap of small, null-finding studies in the bottom of the plot &mdash; suggests publication bias. <strong>Egger's regression test</strong> formalizes this asymmetry, though it has low power with few studies and can confound bias with genuine small-study effects.</p>
+        <p>Adjustment methods include <strong>trim-and-fill</strong> (impute hypothetical missing studies to restore symmetry), <strong>PET-PEESE</strong> (regress effect on standard error to estimate the bias-adjusted effect), and <strong>selection models</strong> that explicitly parameterize the publication process. <strong>p-curve</strong> and <strong>p-uniform</strong> use the distribution of significant p-values to infer evidential value beyond what selective reporting could produce.</p>
+        <p>No single method is dispositive. Modern best practice runs several adjustment methods and reports their range as a sensitivity analysis. <strong>Pre-registration</strong> of studies and registries that include null results are the long-term solutions; statistical adjustments are damage control.</p>
+        <div style="margin-top:8px"><a href="../blog/replication-crisis.html" style="font-size:.85rem">&rarr; Deep dive: The Replication Crisis &amp; Pre-Registration</a></div>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Publication Bias module</span><span>Bias correction</span></div>
+    </article>
+
+    <article class="entry" data-title="Meta-regression" data-content="meta regression moderator analysis subgroup study level covariate explained heterogeneity Knapp Hartung" id="meta-regression">
+      <h3>Meta-Regression <a href="#meta-regression" class="permalink" aria-label="Permalink to Meta-Regression" title="Copy link to this entry">#</a></h3>
+      <div class="definition">A regression of study-level effect sizes on study-level moderators, used to explain between-study heterogeneity.</div>
+      <div class="body">
+        <p>When a meta-analysis shows substantial heterogeneity, meta-regression asks whether systematic study features &mdash; sample mean age, dose of intervention, year of publication, country, methodological quality &mdash; account for it. Each study contributes one observation, with the moderator value as the predictor.</p>
+        <p>Important cautions: meta-regression with few studies has very low power; a useful rule of thumb is at least 10 studies per moderator. Analyses are inherently <strong>ecological</strong> &mdash; cross-study correlations cannot establish individual-level causal effects, and confounding at the study level is rampant. The Knapp-Hartung adjustment to standard errors is now standard for meta-regression and should be reported.</p>
+        <p><strong>Use case:</strong> A meta-analysis of CBT for anxiety finds moderate heterogeneity (I<sup>2</sup> = 62%). Meta-regression on number of sessions reveals each additional session is associated with d = 0.04 larger effect (95% CI [0.01, 0.07]), explaining roughly 30% of the heterogeneity.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Meta-Regression module</span><span>Moderators</span></div>
+    </article>
+
+    <article class="entry" data-title="Forest plot" data-content="forest plot meta analysis effect sizes confidence intervals weights summary diamond visualization Lewis" id="forest-plot">
+      <h3>Forest Plot <a href="#forest-plot" class="permalink" aria-label="Permalink to Forest Plot" title="Copy link to this entry">#</a></h3>
+      <div class="definition">The canonical visualization of a meta-analysis: each study's effect size and confidence interval as a horizontal line, with a summary diamond at the bottom.</div>
+      <div class="body">
+        <p>Each row of a forest plot represents one study, with a square (sized proportional to the study's weight) marking the point estimate and a horizontal line showing the confidence interval. The <strong>summary diamond</strong> at the bottom shows the meta-analytic estimate and its CI, with width equal to the diamond's horizontal span. A vertical line of "no effect" (e.g., d = 0 or OR = 1) makes immediately apparent which studies cross it.</p>
+        <p>Well-designed forest plots include columns for the study citation, sample sizes, raw event counts (for binary outcomes), the effect size with CI, and the relative weight in the meta-analysis. Adding a <strong>prediction interval</strong> as a separate row at the bottom (Riley, Higgins, & Deeks, 2011) is best practice for random-effects models because it conveys the range of effects future studies are likely to find.</p>
+        <p>The forest plot has rightly been called the "single most informative graphic in evidence-based medicine" &mdash; a reader can grasp the heterogeneity, the precision of each study, and the direction and magnitude of the synthesis at a glance.</p>
+      </div>
+      <div class="meta"><span class="module">PsyStat: Meta-Analysis Visualization</span><span>Visualization</span></div>
+    </article>
+
+  </div>
+</section>
+
+<!-- Closing reference list -->
+<section class="cat-section" id="references">
+  <h2>Selected References</h2>
+  <p class="cat-intro">Foundational and contemporary works that informed the entries above. Many of these are open-access or available through major university libraries.</p>
+  <div class="entry" style="max-width:none">
+    <div class="body" style="font-size:.85rem">
+      <p>Aiken, L. S., &amp; West, S. G. (1991). <em>Multiple regression: Testing and interpreting interactions.</em> Sage.</p>
+      <p>Baron, R. M., &amp; Kenny, D. A. (1986). The moderator-mediator variable distinction in social psychological research. <em>Journal of Personality and Social Psychology, 51</em>(6), 1173-1182.</p>
+      <p>Benjamini, Y., &amp; Hochberg, Y. (1995). Controlling the false discovery rate. <em>Journal of the Royal Statistical Society: Series B, 57</em>(1), 289-300.</p>
+      <p>Campbell, D. T., &amp; Fiske, D. W. (1959). Convergent and discriminant validation by the multitrait-multimethod matrix. <em>Psychological Bulletin, 56</em>(2), 81-105.</p>
+      <p>Carvalho, C. M., Polson, N. G., &amp; Scott, J. G. (2010). The horseshoe estimator for sparse signals. <em>Biometrika, 97</em>(2), 465-480.</p>
+      <p>Chen, F. F. (2007). Sensitivity of goodness of fit indexes to lack of measurement invariance. <em>Structural Equation Modeling, 14</em>(3), 464-504.</p>
+      <p>Cumming, G. (2014). The new statistics: Why and how. <em>Psychological Science, 25</em>(1), 7-29.</p>
+      <p>Delacre, M., Lakens, D., &amp; Leys, C. (2017). Why psychologists should by default use Welch's t-test. <em>International Review of Social Psychology, 30</em>(1), 92-101.</p>
+      <p>Gelman, A., &amp; Carlin, J. (2014). Beyond power calculations: Assessing Type S and Type M errors. <em>Perspectives on Psychological Science, 9</em>(6), 641-651.</p>
+      <p>Goodman-Bacon, A. (2021). Difference-in-differences with variation in treatment timing. <em>Journal of Econometrics, 225</em>(2), 254-277.</p>
+      <p>Henseler, J., Ringle, C. M., &amp; Sarstedt, M. (2015). A new criterion for assessing discriminant validity in variance-based structural equation modeling. <em>Journal of the Academy of Marketing Science, 43</em>(1), 115-135.</p>
+      <p>Higgins, J. P. T., &amp; Thompson, S. G. (2002). Quantifying heterogeneity in a meta-analysis. <em>Statistics in Medicine, 21</em>(11), 1539-1558.</p>
+      <p>Hu, L., &amp; Bentler, P. M. (1999). Cutoff criteria for fit indexes in covariance structure analysis. <em>Structural Equation Modeling, 6</em>(1), 1-55.</p>
+      <p>Imbens, G. W., &amp; Kalyanaraman, K. (2012). Optimal bandwidth choice for the regression discontinuity estimator. <em>Review of Economic Studies, 79</em>(3), 933-959.</p>
+      <p>McNeish, D. (2018). Thanks coefficient alpha, we'll take it from here. <em>Psychological Methods, 23</em>(3), 412-433.</p>
+      <p>Pearl, J. (2009). <em>Causality: Models, reasoning, and inference</em> (2nd ed.). Cambridge University Press.</p>
+      <p>Preacher, K. J., &amp; Hayes, A. F. (2008). Asymptotic and resampling strategies for assessing and comparing indirect effects. <em>Behavior Research Methods, 40</em>(3), 879-891.</p>
+      <p>Rosenbaum, P. R., &amp; Rubin, D. B. (1983). The central role of the propensity score in observational studies for causal effects. <em>Biometrika, 70</em>(1), 41-55.</p>
+      <p>Sijtsma, K. (2009). On the use, the misuse, and the very limited usefulness of Cronbach's alpha. <em>Psychometrika, 74</em>(1), 107-120.</p>
+      <p>Wasserstein, R. L., &amp; Lazar, N. A. (2016). The ASA's statement on p-values: Context, process, and purpose. <em>The American Statistician, 70</em>(2), 129-133.</p>
+      <p>Westreich, D., &amp; Greenland, S. (2013). The Table 2 fallacy: Presenting and interpreting confounder and modifier coefficients. <em>American Journal of Epidemiology, 177</em>(4), 292-298.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<!-- Footer -->
+<footer>
+  <p>&copy; 2026 Moonlit Social Labs. All rights reserved.</p>
+  <p style="font-size:.8rem;color:var(--text3);max-width:680px;margin:0 auto">
+    The Statistical Methods Encyclopedia is provided as a free educational reference. Entries are general guidance and do not replace consultation with a qualified statistician for high-stakes analyses. PsyStat Lab is a research tool and does not provide clinical or financial advice.
+  </p>
+  <div class="footer-links" style="margin-top:16px">
+    <a href="landing.html">Home</a>
+    <a href="features.html">Features</a>
+    <a href="about.html">About</a>
+    <a href="blog/">Blog</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="terms.html">Terms</a>
+  </div>
+  <a href="https://ko-fi.com/moonlitsociallabs" target="_blank" rel="noopener" class="ko-fi">Support on Ko-fi</a>
+</footer>
+
+<!-- Search filter script -->
+<script>
+(function() {
+  var searchBox = document.getElementById('searchBox');
+  var noResults = document.getElementById('noResults');
+  var entries = Array.prototype.slice.call(document.querySelectorAll('.entry[data-title]'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.cat-section'));
+
+  function normalize(s) { return (s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' '); }
+
+  searchBox.addEventListener('input', function() {
+    var q = normalize(searchBox.value).trim();
+    var anyVisible = false;
+
+    entries.forEach(function(e) {
+      var hay = normalize(e.getAttribute('data-title') + ' ' + e.getAttribute('data-content') + ' ' + e.textContent);
+      var match = q === '' || hay.indexOf(q) !== -1;
+      e.style.display = match ? '' : 'none';
+      if (match) anyVisible = true;
+    });
+
+    // Hide section headers if no entries in that section are visible
+    sections.forEach(function(sec) {
+      if (sec.id === 'references') return;
+      var visible = sec.querySelectorAll('.entry[data-title]:not([style*="display: none"])');
+      sec.style.display = visible.length > 0 ? '' : 'none';
+    });
+
+    noResults.style.display = anyVisible ? 'none' : 'block';
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<meta name="google-site-verification" content="IWGVEm2c0aIEJAr9l31qjz3YzIDiqVe8VdwF1FATmTw" />
+<title>Mixed Models for Nested Data — PsyStat Lab Blog</title>
+<meta name="description" content="A graduate-level methods chapter on multilevel and mixed-effects modeling: why clustering breaks OLS, how random intercepts and slopes work, growth curves, GLMMs, centering, REML, cross-classified designs, and when mixed models are essential vs. overkill.">
+<meta name="keywords" content="mixed models, multilevel models, hierarchical linear models, HLM, lme4, random effects, ICC, nested data, growth curve, GLMM, REML, cross-classified, PsyStat Lab">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://psystat-lab.dev/blog/mixed-models-nested-data.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mixed Models for Nested Data">
+<meta property="og:description" content="Why clustering violates OLS, how random effects fix it, and when mixed models are essential vs. overkill.">
+<meta property="og:url" content="https://psystat-lab.dev/blog/mixed-models-nested-data.html">
+<meta property="og:image" content="https://psystat-lab.dev/og-image.png">
+<meta property="article:published_time" content="2026-04-16">
+<meta property="article:author" content="Moonlit Social Labs">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mixed Models for Nested Data — PsyStat Lab">
+<meta name="twitter:description" content="A scholarly methods chapter on multilevel modeling — from ICC to GLMMs to cross-classified designs.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Mixed Models for Nested Data",
+  "description": "A graduate-level methods chapter on multilevel and mixed-effects modeling for clustered, hierarchical, and longitudinal data.",
+  "author": { "@type": "Organization", "name": "Moonlit Social Labs" },
+  "publisher": { "@type": "Organization", "name": "PsyStat Lab" },
+  "datePublished": "2026-04-16",
+  "url": "https://psystat-lab.dev/blog/mixed-models-nested-data.html"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://psystat-lab.dev/"},
+    {"@type": "ListItem", "position": 2, "name": "Blog", "item": "https://psystat-lab.dev/blog/"},
+    {"@type": "ListItem", "position": 3, "name": "Mixed Models for Nested Data", "item": "https://psystat-lab.dev/blog/mixed-models-nested-data.html"}
+  ]
+}
+</script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --bg:#0B0F1A; --surface:#131926; --elevated:#1A2236; --border:#1E293B; --text:#F1F5F9; --text2:#94A3B8; --text3:#64748B; --primary:#6366F1; --cyan:#06B6D4; --accent:#D97706; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; -webkit-font-smoothing: antialiased; }
+  a { color: var(--cyan); text-decoration: none; } a:hover { text-decoration: underline; }
+  ::selection { background: var(--primary); color: #fff; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 0; background: rgba(11,15,26,.85); backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,.04); }
+  nav .inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+  nav .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; }
+  nav .logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #6366F1, #06B6D4); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; font-weight: 800; }
+  nav .links { display: flex; align-items: center; gap: 24px; font-size: .9rem; }
+  nav .links a { color: var(--text2); } nav .links a:hover { color: var(--text); text-decoration: none; }
+  nav .cta-sm { background: var(--primary); color: #fff !important; padding: 6px 16px; border-radius: 8px; font-weight: 600; }
+  article { max-width: 740px; margin: 0 auto; padding: 120px 24px 60px; }
+  .tag { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 10px; border-radius: 100px; background: rgba(217,119,6,.15); color: var(--accent); margin-bottom: 16px; }
+  h1 { font-size: 2rem; font-weight: 800; line-height: 1.25; margin-bottom: 16px; }
+  .meta { color: var(--text3); font-size: .85rem; margin-bottom: 32px; }
+  h2 { font-size: 1.4rem; font-weight: 700; margin: 36px 0 12px; color: var(--text); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 28px 0 8px; color: #818CF8; }
+  p { color: var(--text2); margin-bottom: 16px; font-size: 1.02rem; }
+  ul, ol { color: var(--text2); margin: 0 0 16px 24px; font-size: 1.02rem; }
+  li { margin-bottom: 6px; }
+  blockquote { border-left: 3px solid var(--accent); padding: 12px 20px; margin: 20px 0; background: var(--surface); border-radius: 0 8px 8px 0; }
+  blockquote p { margin: 0; color: var(--text); font-style: italic; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: .88rem; background: var(--elevated); padding: 2px 6px; border-radius: 4px; color: #818CF8; }
+  .callout { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 24px 0; }
+  .callout-title { font-weight: 700; font-size: .9rem; color: var(--accent); margin-bottom: 8px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; color: var(--text3); font-size: .9rem; margin-bottom: 24px; }
+  .back:hover { color: var(--text); text-decoration: none; }
+  footer { border-top: 1px solid var(--border); padding: 32px 24px; text-align: center; color: var(--text3); font-size: .85rem; }
+  footer a { color: var(--text3); margin: 0 12px; } footer a:hover { color: var(--text); }
+  @media (max-width: 640px) { article { padding: 100px 16px 40px; } h1 { font-size: 1.5rem; } nav .links { display: none; } }
+</style>
+</head>
+<body>
+
+<nav><div class="inner">
+  <a href="../landing.html" class="logo" style="text-decoration:none;color:var(--text)"><div class="logo-icon">&Psi;</div><span>PsyStat <span style="background:linear-gradient(135deg,#818CF8,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Lab</span></span><span style="display:inline-block;background:#7C3AED;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;text-transform:uppercase">BETA</span></a>
+  <div class="links"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../about.html">About</a><a href="../landing.html#start" class="cta-sm">Get Started</a></div>
+</div></nav>
+
+<article>
+  <nav aria-label="Breadcrumb" style="font-size:.85rem;color:var(--text3);margin-bottom:16px">
+    <a href="../landing.html" style="color:var(--text3)">Home</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <a href="./" style="color:var(--text3)">Blog</a>
+    <span style="margin:0 8px">&rsaquo;</span>
+    <span style="color:var(--text2)">Mixed Models for Nested Data</span>
+  </nav>
+  <a href="./" class="back">&larr; All posts</a>
+  <div class="tag">Methodology</div>
+  <h1>Mixed Models for Nested Data</h1>
+  <div class="meta">By Moonlit Social Labs &middot; April 16, 2026 &middot; 14 min read</div>
+
+  <p>Most of the data social scientists, clinicians, and education researchers actually collect violates the central assumption of ordinary least squares regression. Students sit in classrooms, classrooms sit in schools, schools sit in districts. Patients are clustered within hospitals, and hospitals within health systems. Daily mood ratings are nested within persons, and persons within experimental conditions. Whenever observations share a context, they share unmeasured causes &mdash; and that shared variance breaks the independence assumption that ordinary regression silently relies on.</p>
+
+  <p>Mixed-effects models &mdash; also called multilevel models, hierarchical linear models (HLM), or random-effects models, depending on which discipline you trained in &mdash; are the standard tool for analyzing such data. This piece walks through what they do, why they matter, and where they fail. It is intended as a graduate-level orientation rather than a tutorial: by the end you should be able to read a methods section critically and know whether a mixed model is the right tool for your own design.</p>
+
+  <h2>1. Why Independence Matters</h2>
+
+  <p>Ordinary regression assumes that, conditional on the predictors, the residuals are independent and identically distributed. The standard errors that appear in your output are computed under that assumption. When observations are nested, residuals from the same cluster are correlated &mdash; two students in the same classroom are more similar than two students drawn at random &mdash; and the standard errors are too small. Confidence intervals are too narrow. <em>p</em>-values are too low. You reject null hypotheses you should not reject.</p>
+
+  <p>This is not a small correction. In a study of 30 schools with 20 students each, ignoring clustering can inflate the Type I error rate from the nominal 5% to anywhere between 15% and 50%, depending on the magnitude of the cluster effect (Snijders &amp; Bosker, 2012). The problem is not that your point estimate is biased &mdash; it usually isn't &mdash; but that you have wildly overstated how much information your sample contains.</p>
+
+  <h3>The intraclass correlation coefficient</h3>
+
+  <p>The basic diagnostic is the intraclass correlation coefficient (ICC), defined as the proportion of total residual variance that lies between clusters:</p>
+
+  <p><code>ICC = &sigma;&sup2;<sub>between</sub> / (&sigma;&sup2;<sub>between</sub> + &sigma;&sup2;<sub>within</sub>)</code></p>
+
+  <p>An ICC of 0 means clusters are interchangeable; OLS would be fine. An ICC of 0.10 &mdash; a typical value in education research &mdash; means 10% of the variance is between clusters. That sounds modest, but combined with even a small cluster size it produces a substantial <em>design effect</em>: <code>1 + (n&macr; &minus; 1) &times; ICC</code>, where n&macr; is the average cluster size. With 25 students per classroom and ICC = 0.10, the design effect is 3.4, meaning your effective sample size is roughly one-third of your nominal <em>n</em>. Standard errors should be inflated by &radic;3.4 &asymp; 1.85.</p>
+
+  <p>Raudenbush and Bryk (2002) make the point that even ICCs as small as 0.05 can produce serious distortions when cluster sizes exceed 50, which is routine in patient-level outcomes within hospitals or employee surveys within firms.</p>
+
+  <h2>2. Random Effects: The Conceptual Move</h2>
+
+  <p>The mixed-model fix is to add a random effect for the clustering variable. Conceptually, you allow each cluster to have its own deviation from the overall pattern, but rather than estimating a separate parameter for every cluster (as you would with a fixed-effect dummy), you assume those cluster-specific deviations are draws from a normal distribution with mean zero and variance &tau;. That single variance parameter replaces what would otherwise be hundreds or thousands of intercepts.</p>
+
+  <h3>Random intercepts</h3>
+
+  <p>The simplest model adds a random intercept: each cluster gets its own baseline, but the slopes are common across clusters. In <code>lme4</code> notation:</p>
+
+  <p><code>lmer(achievement ~ ses + (1 | school), data = d)</code></p>
+
+  <p>This says achievement depends on socioeconomic status, but each school has its own intercept drawn from <em>N</em>(0, &tau;<sub>00</sub>). The fixed-effect SE for <code>ses</code> is now correctly inflated to reflect the dependence within schools.</p>
+
+  <h3>Random slopes</h3>
+
+  <p>Random intercepts assume the effect of <code>ses</code> is identical across schools. That is rarely true. Some schools may amplify SES gaps; others may compress them. Adding a random slope captures that:</p>
+
+  <p><code>lmer(achievement ~ ses + (1 + ses | school), data = d)</code></p>
+
+  <p>You now estimate the variance in slopes across schools (&tau;<sub>11</sub>) and the covariance between intercept and slope (&tau;<sub>01</sub>). A negative covariance, for example, would suggest that schools with higher baseline achievement also have flatter SES gradients &mdash; a substantively interesting finding.</p>
+
+  <h3>Crossed vs. nested random effects</h3>
+
+  <p>Random effects are <em>nested</em> when one grouping is strictly contained within another (students within schools; classroom 7 in school A is a different unit from classroom 7 in school B). They are <em>crossed</em> when units cross multiple groupings independently (subjects responding to a fixed set of items, where every subject sees every item). The syntax differs &mdash; <code>(1 | school/classroom)</code> for nesting, <code>(1 | subject) + (1 | item)</code> for crossing &mdash; and getting it wrong silently produces incorrect variance partitions. When labels are unique across the higher level (e.g., classrooms have unique IDs across schools), the two specifications are equivalent; when they recycle, they are not.</p>
+
+  <h2>3. Three-Level and Cross-Classified Designs</h2>
+
+  <p>Real data are rarely two-level. Students sit in classrooms within schools (three levels), and a student may move classrooms across grades (cross-classified across teachers). The framework extends naturally:</p>
+
+  <p><code>lmer(score ~ poverty + (1 | school/classroom), data = d)</code></p>
+
+  <p>fits a three-level model with random intercepts at both the school and classroom-within-school levels. Variance is now partitioned three ways &mdash; between schools, between classrooms within schools, and between students within classrooms &mdash; and the corresponding ICCs tell you where most of the action is. In US elementary education, classroom-level variance often dwarfs school-level variance, which has substantive implications: interventions targeting teachers may matter more than school-level reforms.</p>
+
+  <p>Cross-classified models handle the case where a unit belongs to multiple non-nested groupings simultaneously. A child may live in neighborhood A and attend school B, and the children in school B come from many neighborhoods:</p>
+
+  <p><code>lmer(outcome ~ x + (1 | school) + (1 | neighborhood), data = d)</code></p>
+
+  <p>These models are computationally heavier and require larger samples at each crossing, but they let you decompose contextual effects that would otherwise be confounded.</p>
+
+  <h2>4. Growth Curves and Longitudinal Data</h2>
+
+  <p>Repeated measures within persons are nested data, and mixed models are the modern replacement for repeated-measures ANOVA. The key advantages are tolerance of unbalanced designs (subjects can have different numbers of waves), explicit handling of time as a continuous variable, and graceful accommodation of time-varying covariates.</p>
+
+  <p>Singer and Willett (2003) lay out the canonical two-stage logic. At Level 1, each person's outcome trajectory over time is modeled as an individual growth curve:</p>
+
+  <p><code>y<sub>ij</sub> = &pi;<sub>0i</sub> + &pi;<sub>1i</sub> &middot; time<sub>ij</sub> + e<sub>ij</sub></code></p>
+
+  <p>At Level 2, the person-specific intercepts (&pi;<sub>0i</sub>) and slopes (&pi;<sub>1i</sub>) are themselves modeled as functions of time-invariant predictors:</p>
+
+  <p><code>&pi;<sub>0i</sub> = &gamma;<sub>00</sub> + &gamma;<sub>01</sub> &middot; treatment<sub>i</sub> + u<sub>0i</sub></code></p>
+  <p><code>&pi;<sub>1i</sub> = &gamma;<sub>10</sub> + &gamma;<sub>11</sub> &middot; treatment<sub>i</sub> + u<sub>1i</sub></code></p>
+
+  <p>The cross-level interaction <code>&gamma;<sub>11</sub></code> is what most longitudinal studies actually care about: does treatment change the rate of change? Coding time matters: centering at baseline makes the intercept the predicted score at <em>t</em> = 0; centering at the midpoint makes the intercept the average score across waves. Nonlinear growth (quadratic, piecewise, latent basis) is handled by adding terms or restructuring the time variable, but every additional growth parameter is one more random effect that the data must support.</p>
+
+  <h2>5. Centering: A Decision That Changes Your Question</h2>
+
+  <p>When a Level-1 predictor varies both within and between clusters &mdash; say, daily stress within persons &mdash; how you center it changes what the coefficient means.</p>
+
+  <ul>
+    <li><strong>Grand-mean centering</strong> subtracts the overall mean. The resulting coefficient is a blend of within-person and between-person effects, weighted by the relative variance at each level.</li>
+    <li><strong>Group-mean (or cluster-mean) centering</strong> subtracts each person's own mean. The coefficient is now purely the within-person effect: when this person is more stressed than usual, what happens to their mood?</li>
+    <li><strong>Adding the cluster mean as a Level-2 predictor</strong> &mdash; the "contextual" or "Mundlak" approach &mdash; lets you estimate within and between effects separately in a single model.</li>
+  </ul>
+
+  <p>These are not interchangeable. A within-person effect of stress on mood (&minus;0.4 per stress unit) and a between-person effect (&minus;0.1 per stress unit) tell different scientific stories: one is about state-level reactivity, the other about trait-level adaptation. Reporting only the grand-mean-centered coefficient hides the distinction. Enders and Tofighi (2007) treat this in detail; the short version is that group-mean centering with the cluster mean re-entered at Level 2 is the safest default when within and between effects might differ.</p>
+  <h2>6. Estimation: REML, ML, and Convergence</h2>
+
+  <p>Two estimators dominate. Maximum likelihood (ML) jointly estimates fixed effects and variance components, but its variance estimates are biased downward in small samples. Restricted maximum likelihood (REML) corrects this bias by integrating out the fixed effects before estimating variances. The practical rule:</p>
+
+  <ul>
+    <li>Use <strong>REML</strong> when your interest is in the variance components or you are reporting final estimates.</li>
+    <li>Use <strong>ML</strong> when comparing models with different fixed-effects structures via likelihood ratio tests &mdash; REML log-likelihoods are not comparable across different fixed-effect specifications.</li>
+  </ul>
+
+  <p>Convergence problems are common and informative. A "singular fit" warning from <code>lme4</code> usually means a variance component has been estimated as zero (or a correlation as &plusmn;1). The model is telling you the data do not support the random-effects structure you requested. The fix is rarely to ignore the warning; it is to simplify the random structure, recheck the data for design quirks, or, when the data simply cannot support the model, retreat to a cluster-robust standard error.</p>
+
+  <h2>7. Generalized Linear Mixed Models</h2>
+
+  <p>When the outcome is binary, count, ordinal, or otherwise non-Gaussian, generalized linear mixed models (GLMMs) extend the framework via a link function. Logistic GLMMs for binary outcomes, Poisson and negative-binomial GLMMs for counts, and ordinal GLMMs for Likert items are all routine.</p>
+
+  <p><code>glmer(passed ~ hours_studied + (1 | school), family = binomial, data = d)</code></p>
+
+  <p>Two complications matter. First, GLMMs do not have closed-form likelihoods and are estimated by approximations &mdash; Laplace approximation, adaptive Gauss-Hermite quadrature, or pseudo-likelihood &mdash; which differ in accuracy and speed. Adaptive quadrature is the gold standard but scales poorly with crossed random effects. Second, fixed-effect coefficients in nonlinear GLMMs are <em>conditional</em> on the random effect, not marginal. The cluster-specific log-odds ratio is not the population-averaged log-odds ratio. If your scientific question is about a typical individual within a cluster, the GLMM coefficient is what you want; if it is about a typical cluster's mean response, you may want a marginal model (GEE) instead.</p>
+
+  <h2>8. Common Pitfalls</h2>
+
+  <ul>
+    <li><strong>Singular fits ignored.</strong> A variance estimated at zero indicates the data cannot identify that random effect. Forcing it in produces unstable standard errors elsewhere.</li>
+    <li><strong>Overfit random-effects structures.</strong> Barr et al. (2013) famously argued for "keeping it maximal" &mdash; fitting the random-effects structure justified by the design &mdash; to control Type I error in confirmatory analyses. Subsequent work (Matuschek et al., 2017; Bates et al., 2015) qualified the advice: maximal models often fail to converge or overfit, and parsimonious random structures may have better power without inflating Type I error. The current consensus is to start maximal but be willing to simplify principled when the data cannot support it.</li>
+    <li><strong>Treating fixed effects as random (or vice versa).</strong> Random effects are appropriate when levels are exchangeable draws from a population and you want to generalize beyond the sampled units. Fixed effects are appropriate when the levels themselves are of interest (the four experimental conditions, the two countries you happen to study). Treating the four experimental conditions as random because there are "only four" is a common error and produces uninformative variance estimates.</li>
+    <li><strong>Few clusters.</strong> McNeish and Stapleton (2016) document that with fewer than roughly 30 clusters, REML variance estimates are downwardly biased and Wald-based <em>p</em>-values for fixed effects are anti-conservative. Kenward&ndash;Roger or Satterthwaite degree-of-freedom corrections, parametric bootstrap, or Bayesian estimation with weakly informative priors are reasonable remedies.</li>
+    <li><strong>Reading R&sup2; off a mixed model.</strong> The marginal and conditional R&sup2; (Nakagawa &amp; Schielzeth, 2013) do reasonable jobs, but they are not the same quantity as OLS R&sup2;, and reporting a single number obscures more than it reveals.</li>
+  </ul>
+
+  <h2>9. A Worked Comparison</h2>
+
+  <p>Consider a small synthetic study: 40 schools, 20 students each (<em>n</em> = 800), with a school-level intervention assigned to half the schools and a continuous student-level outcome. The true intervention effect is 0.30 standard deviations; the true ICC is 0.15.</p>
+
+  <ul>
+    <li><strong>OLS:</strong> Estimate = 0.31, SE = 0.07, <em>p</em> &lt; .001. Looks decisive.</li>
+    <li><strong>Mixed model</strong> with random school intercepts: Estimate = 0.31, SE = 0.13, <em>p</em> = .02. Same point estimate, nearly double the SE.</li>
+    <li><strong>Cluster-robust SE</strong> on the OLS fit: Estimate = 0.31, SE = 0.12, <em>p</em> = .01.</li>
+  </ul>
+
+  <p>The point estimate is unchanged, but the OLS confidence interval is roughly half as wide as it should be. In a borderline case &mdash; say, a true effect of 0.15 with the same design &mdash; OLS would have declared significance and the mixed model would have correctly reported a null result. Multiplied across thousands of published studies in education and clinical research, this is part of why intervention effects so often shrink in replication.</p>
+
+  <h2>10. Mixed Models, GEE, and Cluster-Robust SEs</h2>
+
+  <p>Three approaches handle clustering, and they answer subtly different questions.</p>
+
+  <ul>
+    <li><strong>Mixed models</strong> partition variance and produce <em>conditional</em> (cluster-specific) effects. They give you everything &mdash; ICCs, random slopes, BLUPs for individual clusters &mdash; at the cost of distributional assumptions on the random effects.</li>
+    <li><strong>Generalized estimating equations (GEE)</strong> estimate <em>marginal</em> (population-averaged) effects with a working correlation structure and robust standard errors. They are the right choice when the question is "what is the average effect across the population," especially for binary outcomes where the conditional/marginal distinction matters.</li>
+    <li><strong>OLS with cluster-robust standard errors</strong> is a minimalist option: you keep the OLS point estimates and only correct the inference. It is appropriate when you have many clusters, do not care about variance partitioning, and want a model robust to misspecification of the random-effects distribution.</li>
+  </ul>
+
+  <p>None of these is uniformly best. With few clusters (&lt; 30&ndash;40), cluster-robust SEs are themselves biased and mixed models with small-sample corrections often dominate. With many clusters and a binary outcome where you want a marginal effect, GEE is a defensible default. With variance components or random slopes as your scientific quantity of interest, only mixed models will do.</p>
+
+  <h2>11. When Mixed Models Are Overkill</h2>
+
+  <p>Mixed models are not free. They demand careful thinking about levels, distributions, and centering; they fail to converge in ways that take hours to debug; they invite the reader to interrogate every random effect. They are not always the right tool.</p>
+
+  <ul>
+    <li>If your ICC is essentially zero and your cluster sizes are small, OLS will give nearly identical inference with less complexity.</li>
+    <li>If you have only a handful of clusters (say, 4&ndash;8) and the clusters themselves are of substantive interest, fixed-effect dummies are simpler and more interpretable.</li>
+    <li>If your sole interest is in fixed-effect inference and you have many clusters, OLS with cluster-robust SEs may be more robust and equally valid.</li>
+    <li>If your design is purely cross-sectional with no obvious clustering and you have invented a "random effect" to handle a single nuisance variable, you are probably overcomplicating things.</li>
+  </ul>
+
+  <p>The honest framing is this: mixed models are essential when (a) clustering is non-trivial, (b) you have enough clusters to estimate variance components, and (c) you care about either correct inference or the variance structure itself. Outside that envelope, simpler tools may serve you better.</p>
+
+  <div class="callout">
+    <div class="callout-title">Practical Workflow</div>
+    <p>Fit an empty (intercept-only) model first to estimate the ICC. If it is meaningful (say, &gt; 0.05) or your cluster sizes are large, proceed with a mixed model. Add fixed effects, then random slopes for any predictor whose effect could plausibly vary across clusters. Watch for singular fits and simplify the random structure principled when warned. Use REML for final reporting, ML for likelihood-ratio comparisons of fixed effects, and a small-sample correction (Kenward&ndash;Roger, Satterthwaite) when clusters are few.</p>
+  </div>
+
+  <h2>Try It in PsyStat Lab</h2>
+
+  <p>The <strong>HLM module</strong> in PsyStat Lab fits two- and three-level random-intercept and random-slope models, reports ICCs and design effects, runs Kenward&ndash;Roger small-sample corrections, and flags singular fits with diagnostic guidance. Growth-curve templates and cross-classified specifications are built in, and GLMM extensions handle binary and count outcomes through Laplace and adaptive quadrature.</p>
+
+  <p><a href="../landing.html#start">Get started free &rarr;</a></p>
+
+  <h2>References</h2>
+  <ul>
+    <li>Barr, D. J., Levy, R., Scheepers, C., &amp; Tily, H. J. (2013). Random effects structure for confirmatory hypothesis testing: Keep it maximal. <em>Journal of Memory and Language, 68</em>(3), 255&ndash;278.</li>
+    <li>Bates, D., M&auml;chler, M., Bolker, B., &amp; Walker, S. (2015). Fitting linear mixed-effects models using lme4. <em>Journal of Statistical Software, 67</em>(1), 1&ndash;48.</li>
+    <li>Enders, C. K., &amp; Tofighi, D. (2007). Centering predictor variables in cross-sectional multilevel models. <em>Psychological Methods, 12</em>(2), 121&ndash;138.</li>
+    <li>McNeish, D. M., &amp; Stapleton, L. M. (2016). The effect of small sample size on two-level model estimates: A review and illustration. <em>Educational Psychology Review, 28</em>(2), 295&ndash;314.</li>
+    <li>Nakagawa, S., &amp; Schielzeth, H. (2013). A general and simple method for obtaining R&sup2; from generalized linear mixed-effects models. <em>Methods in Ecology and Evolution, 4</em>(2), 133&ndash;142.</li>
+    <li>Raudenbush, S. W., &amp; Bryk, A. S. (2002). <em>Hierarchical linear models: Applications and data analysis methods</em> (2nd ed.). Sage.</li>
+    <li>Singer, J. D., &amp; Willett, J. B. (2003). <em>Applied longitudinal data analysis: Modeling change and event occurrence</em>. Oxford University Press.</li>
+    <li>Snijders, T. A. B., &amp; Bosker, R. J. (2012). <em>Multilevel analysis: An introduction to basic and advanced multilevel modeling</em> (2nd ed.). Sage.</li>
+  </ul>
+
+  <div style="margin-top:48px;padding-top:32px;border-top:1px solid #1E293B">
+    <h2 style="font-size:1.1rem;margin-bottom:16px;color:#94A3B8">Related Posts</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+      <a href="causal-inference.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06B6D4;margin-bottom:6px">Methodology</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">Causal Inference Without Randomization</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">When you can't randomize, what can you actually claim? A tour of matching, instruments, regression discontinuity, and the assumptions each one rests on.</div>
+      </a>
+      <a href="power-analysis.html" style="display:block;padding:20px;background:#131926;border:1px solid #1E293B;border-radius:10px;text-decoration:none;transition:border-color .2s">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#06B6D4;margin-bottom:6px">Methodology</div>
+        <div style="font-size:1rem;font-weight:600;color:#F1F5F9;margin-bottom:6px">Power Analysis: How Much Data Do You Actually Need?</div>
+        <div style="font-size:.85rem;color:#94A3B8;line-height:1.5">From smallest effect size of interest to simulation-based power for complex designs &mdash; how to plan a study that can actually answer its question.</div>
+      </a>
+    </div>
+  </div>
+</article>
+
+<div class="ad-slot" data-position="bottom" style="text-align:center;padding:16px 0;background:#0F172A;border-top:1px solid #1E293B"></div>
+
+<footer>
+  <p>&copy; 2026 Moonlit Social Labs.</p>
+  <div style="margin-top:12px"><a href="../landing.html">Home</a><a href="../features.html">Features</a><a href="./">Blog</a><a href="../privacy.html">Privacy</a><a href="../terms.html">Terms</a><a href="https://ko-fi.com/moonlitsociallabs" target="_blank" rel="noopener" style="background:#FF5E5B;color:#fff;padding:4px 14px;border-radius:6px;font-weight:600;text-decoration:none">&#9749; Support Us</a></div>
+</footer>
+</body>
+</html>

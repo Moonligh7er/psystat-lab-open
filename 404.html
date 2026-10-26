@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>Page Not Found | PsyStat Lab</title>
+<meta name="description" content="The page you're looking for doesn't exist. Browse our blog, encyclopedia, or features.">
+<meta name="robots" content="noindex, follow">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0B0F1A; --surface: #131926; --elevated: #1A2236; --border: #1E293B;
+    --text: #F1F5F9; --text2: #94A3B8; --text3: #64748B;
+    --primary: #6366F1; --cyan: #06B6D4;
+  }
+  html { font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .wrap { max-width: 620px; text-align: center; }
+  .icon {
+    width: 80px; height: 80px; border-radius: 20px;
+    background: linear-gradient(135deg, #6366F1, #06B6D4);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 2.4rem; font-weight: 800; color: #fff; margin-bottom: 32px;
+    box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3);
+  }
+  h1 {
+    font-size: 5rem; font-weight: 900; letter-spacing: -.04em; margin-bottom: 8px;
+    background: linear-gradient(135deg, #818CF8, #6366F1, #06B6D4);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 16px; }
+  p { color: var(--text2); font-size: 1.05rem; margin-bottom: 32px; }
+  .actions {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 48px;
+  }
+  .btn {
+    display: inline-block; padding: 12px 24px; border-radius: 10px;
+    font-weight: 600; font-size: .95rem; text-decoration: none;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4); }
+  .btn-secondary {
+    background: var(--surface); color: var(--text); border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--primary); }
+  .links {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; max-width: 540px; margin: 0 auto;
+  }
+  .link-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; text-align: left; text-decoration: none;
+    transition: border-color .2s, transform .2s;
+  }
+  .link-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .link-card .label {
+    font-size: .75rem; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--cyan); margin-bottom: 4px;
+  }
+  .link-card .title { color: var(--text); font-weight: 600; font-size: .95rem; }
+  .link-card .desc { color: var(--text3); font-size: .85rem; margin-top: 4px; }
+  .footer-note {
+    color: var(--text3); font-size: .85rem; margin-top: 48px;
+  }
+  .footer-note a { color: var(--cyan); text-decoration: none; }
+  .footer-note a:hover { text-decoration: underline; }
+  @media (max-width: 480px) {
+    h1 { font-size: 3.5rem; }
+    h2 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="icon">&Psi;</div>
+  <h1>404</h1>
+  <h2>Page Not Found</h2>
+  <p>The page you're looking for doesn't exist or has moved. Try one of the destinations below.</p>
+
+  <div class="actions">
+    <a href="/" class="btn btn-primary">Back to Home</a>
+    <a href="/encyclopedia.html" class="btn btn-secondary">Browse Encyclopedia</a>
+  </div>
+
+  <div class="links">
+    <a href="/features.html" class="link-card">
+      <div class="label">Explore</div>
+      <div class="title">Features</div>
+      <div class="desc">240+ statistical methods, in plain language</div>
+    </a>
+    <a href="/blog/" class="link-card">
+      <div class="label">Read</div>
+      <div class="title">Blog</div>
+      <div class="desc">Methodology, open science, robustness checks</div>
+    </a>
+    <a href="/encyclopedia.html" class="link-card">
+      <div class="label">Reference</div>
+      <div class="title">Methods Encyclopedia</div>
+      <div class="desc">Quick reference for 60+ statistical methods</div>
+    </a>
+    <a href="/about.html" class="link-card">
+      <div class="label">Learn</div>
+      <div class="title">About</div>
+      <div class="desc">Built by Moonlit Social Labs</div>
+    </a>
+  </div>
+
+  <p class="footer-note">
+    Looking for something specific? <a href="mailto:moonlit-social-labs@proton.me">Email us</a>.
+  </p>
+</div>
+</body>
+</html>

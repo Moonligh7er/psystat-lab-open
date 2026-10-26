@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Internal-only / utility pages — do not index
+Disallow: /architecture.html
+Disallow: /investorlanding.html
+Disallow: /businessplan.html
+Disallow: /generate-og-image.html
+Disallow: /store-listing.html
+
+Sitemap: https://psystat-lab.dev/sitemap.xml
+
+# Crawl delay for polite bots
+Crawl-delay: 1

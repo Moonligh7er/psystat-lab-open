@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>For Educators — PsyStat Lab</title>
+<meta name="description" content="A methods-course tool built for phones, tablets, and browsers. 240+ methods, a validated numerical core, an AI teaching assistant, and a syllabus-ready module map. Free pilot for the first 20 methods courses.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://psystat-lab.dev/educators.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="For Educators — PsyStat Lab">
+<meta property="og:description" content="A methods-course tool priced to displace SPSS site licenses. Free pilot for the first 20 methods courses.">
+<meta property="og:url" content="https://psystat-lab.dev/educators.html">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="For Educators — PsyStat Lab">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0B0F1A;
+    --surface: #131926;
+    --elevated: #1A2236;
+    --border: #1E293B;
+    --text: #F1F5F9;
+    --text2: #94A3B8;
+    --text3: #64748B;
+    --primary: #6366F1;
+    --primary-glow: rgba(99,102,241,.25);
+    --cyan: #06B6D4;
+    --emerald: #10B981;
+    --amber: #F59E0B;
+    --rose: #F43F5E;
+  }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.7;
+    overflow-x: hidden; -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::selection { background: var(--primary); color: #fff; }
+  code, .mono { font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
+
+  /* Nav */
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 0;
+    background: rgba(11,15,26,.85); backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(255,255,255,.04); }
+  nav .inner { max-width: 1200px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; }
+  nav .logo { font-size: 1.25rem; font-weight: 800; letter-spacing: -.02em;
+    display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; }
+  nav .logo:hover { text-decoration: none; }
+  nav .logo-icon { width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, #6366F1, #06B6D4);
+    display: flex; align-items: center; justify-content: center; font-size: .9rem; color: #fff; }
+  nav .links { display: flex; gap: 24px; align-items: center; }
+  nav .links a { color: var(--text2); font-size: .875rem; font-weight: 500; transition: color .2s; }
+  nav .links a:hover { color: var(--text); text-decoration: none; }
+  .btn-cta { background: linear-gradient(135deg, var(--emerald), var(--cyan));
+    color: #fff !important; padding: 10px 20px; border-radius: 10px; font-weight: 700;
+    font-size: .875rem; text-decoration: none; display: inline-block; }
+  .btn-cta:hover { text-decoration: none; opacity: .9; }
+  .btn-secondary { background: var(--elevated); border: 1px solid var(--border);
+    color: var(--text) !important; padding: 10px 20px; border-radius: 10px; font-weight: 600;
+    font-size: .875rem; text-decoration: none; display: inline-block; }
+  .btn-secondary:hover { text-decoration: none; background: var(--surface); }
+
+  /* Content */
+  .page { max-width: 1080px; margin: 0 auto; padding: 120px 24px 60px; }
+  .hero-title { font-size: clamp(2rem, 4.6vw, 3.4rem); font-weight: 800; letter-spacing: -.03em; line-height: 1.1; margin-bottom: 16px; }
+  .hero-title .accent { background: linear-gradient(135deg, #34D399, #06B6D4);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .lede { color: var(--text2); font-size: 1.15rem; margin-bottom: 32px; max-width: 720px; line-height: 1.6; }
+  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+
+  /* Pain / value grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 48px 0; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin: 48px 0; }
+  @media (max-width: 720px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px; }
+  .card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+  .card p { color: var(--text2); font-size: .95rem; line-height: 1.6; }
+  .card.rose { border-color: rgba(244,63,94,.35); background: linear-gradient(135deg, rgba(244,63,94,.05), rgba(139,92,246,.03)); }
+  .card.emerald { border-color: rgba(16,185,129,.35); background: linear-gradient(135deg, rgba(16,185,129,.05), rgba(6,182,212,.03)); }
+  .card .num { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; color: var(--text); display: block; margin-bottom: 4px; }
+  .card .num.emerald { color: #34D399; }
+  .card .num.rose { color: #FB7185; }
+  .card .cap { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text3); font-weight: 700; margin-bottom: 12px; }
+
+  /* Sections */
+  section.block { margin-top: 64px; margin-bottom: 32px; }
+  section.block h2 { font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: 8px; }
+  section.block .subhead { color: var(--text2); margin-bottom: 32px; max-width: 720px; }
+
+  /* Syllabus table */
+  .syllabus-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: .92rem; }
+  .syllabus-table th, .syllabus-table td { padding: 14px 14px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .syllabus-table th { background: var(--elevated); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text3); font-weight: 700; }
+  .syllabus-table td { color: var(--text2); }
+  .syllabus-table td strong { color: var(--text); display: block; margin-bottom: 4px; }
+  .syllabus-table td.week { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--text); width: 68px; white-space: nowrap; }
+  .syllabus-table code { font-size: .8rem; color: var(--cyan); background: var(--elevated); padding: 1px 6px; border-radius: 4px; }
+  .syllabus-note { color: var(--text3); font-size: .82rem; margin-top: 14px; }
+
+  /* Callout */
+  .callout { background: linear-gradient(135deg, rgba(16,185,129,.08), rgba(6,182,212,.06));
+    border: 1px solid rgba(16,185,129,.3); border-radius: 16px; padding: 32px;
+    margin: 48px 0; }
+  .callout h2 { color: var(--text); margin-bottom: 8px; }
+  .callout p { color: var(--text2); margin-bottom: 12px; }
+  .callout .checklist { list-style: none; padding: 0; margin: 16px 0; }
+  .callout .checklist li { color: var(--text2); padding: 6px 0 6px 28px; position: relative; }
+  .callout .checklist li::before { content: '\2713'; color: var(--emerald);
+    position: absolute; left: 0; font-weight: 700; }
+  .callout form { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .callout input[type="email"] {
+    flex: 1 1 260px; padding: 12px 16px; background: rgba(11,15,26,.6);
+    border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+    font-size: 1rem; font-family: inherit;
+  }
+  .callout input[type="email"]:focus { outline: none; border-color: var(--emerald); }
+  .callout button {
+    padding: 12px 24px; background: linear-gradient(135deg, var(--emerald), var(--cyan));
+    border: none; border-radius: 10px; color: #fff; font-weight: 700; font-size: .95rem;
+    cursor: pointer; font-family: inherit;
+  }
+  .callout button:hover { opacity: .9; }
+  .form-note { color: var(--text3); font-size: .78rem; margin-top: 8px; }
+
+  /* FAQ */
+  .faq-item { background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+  .faq-q { padding: 16px 20px; font-weight: 600; color: var(--text); cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center; }
+  .faq-q:hover { background: var(--elevated); }
+  .faq-q .arrow { color: var(--text3); transition: transform .2s; }
+  .faq-item.open .faq-q .arrow { transform: rotate(180deg); }
+  .faq-a { padding: 0 20px 20px; color: var(--text2); display: none; font-size: .95rem; }
+  .faq-item.open .faq-a { display: block; }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--border); padding: 32px 24px; text-align: center;
+    color: var(--text3); font-size: .85rem; margin-top: 64px; }
+  footer a { color: var(--text2); margin: 0 8px; }
+
+  @media (max-width: 720px) {
+    .page { padding: 100px 16px 40px; }
+    nav .links { gap: 12px; }
+    nav .links a:not(.btn-cta):not(.btn-secondary) { display: none; }
+    .syllabus-table { font-size: .82rem; }
+    .syllabus-table th, .syllabus-table td { padding: 10px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <a href="landing.html" class="logo">
+      <div class="logo-icon">P</div>
+      PsyStat Lab<span style="display:inline-block;background:#7C3AED;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;text-transform:uppercase">BETA</span>
+    </a>
+    <div class="links">
+      <a href="landing.html">Home</a>
+      <a href="validation.html">Validation</a>
+      <a href="#pilot" class="btn-cta">Request a pilot</a>
+    </div>
+  </div>
+</nav>
+
+<main class="page">
+  <div style="display:inline-block; padding: 6px 14px; background: rgba(16,185,129,.14); border: 1px solid rgba(16,185,129,.35); border-radius: 999px; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #34D399; margin-bottom: 20px;">
+    For methods instructors &amp; lab PIs
+  </div>
+  <h1 class="hero-title">
+    Your students already have<br>a research computer<br>
+    <span class="accent">in their pocket.</span>
+  </h1>
+  <p class="lede">
+    Every research-methods course confronts the same wall: statistical software costs more than the textbook, installs badly, only runs on the computer it&rsquo;s licensed to, and teaches students they need permission to touch data. PsyStat Lab is 240+ methods, an AI teaching assistant, and a validated numerical core &mdash; usable from any phone, tablet, or browser, without an install, on the first day of class.
+  </p>
+  <div class="hero-cta">
+    <a href="#pilot" class="btn-cta">Request a pilot (free semester)</a>
+    <a href="#syllabus" class="btn-secondary">See the 12-week map &darr;</a>
+  </div>
+
+  <!-- Pain / opportunity -->
+  <section class="block" id="pain">
+    <h2>The status quo, priced honestly</h2>
+    <p class="subhead">These are what your department is already paying &mdash; per student, per year, for tools designed in an era before mobile.</p>
+    <div class="grid-3">
+      <div class="card rose">
+        <div class="cap">SPSS site license</div>
+        <span class="num rose">$99+</span>
+        <p>Per user per year at academic rates. IBM&rsquo;s public rack rate. Doesn&rsquo;t include install support, and students lose access the day they graduate.</p>
+      </div>
+      <div class="card rose">
+        <div class="cap">Stata single-user</div>
+        <span class="num rose">$425</span>
+        <p>Six-month student rate. Undergraduate methods courses can&rsquo;t justify it, so instructors teach around the tool rather than with it.</p>
+      </div>
+      <div class="card rose">
+        <div class="cap">Instructor time lost to installs</div>
+        <span class="num rose">2&ndash;3 wks</span>
+        <p>The consistent finding when methods instructors are surveyed: the first two to three weeks of any hands-on stats course are absorbed by installation, licensing, and platform troubleshooting instead of statistics.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- The alternative -->
+  <section class="block">
+    <h2>What changes with a mobile-first tool</h2>
+    <p class="subhead">Not just a cost swap. A different pedagogy.</p>
+    <div class="grid-2">
+      <div class="card emerald">
+        <div class="cap">Day 1 &middot; Zero install</div>
+        <h3>Class runs the first day</h3>
+        <p>Students open a browser or the app. There is nothing to install, nothing to license, nothing to configure. The two-week install triage disappears. You get those weeks back for actual statistics.</p>
+      </div>
+      <div class="card emerald">
+        <div class="cap">Every device &middot; Every context</div>
+        <h3>Homework in bed. Lab work at the bench.</h3>
+        <p>PsyStat runs identically on phone, tablet, laptop, and computer-lab desktop. Students who commute do assignments on the bus. Students in field settings run analyses on real data on tablets. Students who never touch a &ldquo;real computer&rdquo; are no longer excluded.</p>
+      </div>
+      <div class="card emerald">
+        <div class="cap">AI teaching assistant</div>
+        <h3>Every student has a TA</h3>
+        <p>The AI advisor explains why a test was selected, flags assumption violations, and walks a stuck student through their data at 2 a.m. It does not do the assignment for them &mdash; it teaches the reasoning your syllabus is already trying to build.</p>
+      </div>
+      <div class="card emerald">
+        <div class="cap">Validated core</div>
+        <h3>Numbers you can defend</h3>
+        <p>Every method PsyStat exposes is compared against a canonical reference (NIST StRD, R, or peer-reviewed textbook) on every commit. See the <a href="validation.html" style="color:#34D399;">public validation report</a>. When a student cites PsyStat in a paper, the citation is bound to a specific build and a specific validation snapshot.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Syllabus module map -->
+  <section class="block" id="syllabus">
+    <h2>Syllabus-ready module map</h2>
+    <p class="subhead">A standard 12-week undergraduate research-methods sequence, mapped to the PsyStat modules that cover each week. Copy this into your syllabus; every module link goes straight to the tool.</p>
+    <table class="syllabus-table">
+      <thead>
+        <tr>
+          <th>Week</th>
+          <th>Topic</th>
+          <th>PsyStat modules &amp; tools</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="week">1</td>
+          <td>
+            <strong>Research questions &amp; measurement</strong>
+            Formulating testable hypotheses, operationalization, reliability and validity in the abstract.
+          </td>
+          <td>
+            <code>Study Planner</code>, <code>Research Hub</code>. Simulation: <em>What does reliability look like?</em> Interactive noise-signal demo.
+          </td>
+        </tr>
+        <tr>
+          <td class="week">2</td>
+          <td>
+            <strong>Descriptive statistics &amp; visualization</strong>
+            Means, medians, spread, distributional shape. Reading a graph before running a test.
+          </td>
+          <td>
+            <code>Stats Studio &rarr; Descriptive</code>, <code>Data Cleaning</code>. Interactive histogram + boxplot builder.
+          </td>
+        </tr>
+        <tr>
+          <td class="week">3</td>
+          <td>
+            <strong>Sampling &amp; the CLT</strong>
+            Sampling distributions, standard errors, the Central Limit Theorem, why sample size matters.
+          </td>
+          <td>
+            Simulation: <em>Sampling distributions</em>. Draws thousands of samples on the phone in real time so students see the CLT emerge instead of taking it on faith.
+          </td>
+        </tr>
+        <tr>
+          <td class="week">4</td>
+          <td>
+            <strong>Hypothesis testing intuition</strong>
+            Null vs. alternative, alpha, Type I/II errors, power.
+          </td>
+          <td>
+            <code>Power Analysis</code>, simulation: <em>Type I vs. Type II tradeoffs</em>. Students find the alpha level themselves.
+          </td>
+        </tr>
+        <tr>
+          <td class="week">5</td>
+          <td>
+            <strong>Comparing two groups: t-tests</strong>
+            Independent-samples, paired, Welch&rsquo;s correction, effect sizes.
+          </td>
+          <td>
+            <code>Stats Studio &rarr; t-test</code>. Assignment: run indep + paired on the built-in Rosner and Snedecor teaching datasets. Validated against the <a href="validation.html" style="color:var(--cyan);">golden-number suite</a>.
+          </td>
+        </tr>
+        <tr>
+          <td class="week">6</td>
+          <td>
+            <strong>ANOVA: three or more groups</strong>
+            One-way, factorial, post-hoc procedures, eta-squared.
+          </td>
+          <td>
+            <code>Stats Studio &rarr; ANOVA</code>. Tukey HSD auto-generated. Assumption-check dashboard flags violations before the student misinterprets output.
+          </td>
+        </tr>
+        <tr>
+          <td class="week">7</td>
+          <td>
+            <strong>Correlation &amp; regression</strong>
+            Pearson, Spearman, Kendall, simple linear regression, coefficient interpretation.
+          </td>
+          <td>
+            <code>Stats Studio &rarr; Correlation / Regression</code>. NIST-Norris-validated OLS. Interactive residual plots.
+          </td>
+        </tr>
+        <tr>
+          <td class="week">8</td>
+          <td>
+            <strong>Chi-square &amp; categorical data</strong>
+            Contingency tables, Cramer&rsquo;s V, odds ratios.
+          </td>
+          <td>
+            <code>Stats Studio &rarr; Chi-square</code>. 2x2 tables with OR + Fisher&rsquo;s exact fallback for small counts.
+          </td>
+        </tr>
+        <tr>
+          <td class="week">9</td>
+          <td>
+            <strong>Non-parametric alternatives</strong>
+            When assumptions fail. Mann-Whitney, Wilcoxon signed-rank, Kruskal-Wallis.
+          </td>
+          <td>
+            <code>Advanced Stats &rarr; Non-parametric</code>. Same UI as t-test &mdash; students see the parallel structure.
+          </td>
+        </tr>
+        <tr>
+          <td class="week">10</td>
+          <td>
+            <strong>Reproducibility, pre-registration &amp; open science</strong>
+            The replication crisis, HARKing, pre-registration mechanics.
+          </td>
+          <td>
+            <code>Research Hub &rarr; Pre-Registration Builder</code> (OSF and AsPredicted formats). <code>Replication Package</code> export. Encyclopedia entry on the replication crisis.
+          </td>
+        </tr>
+        <tr>
+          <td class="week">11</td>
+          <td>
+            <strong>Multiverse &amp; specification-curve analysis</strong>
+            The p-hacking problem made concrete. What robust findings actually look like.
+          </td>
+          <td>
+            <code>Multiverse Analysis</code>. Students see how a &ldquo;significant&rdquo; finding changes across analytic choices. Best intuition-builder for critical reading.
+          </td>
+        </tr>
+        <tr>
+          <td class="week">12</td>
+          <td>
+            <strong>Communicating results</strong>
+            APA-formatted reporting, figures, effect sizes, honest caveats.
+          </td>
+          <td>
+            <code>APA Formatter</code>, <code>Narrative Builder</code>, <code>Slides Export</code>. Every analysis produces publication-shape output automatically &mdash; students learn to write results by editing structured drafts, not from a blank page.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="syllabus-note">
+      This map matches the outline of <em>Psychological Research Methods</em> (Bordens &amp; Abbott, 2018) and <em>Statistical Methods for the Behavioral Sciences</em> (Gravetter et al., 2020) &mdash; adjust week numbers to your semester. A downloadable syllabus insert (PDF + editable DOCX) is included in every pilot.
+    </p>
+  </section>
+
+  <!-- Pilot -->
+  <section class="block">
+    <div class="callout" id="pilot">
+      <div style="display:inline-block; padding: 4px 12px; background: rgba(16,185,129,.14); border: 1px solid rgba(16,185,129,.35); border-radius: 999px; font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #34D399; margin-bottom: 12px;">Free pilot &middot; First 20 courses</div>
+      <h2>Run a full semester on us</h2>
+      <p>The first 20 methods courses to pilot PsyStat Lab receive a full semester of Classroom-tier access at no cost, for the instructor plus every enrolled student. In exchange, we ask for:</p>
+      <ul class="checklist">
+        <li>Two 30-minute check-ins during the semester (mid-term and end-of-semester feedback)</li>
+        <li>Permission to reference your course (if you&rsquo;re willing) in future case studies &mdash; opt-in only, we won&rsquo;t quote you without written approval</li>
+        <li>Honest feedback on what worked, what didn&rsquo;t, and what students actually used</li>
+      </ul>
+      <p style="margin-top:20px;">We are not a large team. Every pilot instructor gets a direct line to the person building the tool, and requests routinely turn into shipped features within a semester.</p>
+      <form action="mailto:moonlit-social-labs@proton.me?subject=Educator%20pilot%20request" method="post" enctype="text/plain">
+        <input type="email" name="email" placeholder="your@university.edu" required>
+        <button type="submit">Request a pilot</button>
+      </form>
+      <p class="form-note">Or email <a href="mailto:moonlit-social-labs@proton.me?subject=Educator%20pilot%20request" style="color:var(--text2);">moonlit-social-labs@proton.me</a> directly. Please include your institution, course title, expected enrollment, and semester.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="block">
+    <h2>Instructor FAQ</h2>
+    <p class="subhead">Concrete answers to the questions instructors have actually asked. If you have one that isn&rsquo;t here, email us and it&rsquo;ll appear on this page.</p>
+    <div class="faq-item">
+      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+        Do students need to install anything?
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="faq-a">No. PsyStat Lab runs in any modern browser and is also available as a native iOS/Android app. Everything a student needs to do a full research-methods sequence is web-accessible. The mobile app is optional, not required.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+        Are the numbers actually right? SPSS is the reference standard because it&rsquo;s trusted.
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="faq-a">See the <a href="validation.html">public validation report</a>. Every method PsyStat exposes is compared against a canonical reference (NIST StRD, R, or peer-reviewed textbook) on every commit. Currently 10 methods are validated with 25 independent checks; that number grows on a documented roadmap. Methods not yet validated are labeled &ldquo;unvalidated (beta)&rdquo; in the app and are not billed as citable.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+        Can students cite PsyStat in a lab report or thesis?
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="faq-a">Yes. The built-in Citation Generator stamps every citation with the exact PsyStat Lab version and the validation-snapshot version that was current when the analysis ran, in APA 7th, BibTeX, Chicago, and Vancouver formats. A cited analysis is bound to a specific commit and can be reproduced years later against that build.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+        What data privacy protections apply to student work?
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="faq-a">Raw CSV files students upload are parsed on the device and are not transmitted. Only the numeric columns being analyzed travel to our compute backend, which retains nothing after the request. Saved analyses live in the student&rsquo;s account under row-level security. There is no advertising on any tier. See the <a href="privacy.html#irb-statement">IRB-ready data-handling statement</a> for a paragraph designed to paste directly into a course-approval document.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+        What does &ldquo;institutional pricing&rdquo; actually mean?
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="faq-a">Priced per seat, scaling down sharply above 20 students, with a floor that&rsquo;s meaningfully cheaper than the SPSS/Stata/JMP alternatives. Exact numbers depend on cohort size and institution type &mdash; write to us with your enrollment and semester and you&rsquo;ll get a same-week quote. First 20 pilot courses run free for a semester.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+        Can students keep access after the semester ends?
+        <span class="arrow">&#9660;</span>
+      </div>
+      <div class="faq-a">Yes. Every classroom enrollment includes a 90-day grace window during which the student can export all saved analyses and, if they choose, convert to a personal Free or Researcher account at their own pace. Students who never sign up individually never see a subscription prompt during the course.</div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>&copy; 2026 Moonlit Social Labs. Built for the researchers the software industry forgot.</p>
+  <div style="margin-top:12px">
+    <a href="landing.html">Home</a>
+    <a href="validation.html">Validation</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="terms.html">Terms</a>
+    <a href="https://github.com/Moonligh7er/psystat-lab-open" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</footer>
+
+</body>
+</html>
