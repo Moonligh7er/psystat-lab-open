@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-26T10:37:03.793494+00:00",
+  "generated_at": "2026-10-27T00:46:56.812083+00:00",
   "exit_status": 0,
-  "n_methods_validated": 87,
-  "n_total_checks": 295,
+  "n_methods_validated": 112,
+  "n_total_checks": 377,
   "methods": [
     {
       "method": "2PL model (MML)",
@@ -181,6 +181,94 @@
       "n_checks": 2
     },
     {
+      "method": "Alignment (Asparouhov & Muthen)",
+      "endpoint": "/api/invariance/alignment",
+      "checks": [
+        {
+          "statistic": "group 1 mean",
+          "observed": 0.0,
+          "expected": 0.0,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "4 groups x 6 items (constructed)",
+          "test_id": "tests/test_sem.py::test_alignment_matches_sirt"
+        },
+        {
+          "statistic": "group 1 SD",
+          "observed": 1.0,
+          "expected": 1.0,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "4 groups x 6 items (constructed)",
+          "test_id": "tests/test_sem.py::test_alignment_matches_sirt"
+        },
+        {
+          "statistic": "group 2 mean",
+          "observed": 0.41694525859749815,
+          "expected": 0.416946,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "4 groups x 6 items (constructed)",
+          "test_id": "tests/test_sem.py::test_alignment_matches_sirt"
+        },
+        {
+          "statistic": "group 2 SD",
+          "observed": 1.201906025840151,
+          "expected": 1.201904,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "4 groups x 6 items (constructed)",
+          "test_id": "tests/test_sem.py::test_alignment_matches_sirt"
+        },
+        {
+          "statistic": "group 3 mean",
+          "observed": -0.31320686006571696,
+          "expected": -0.313206,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "4 groups x 6 items (constructed)",
+          "test_id": "tests/test_sem.py::test_alignment_matches_sirt"
+        },
+        {
+          "statistic": "group 3 SD",
+          "observed": 0.901231437008367,
+          "expected": 0.901231,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "4 groups x 6 items (constructed)",
+          "test_id": "tests/test_sem.py::test_alignment_matches_sirt"
+        },
+        {
+          "statistic": "group 4 mean",
+          "observed": 0.907128815677614,
+          "expected": 0.907128,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "4 groups x 6 items (constructed)",
+          "test_id": "tests/test_sem.py::test_alignment_matches_sirt"
+        },
+        {
+          "statistic": "group 4 SD",
+          "observed": 1.5000215278750844,
+          "expected": 1.50002,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "4 groups x 6 items (constructed)",
+          "test_id": "tests/test_sem.py::test_alignment_matches_sirt"
+        }
+      ],
+      "references": [
+        "sirt (R 4.5.2) invariance.alignment"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "4 groups x 6 items (constructed)"
+      ],
+      "n_checks": 8
+    },
+    {
       "method": "Begg & Mazumdar rank test",
       "endpoint": "/api/meta-analysis/publication-bias",
       "checks": [
@@ -213,6 +301,31 @@
         "BCG vaccine trials (dat.bcg), log risk ratios"
       ],
       "n_checks": 2
+    },
+    {
+      "method": "Bridge centrality",
+      "endpoint": "/api/network-psychometrics/bridge",
+      "checks": [
+        {
+          "statistic": "bridge EI 2-step (node 5)",
+          "observed": 0.26426285954706963,
+          "expected": 0.2642628595,
+          "tolerance_abs": 1e-09,
+          "tolerance_rel": null,
+          "dataset": "simulated network_sim (n = 500 / 450)",
+          "test_id": "tests/test_network.py::test_bridge_matches_networktools"
+        }
+      ],
+      "references": [
+        "qgraph 1.9.8 / networktools 1.6.1 / NetworkComparisonTest 2.2.4 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated network_sim (n = 500 / 450)"
+      ],
+      "n_checks": 1
     },
     {
       "method": "Cognitive Lab: N-Back d\u2032 (log-linear)",
@@ -288,6 +401,157 @@
         "simulated ex-Gaussian RTs, 40 trials per condition"
       ],
       "n_checks": 1
+    },
+    {
+      "method": "Confirmatory factor analysis (ML)",
+      "endpoint": "/api/sem/cfa",
+      "checks": [
+        {
+          "statistic": "chi_square",
+          "observed": 85.30661325534442,
+          "expected": 85.30661326,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "cfi",
+          "observed": 0.9305585976754686,
+          "expected": 0.9305586,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "tli",
+          "observed": 0.8958378965132028,
+          "expected": 0.8958379,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "rmsea",
+          "observed": 0.09212230457337273,
+          "expected": 0.0921223,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "rmsea_ci90_lower",
+          "observed": 0.07141934460543424,
+          "expected": 0.07141934,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "rmsea_ci90_upper",
+          "observed": 0.11367880795207357,
+          "expected": 0.11367881,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "srmr",
+          "observed": 0.06520540464606192,
+          "expected": 0.06520541,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "aic",
+          "observed": 7517.486921335888,
+          "expected": 7517.48692134,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "bic",
+          "observed": 7595.336236895614,
+          "expected": 7595.3362369,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "loading visual=~x2",
+          "observed": 0.5534993966040488,
+          "expected": 0.5534995,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "SE visual=~x2",
+          "observed": 0.09966500452086838,
+          "expected": 0.09966494,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "std.all visual=~x2",
+          "observed": 0.42359981607935343,
+          "expected": 0.42360016,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "SE speed=~x9",
+          "observed": 0.15116827579701736,
+          "expected": 0.1511683,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "cov visual~~textual",
+          "observed": 0.4082313767263899,
+          "expected": 0.40823145,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        },
+        {
+          "statistic": "cor textual~~speed",
+          "observed": 0.2829832180593866,
+          "expected": 0.28298313,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford 1939",
+          "test_id": "tests/test_sem.py::test_cfa_matches_lavaan"
+        }
+      ],
+      "references": [
+        "lavaan 0.7.3 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Holzinger-Swineford 1939"
+      ],
+      "n_checks": 15
     },
     {
       "method": "Cronbach's alpha",
@@ -425,6 +689,56 @@
       "n_checks": 13
     },
     {
+      "method": "DINA (EM, MMLE)",
+      "endpoint": "/api/dcm/dina",
+      "checks": [
+        {
+          "statistic": "log-likelihood",
+          "observed": -6909.478785170644,
+          "expected": -6909.478785,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "simulated dcm_sim (N = 1000, 12 items, 3 attributes)",
+          "test_id": "tests/test_dcm.py::test_matches_gdina_package[dina]"
+        }
+      ],
+      "references": [
+        "GDINA 2.13.2 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated dcm_sim (N = 1000, 12 items, 3 attributes)"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "DINO (EM, MMLE)",
+      "endpoint": "/api/dcm/dino",
+      "checks": [
+        {
+          "statistic": "log-likelihood",
+          "observed": -7065.387640697745,
+          "expected": -7065.387641,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "simulated dcm_sim (N = 1000, 12 items, 3 attributes)",
+          "test_id": "tests/test_dcm.py::test_matches_gdina_package[dino]"
+        }
+      ],
+      "references": [
+        "GDINA 2.13.2 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated dcm_sim (N = 1000, 12 items, 3 attributes)"
+      ],
+      "n_checks": 1
+    },
+    {
       "method": "Diagnostic accuracy (Wilson CIs)",
       "endpoint": "/api/medical/diagnostic-accuracy",
       "checks": [
@@ -448,6 +762,40 @@
         "TP 85, FP 10, TN 90, FN 15"
       ],
       "n_checks": 1
+    },
+    {
+      "method": "EBICglasso network",
+      "endpoint": "/api/network-psychometrics/estimate",
+      "checks": [
+        {
+          "statistic": "EBIC of selected network",
+          "observed": 3727.557893681858,
+          "expected": 3727.55788,
+          "tolerance_abs": 0.001,
+          "tolerance_rel": null,
+          "dataset": "simulated network_sim (n = 500 / 450)",
+          "test_id": "tests/test_network.py::test_ebicglasso_matches_qgraph"
+        },
+        {
+          "statistic": "max |edge weight difference|",
+          "observed": 7.191134568235169e-07,
+          "expected": 0.0,
+          "tolerance_abs": 5e-05,
+          "tolerance_rel": null,
+          "dataset": "simulated network_sim (n = 500 / 450)",
+          "test_id": "tests/test_network.py::test_ebicglasso_matches_qgraph"
+        }
+      ],
+      "references": [
+        "qgraph 1.9.8 / networktools 1.6.1 / NetworkComparisonTest 2.2.4 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated network_sim (n = 500 / 450)"
+      ],
+      "n_checks": 2
     },
     {
       "method": "Egger regression test",
@@ -550,6 +898,153 @@
         "two 10-value groups (G1, G2, G3)"
       ],
       "n_checks": 1
+    },
+    {
+      "method": "G-DINA (EM, MMLE)",
+      "endpoint": "/api/dcm/gdina",
+      "checks": [
+        {
+          "statistic": "log-likelihood",
+          "observed": -6770.416148822116,
+          "expected": -6770.416149,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "simulated dcm_sim (N = 1000, 12 items, 3 attributes)",
+          "test_id": "tests/test_dcm.py::test_matches_gdina_package[gdina]"
+        }
+      ],
+      "references": [
+        "GDINA 2.13.2 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated dcm_sim (N = 1000, 12 items, 3 attributes)"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "G-study variance components (p x i x o)",
+      "endpoint": "/api/generalizability/g-study",
+      "checks": [
+        {
+          "statistic": "person",
+          "observed": 0.5924840043931037,
+          "expected": 0.59248419,
+          "tolerance_abs": 5e-06,
+          "tolerance_rel": null,
+          "dataset": "simulated 30 x 5 x 4",
+          "test_id": "tests/test_generalizability.py::test_p_x_i_x_o_components_match_lme4"
+        },
+        {
+          "statistic": "item",
+          "observed": 0.6794584240677215,
+          "expected": 0.67945991,
+          "tolerance_abs": 5e-06,
+          "tolerance_rel": null,
+          "dataset": "simulated 30 x 5 x 4",
+          "test_id": "tests/test_generalizability.py::test_p_x_i_x_o_components_match_lme4"
+        },
+        {
+          "statistic": "occasion",
+          "observed": 0.2062101695231795,
+          "expected": 0.20621016,
+          "tolerance_abs": 5e-06,
+          "tolerance_rel": null,
+          "dataset": "simulated 30 x 5 x 4",
+          "test_id": "tests/test_generalizability.py::test_p_x_i_x_o_components_match_lme4"
+        },
+        {
+          "statistic": "person_x_item",
+          "observed": 0.11154738576283546,
+          "expected": 0.11154741,
+          "tolerance_abs": 5e-06,
+          "tolerance_rel": null,
+          "dataset": "simulated 30 x 5 x 4",
+          "test_id": "tests/test_generalizability.py::test_p_x_i_x_o_components_match_lme4"
+        },
+        {
+          "statistic": "person_x_occasion",
+          "observed": 0.08086584846293121,
+          "expected": 0.08086584,
+          "tolerance_abs": 5e-06,
+          "tolerance_rel": null,
+          "dataset": "simulated 30 x 5 x 4",
+          "test_id": "tests/test_generalizability.py::test_p_x_i_x_o_components_match_lme4"
+        },
+        {
+          "statistic": "item_x_occasion",
+          "observed": 0.02609147257796953,
+          "expected": 0.02609151,
+          "tolerance_abs": 5e-06,
+          "tolerance_rel": null,
+          "dataset": "simulated 30 x 5 x 4",
+          "test_id": "tests/test_generalizability.py::test_p_x_i_x_o_components_match_lme4"
+        },
+        {
+          "statistic": "residual",
+          "observed": 0.37341610842480755,
+          "expected": 0.37341608,
+          "tolerance_abs": 5e-06,
+          "tolerance_rel": null,
+          "dataset": "simulated 30 x 5 x 4",
+          "test_id": "tests/test_generalizability.py::test_p_x_i_x_o_components_match_lme4"
+        }
+      ],
+      "references": [
+        "lme4 (R 4.5.2) REML"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated 30 x 5 x 4"
+      ],
+      "n_checks": 7
+    },
+    {
+      "method": "G-study variance components (p x i)",
+      "endpoint": "/api/generalizability/g-study",
+      "checks": [
+        {
+          "statistic": "person",
+          "observed": 0.558110784516475,
+          "expected": 0.5581108,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "simulated 30 x 6",
+          "test_id": "tests/test_generalizability.py::test_p_x_i_components_match_lme4"
+        },
+        {
+          "statistic": "item",
+          "observed": 0.22976387720229863,
+          "expected": 0.22976391,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "simulated 30 x 6",
+          "test_id": "tests/test_generalizability.py::test_p_x_i_components_match_lme4"
+        },
+        {
+          "statistic": "person_x_item",
+          "observed": 0.5432050822977011,
+          "expected": 0.54320508,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "simulated 30 x 6",
+          "test_id": "tests/test_generalizability.py::test_p_x_i_components_match_lme4"
+        }
+      ],
+      "references": [
+        "lme4 (R 4.5.2) REML"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated 30 x 6"
+      ],
+      "n_checks": 3
     },
     {
       "method": "Global Moran's I",
@@ -1152,12 +1647,126 @@
       "n_checks": 1
     },
     {
+      "method": "Latent growth curve model (ML)",
+      "endpoint": "/api/sem/latent-growth",
+      "checks": [
+        {
+          "statistic": "chi_square",
+          "observed": 8.068732885315685,
+          "expected": 8.06873289,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "lavaan Demo.growth t1-t4",
+          "test_id": "tests/test_sem.py::test_latent_growth_matches_lavaan"
+        },
+        {
+          "statistic": "srmr",
+          "observed": 0.012117052645543691,
+          "expected": 0.01211705,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "lavaan Demo.growth t1-t4",
+          "test_id": "tests/test_sem.py::test_latent_growth_matches_lavaan"
+        },
+        {
+          "statistic": "intercept mean",
+          "observed": 0.6146957343503908,
+          "expected": 0.61469576,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "lavaan Demo.growth t1-t4",
+          "test_id": "tests/test_sem.py::test_latent_growth_matches_lavaan"
+        },
+        {
+          "statistic": "SE intercept mean",
+          "observed": 0.07677168101985547,
+          "expected": 0.07677168,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "lavaan Demo.growth t1-t4",
+          "test_id": "tests/test_sem.py::test_latent_growth_matches_lavaan"
+        },
+        {
+          "statistic": "slope mean",
+          "observed": 1.0062943294881683,
+          "expected": 1.00629434,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "lavaan Demo.growth t1-t4",
+          "test_id": "tests/test_sem.py::test_latent_growth_matches_lavaan"
+        },
+        {
+          "statistic": "slope variance",
+          "observed": 0.5869141343346763,
+          "expected": 0.58691419,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "lavaan Demo.growth t1-t4",
+          "test_id": "tests/test_sem.py::test_latent_growth_matches_lavaan"
+        },
+        {
+          "statistic": "i~~s correlation",
+          "observed": 0.5802343948015866,
+          "expected": 0.58023443,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "lavaan Demo.growth t1-t4",
+          "test_id": "tests/test_sem.py::test_latent_growth_matches_lavaan"
+        }
+      ],
+      "references": [
+        "lavaan 0.7.3 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "lavaan Demo.growth t1-t4"
+      ],
+      "n_checks": 7
+    },
+    {
+      "method": "Latent transition analysis (EM)",
+      "endpoint": "/api/lta/analyze",
+      "checks": [
+        {
+          "statistic": "log-likelihood, T = 2",
+          "observed": -2851.5539198129213,
+          "expected": -2851.55392,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "simulated lta_t2",
+          "test_id": "tests/test_lta.py::test_lta_loglik_matches_depmixs4[lta_t2-2-time_specific--2851.55392]"
+        },
+        {
+          "statistic": "log-likelihood, T = 3",
+          "observed": -4210.66335420579,
+          "expected": -4210.663354,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "simulated lta_t3",
+          "test_id": "tests/test_lta.py::test_lta_loglik_matches_depmixs4[lta_t3-3-homogeneous--4210.663354]"
+        }
+      ],
+      "references": [
+        "depmixS4 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated lta_t2",
+        "simulated lta_t3"
+      ],
+      "n_checks": 2
+    },
+    {
       "method": "Linear mixed model, random intercept (REML)",
       "endpoint": "/api/advanced/mixed-model",
       "checks": [
         {
           "statistic": "slope",
-          "observed": 9.952689484126997,
+          "observed": 9.95268948412699,
           "expected": 9.95268948,
           "tolerance_abs": null,
           "tolerance_rel": 1e-06,
@@ -1166,7 +1775,7 @@
         },
         {
           "statistic": "slope SE",
-          "observed": 0.5869045047605614,
+          "observed": 0.5869073572897572,
           "expected": 0.58690718,
           "tolerance_abs": null,
           "tolerance_rel": 0.0001,
@@ -1175,7 +1784,7 @@
         },
         {
           "statistic": "intercept variance",
-          "observed": 70.35906608689372,
+          "observed": 70.35210291357349,
           "expected": 70.352547,
           "tolerance_abs": null,
           "tolerance_rel": 0.001,
@@ -1184,7 +1793,7 @@
         },
         {
           "statistic": "REML log-likelihood",
-          "observed": -389.0908100509148,
+          "observed": -389.090810036256,
           "expected": -389.09081,
           "tolerance_abs": 0.001,
           "tolerance_rel": null,
@@ -1209,7 +1818,7 @@
       "checks": [
         {
           "statistic": "slope SE",
-          "observed": 0.7393162903064692,
+          "observed": 0.7393203632458957,
           "expected": 0.7393197,
           "tolerance_abs": null,
           "tolerance_rel": 0.001,
@@ -1218,7 +1827,7 @@
         },
         {
           "statistic": "REML log-likelihood",
-          "observed": -386.9512557060532,
+          "observed": -386.95125570269374,
           "expected": -386.951256,
           "tolerance_abs": 0.001,
           "tolerance_rel": null,
@@ -2120,6 +2729,90 @@
       "n_checks": 1
     },
     {
+      "method": "Measurement invariance (configural)",
+      "endpoint": "/api/invariance/configural",
+      "checks": [
+        {
+          "statistic": "chi_square",
+          "observed": 115.85279172971617,
+          "expected": 115.85279175,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford by school",
+          "test_id": "tests/test_sem.py::test_invariance_levels_match_lavaan"
+        }
+      ],
+      "references": [
+        "lavaan 0.7.3 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Holzinger-Swineford by school"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Measurement invariance (metric)",
+      "endpoint": "/api/invariance/metric",
+      "checks": [
+        {
+          "statistic": "chi_square",
+          "observed": 124.04507630732769,
+          "expected": 124.04507631,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford by school",
+          "test_id": "tests/test_sem.py::test_invariance_levels_match_lavaan"
+        }
+      ],
+      "references": [
+        "lavaan 0.7.3 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Holzinger-Swineford by school"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Measurement invariance (scalar)",
+      "endpoint": "/api/invariance/scalar",
+      "checks": [
+        {
+          "statistic": "chi_square",
+          "observed": 164.1045234797467,
+          "expected": 164.10452348,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford by school",
+          "test_id": "tests/test_sem.py::test_invariance_levels_match_lavaan"
+        },
+        {
+          "statistic": "textual mean, group 2",
+          "observed": 0.5763588954615569,
+          "expected": 0.57635905,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford by school",
+          "test_id": "tests/test_sem.py::test_invariance_levels_match_lavaan"
+        }
+      ],
+      "references": [
+        "lavaan 0.7.3 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Holzinger-Swineford by school"
+      ],
+      "n_checks": 2
+    },
+    {
       "method": "Meta-regression (fixed effect)",
       "endpoint": "/api/meta-analysis/moderator-analysis",
       "checks": [
@@ -2364,6 +3057,56 @@
       "n_checks": 5
     },
     {
+      "method": "Mover-stayer LTA",
+      "endpoint": "/api/lta/mover-stayer",
+      "checks": [
+        {
+          "statistic": "log-likelihood",
+          "observed": -4238.694695771383,
+          "expected": -4238.694696,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "simulated lta_t3_stayers",
+          "test_id": "tests/test_lta.py::test_mover_stayer_matches_independent_ml"
+        }
+      ],
+      "references": [
+        "independent likelihood + optim (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated lta_t3_stayers"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Multilevel mediation 1-1-1",
+      "endpoint": "/api/multilevel-sem/cross-level-mediation",
+      "checks": [
+        {
+          "statistic": "between indirect effect",
+          "observed": 0.5899016314464577,
+          "expected": 0.58991624,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "simulated twolevel_path (654 people, 80 clusters)",
+          "test_id": "tests/test_multilevel_sem.py::test_mediation_111_matches_lavaan"
+        }
+      ],
+      "references": [
+        "lavaan 0.7.3 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated twolevel_path (654 people, 80 clusters)"
+      ],
+      "n_checks": 1
+    },
+    {
       "method": "Multiple correspondence analysis",
       "endpoint": "/api/correspondence/multiple",
       "checks": [
@@ -2439,6 +3182,56 @@
         "12 observations, 2 predictors"
       ],
       "n_checks": 3
+    },
+    {
+      "method": "Network Comparison Test",
+      "endpoint": "/api/network-psychometrics/compare",
+      "checks": [
+        {
+          "statistic": "global strength difference S",
+          "observed": 0.0973513364974341,
+          "expected": 0.0973516988,
+          "tolerance_abs": 0.0002,
+          "tolerance_rel": null,
+          "dataset": "simulated network_sim (n = 500 / 450)",
+          "test_id": "tests/test_network.py::test_nct_observed_statistics_match"
+        }
+      ],
+      "references": [
+        "qgraph 1.9.8 / networktools 1.6.1 / NetworkComparisonTest 2.2.4 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated network_sim (n = 500 / 450)"
+      ],
+      "n_checks": 1
+    },
+    {
+      "method": "Network centrality",
+      "endpoint": "/api/network-psychometrics/centrality",
+      "checks": [
+        {
+          "statistic": "closeness (node 1)",
+          "observed": 0.012566043341146176,
+          "expected": 0.01256604334,
+          "tolerance_abs": 1e-11,
+          "tolerance_rel": null,
+          "dataset": "simulated network_sim (n = 500 / 450)",
+          "test_id": "tests/test_network.py::test_centrality_on_r_network_exact"
+        }
+      ],
+      "references": [
+        "qgraph 1.9.8 / networktools 1.6.1 / NetworkComparisonTest 2.2.4 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated network_sim (n = 500 / 450)"
+      ],
+      "n_checks": 1
     },
     {
       "method": "Number needed to treat (Altman CI)",
@@ -2640,6 +3433,146 @@
         "Science"
       ],
       "n_checks": 15
+    },
+    {
+      "method": "Partial scalar invariance",
+      "endpoint": "/api/invariance/partial-invariance",
+      "checks": [
+        {
+          "statistic": "chi_square releasing up to item3",
+          "observed": 144.58040591499454,
+          "expected": 144.58040592,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford by school",
+          "test_id": "tests/test_sem.py::test_partial_invariance_matches_lavaan_group_partial"
+        },
+        {
+          "statistic": "chi_square releasing up to item7",
+          "observed": 129.42405259147873,
+          "expected": 129.4240526,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford by school",
+          "test_id": "tests/test_sem.py::test_partial_invariance_matches_lavaan_group_partial"
+        }
+      ],
+      "references": [
+        "lavaan 0.7.3 (R 4.5.2) group.partial"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Holzinger-Swineford by school"
+      ],
+      "n_checks": 2
+    },
+    {
+      "method": "Path analysis (ML, fixed.x)",
+      "endpoint": "/api/sem/path-analysis",
+      "checks": [
+        {
+          "statistic": "chi_square",
+          "observed": 12.227283700877598,
+          "expected": 12.2272837,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford x1, x4, x7, x8",
+          "test_id": "tests/test_sem.py::test_path_analysis_matches_lavaan"
+        },
+        {
+          "statistic": "cfi",
+          "observed": 0.9229002407340575,
+          "expected": 0.92290024,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford x1, x4, x7, x8",
+          "test_id": "tests/test_sem.py::test_path_analysis_matches_lavaan"
+        },
+        {
+          "statistic": "tli",
+          "observed": 0.5374014444043453,
+          "expected": 0.53740144,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford x1, x4, x7, x8",
+          "test_id": "tests/test_sem.py::test_path_analysis_matches_lavaan"
+        },
+        {
+          "statistic": "rmsea",
+          "observed": 0.19313193896943012,
+          "expected": 0.19313194,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford x1, x4, x7, x8",
+          "test_id": "tests/test_sem.py::test_path_analysis_matches_lavaan"
+        },
+        {
+          "statistic": "srmr",
+          "observed": 0.06543881653805383,
+          "expected": 0.06543881,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford x1, x4, x7, x8",
+          "test_id": "tests/test_sem.py::test_path_analysis_matches_lavaan"
+        },
+        {
+          "statistic": "aic",
+          "observed": 2586.853504669734,
+          "expected": 2586.85350467,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford x1, x4, x7, x8",
+          "test_id": "tests/test_sem.py::test_path_analysis_matches_lavaan"
+        },
+        {
+          "statistic": "x4~x1",
+          "observed": 0.37164807061477434,
+          "expected": 0.37164807,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford x1, x4, x7, x8",
+          "test_id": "tests/test_sem.py::test_path_analysis_matches_lavaan"
+        },
+        {
+          "statistic": "SE x7~x1",
+          "observed": 0.04984403317320635,
+          "expected": 0.04984403,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford x1, x4, x7, x8",
+          "test_id": "tests/test_sem.py::test_path_analysis_matches_lavaan"
+        },
+        {
+          "statistic": "indirect x1->x4->x7",
+          "observed": 0.07380813860064615,
+          "expected": 0.07380813,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford x1, x4, x7, x8",
+          "test_id": "tests/test_sem.py::test_path_analysis_matches_lavaan"
+        },
+        {
+          "statistic": "SE indirect (delta)",
+          "observed": 0.023532705843735836,
+          "expected": 0.02353271,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "Holzinger-Swineford x1, x4, x7, x8",
+          "test_id": "tests/test_sem.py::test_path_analysis_matches_lavaan"
+        }
+      ],
+      "references": [
+        "lavaan 0.7.3 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "Holzinger-Swineford x1, x4, x7, x8"
+      ],
+      "n_checks": 10
     },
     {
       "method": "Pearson product-moment correlation",
@@ -2974,6 +3907,31 @@
       "n_checks": 1
     },
     {
+      "method": "Q-matrix validation (PVAF)",
+      "endpoint": "/api/dcm/qmatrix-validate",
+      "checks": [
+        {
+          "statistic": "PVAF item 12, q = 011",
+          "observed": 0.8352096343552906,
+          "expected": 0.83520964,
+          "tolerance_abs": 2e-06,
+          "tolerance_rel": null,
+          "dataset": "simulated dcm_sim (N = 1000, 12 items, 3 attributes)",
+          "test_id": "tests/test_dcm.py::test_qval_pvaf_matches_gdina"
+        }
+      ],
+      "references": [
+        "GDINA 2.13.2 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated dcm_sim (N = 1000, 12 items, 3 attributes)"
+      ],
+      "n_checks": 1
+    },
+    {
       "method": "Q-methodology (PCA, varimax, qmethod flagging)",
       "endpoint": "/api/q-methodology/analyze",
       "checks": [
@@ -3136,6 +4094,31 @@
         "BCG vaccine trials (dat.bcg), log risk ratios"
       ],
       "n_checks": 4
+    },
+    {
+      "method": "Random-slope multilevel regression (REML)",
+      "endpoint": "/api/multilevel-sem/random-slopes-sem",
+      "checks": [
+        {
+          "statistic": "slope SE",
+          "observed": 0.0389106117519448,
+          "expected": 0.03891065,
+          "tolerance_abs": 2e-05,
+          "tolerance_rel": null,
+          "dataset": "simulated twolevel_path (654 people, 80 clusters)",
+          "test_id": "tests/test_multilevel_sem.py::test_random_slopes_matches_lme4"
+        }
+      ],
+      "references": [
+        "lme4 2.0.6, bobyqa (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated twolevel_path (654 people, 80 clusters)"
+      ],
+      "n_checks": 1
     },
     {
       "method": "Rasch item fit (EAP)",
@@ -3588,6 +4571,112 @@
       "n_checks": 1
     },
     {
+      "method": "Structural equation model (ML)",
+      "endpoint": "/api/sem/sem",
+      "checks": [
+        {
+          "statistic": "chi_square",
+          "observed": 72.46160699645938,
+          "expected": 72.461607,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "PoliticalDemocracy (Bollen)",
+          "test_id": "tests/test_sem.py::test_full_sem_matches_lavaan"
+        },
+        {
+          "statistic": "cfi",
+          "observed": 0.9534353337356348,
+          "expected": 0.95343533,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "PoliticalDemocracy (Bollen)",
+          "test_id": "tests/test_sem.py::test_full_sem_matches_lavaan"
+        },
+        {
+          "statistic": "rmsea",
+          "observed": 0.10115046667918881,
+          "expected": 0.10115047,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "PoliticalDemocracy (Bollen)",
+          "test_id": "tests/test_sem.py::test_full_sem_matches_lavaan"
+        },
+        {
+          "statistic": "srmr",
+          "observed": 0.05474243258967466,
+          "expected": 0.0547424,
+          "tolerance_abs": 1e-06,
+          "tolerance_rel": null,
+          "dataset": "PoliticalDemocracy (Bollen)",
+          "test_id": "tests/test_sem.py::test_full_sem_matches_lavaan"
+        },
+        {
+          "statistic": "bic",
+          "observed": 3237.855478412222,
+          "expected": 3237.85547841,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "PoliticalDemocracy (Bollen)",
+          "test_id": "tests/test_sem.py::test_full_sem_matches_lavaan"
+        },
+        {
+          "statistic": "dem60~ind60",
+          "observed": 1.4737419492224546,
+          "expected": 1.4737423,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "PoliticalDemocracy (Bollen)",
+          "test_id": "tests/test_sem.py::test_full_sem_matches_lavaan"
+        },
+        {
+          "statistic": "SE dem60~ind60",
+          "observed": 0.39166929566714564,
+          "expected": 0.39166965,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "PoliticalDemocracy (Bollen)",
+          "test_id": "tests/test_sem.py::test_full_sem_matches_lavaan"
+        },
+        {
+          "statistic": "dem65~dem60",
+          "observed": 0.8643942494791672,
+          "expected": 0.86439401,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "PoliticalDemocracy (Bollen)",
+          "test_id": "tests/test_sem.py::test_full_sem_matches_lavaan"
+        },
+        {
+          "statistic": "SE dem65~dem60",
+          "observed": 0.11268873159340577,
+          "expected": 0.11268865,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "PoliticalDemocracy (Bollen)",
+          "test_id": "tests/test_sem.py::test_full_sem_matches_lavaan"
+        },
+        {
+          "statistic": "R2 dem65",
+          "observed": 0.9735500519781486,
+          "expected": 0.97354965,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "PoliticalDemocracy (Bollen)",
+          "test_id": "tests/test_sem.py::test_full_sem_matches_lavaan"
+        }
+      ],
+      "references": [
+        "lavaan 0.7.3 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "PoliticalDemocracy (Bollen)"
+      ],
+      "n_checks": 10
+    },
+    {
       "method": "Subgroup analysis (mixed effects)",
       "endpoint": "/api/meta-analysis/moderator-analysis",
       "checks": [
@@ -3647,12 +4736,37 @@
       "n_checks": 2
     },
     {
+      "method": "Two-level CFA (ML)",
+      "endpoint": "/api/multilevel-sem/measurement-model-multilevel",
+      "checks": [
+        {
+          "statistic": "log-likelihood",
+          "observed": -3222.814203661812,
+          "expected": -3222.81420374,
+          "tolerance_abs": 0.0001,
+          "tolerance_rel": null,
+          "dataset": "simulated twolevel_cfa (654 people, 80 clusters)",
+          "test_id": "tests/test_multilevel_sem.py::test_two_level_cfa_matches_lavaan"
+        }
+      ],
+      "references": [
+        "lavaan 0.7.3 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated twolevel_cfa (654 people, 80 clusters)"
+      ],
+      "n_checks": 1
+    },
+    {
       "method": "Two-level HLM (random intercept)",
       "endpoint": "/api/hlm/two-level",
       "checks": [
         {
           "statistic": "R2 marginal",
-          "observed": 0.6829492787153065,
+          "observed": 0.6829539610777179,
           "expected": 0.6829536624,
           "tolerance_abs": 0.0001,
           "tolerance_rel": null,
@@ -3661,7 +4775,7 @@
         },
         {
           "statistic": "R2 conditional",
-          "observed": 0.7743860066548708,
+          "observed": 0.7743822667031779,
           "expected": 0.7743825053,
           "tolerance_abs": 0.0001,
           "tolerance_rel": null,
@@ -3670,7 +4784,7 @@
         },
         {
           "statistic": "slope SE",
-          "observed": 0.5869045047605614,
+          "observed": 0.5869073572897572,
           "expected": 0.58690718,
           "tolerance_abs": 0.0001,
           "tolerance_rel": null,
@@ -3695,7 +4809,7 @@
       "checks": [
         {
           "statistic": "R2 marginal",
-          "observed": 0.6820113711538371,
+          "observed": 0.6820128443658448,
           "expected": 0.6820131649,
           "tolerance_abs": 0.0001,
           "tolerance_rel": null,
@@ -3704,7 +4818,7 @@
         },
         {
           "statistic": "R2 conditional",
-          "observed": 0.7948936199153455,
+          "observed": 0.7948926728330644,
           "expected": 0.7948920456,
           "tolerance_abs": 0.0001,
           "tolerance_rel": null,
@@ -3713,7 +4827,7 @@
         },
         {
           "statistic": "slope SE",
-          "observed": 0.7393162903064692,
+          "observed": 0.7393203632458957,
           "expected": 0.7393197,
           "tolerance_abs": 0.0001,
           "tolerance_rel": null,
@@ -3731,6 +4845,31 @@
         "deterministic 12 subjects x 8 days (LCG)"
       ],
       "n_checks": 3
+    },
+    {
+      "method": "Two-level path model (ML)",
+      "endpoint": "/api/multilevel-sem/msem-two-level",
+      "checks": [
+        {
+          "statistic": "log-likelihood",
+          "observed": -2887.4113176454684,
+          "expected": -2887.41131765,
+          "tolerance_abs": 1e-05,
+          "tolerance_rel": null,
+          "dataset": "simulated twolevel_path (654 people, 80 clusters)",
+          "test_id": "tests/test_multilevel_sem.py::test_two_level_path_model_matches_lavaan"
+        }
+      ],
+      "references": [
+        "lavaan 0.7.3 (R 4.5.2)"
+      ],
+      "reference_kinds": [
+        "r"
+      ],
+      "datasets": [
+        "simulated twolevel_path (654 people, 80 clusters)"
+      ],
+      "n_checks": 1
     },
     {
       "method": "VAR Granger causality (Wald F)",

@@ -10,6 +10,8 @@ marketing site. It is exported from the product's private repository, so it is u
 |---|---|
 | `backend/app/routers/` | The statistical methods (FastAPI routers): t-tests through IRT, SEM, meta-analysis, time series, causal inference, ... |
 | `backend/app/irt_engine.py` | Marginal maximum-likelihood IRT (Rasch, 2PL, 3PL, graded response, partial credit) |
+| `backend/app/sem_engine.py` | Maximum-likelihood SEM (multi-group, mean structures) and two-level SEM for clustered data |
+| `backend/app/mixed.py` | Robust linear-mixed-model fitting (several optimizers; lme4-style fixed-effect SEs) |
 | `backend/tests/` | Unit tests and the numerical validation suite (`pytest -m validation`), each check against NIST StRD, a textbook, or the R reference implementation |
 | `backend/tests/validation/` | Reference values (`references.py`), datasets (`datasets.py`) and how the suite works (`README.md`) |
 | `backend/validation-results.json` | The latest validation run; the [validation page](https://www.psystat-lab.dev/validation.html) renders it |

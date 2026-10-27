@@ -16,6 +16,7 @@ import pandas as pd
 from scipy import stats as sp_stats
 import statsmodels.api as sm
 from statsmodels.formula.api import mixedlm
+from app.mixed import fit_mixedlm, fixed_effect_se
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.tsa.stattools import adfuller, acf, pacf
 from statsmodels.stats.stattools import durbin_watson
@@ -161,7 +162,7 @@ def mixed_effects_model(req: MixedModelRequest):
             model = mixedlm(formula, df, groups=df["group"], re_formula=f"~{safe[0]}")
         else:
             model = mixedlm(formula, df, groups=df["group"])
-        result = model.fit(reml=True)
+        result = fit_mixedlm(model, reml=True)
     except Exception as e:
         raise HTTPException(400, f"Model fitting failed: {e}")
 
@@ -169,7 +170,7 @@ def mixed_effects_model(req: MixedModelRequest):
     for name in result.fe_params.index:
         fixed_effects[name_of.get(name, name)] = {
             "coefficient": float(result.fe_params[name]),
-            "std_error": float(result.bse_fe[name]),
+            "std_error": float(fixed_effect_se(result)[0][name]),
             "z_value": float(result.tvalues[name]),
             "p_value": float(result.pvalues[name]),
         }

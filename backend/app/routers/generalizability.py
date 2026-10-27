@@ -5,6 +5,10 @@ Implements variance component estimation via expected mean squares (EMS) for
 crossed person-by-item (p x i) and person-by-item-by-occasion (p x i x o)
 designs, D-study coefficient computation for relative and absolute decisions,
 and universe score confidence intervals.
+
+For these balanced designs the EMS (ANOVA) estimates equal REML estimates whenever none
+is negative (checked against lme4 in tests/test_generalizability.py). Negative estimates
+are set to zero (Cronbach et al., 1972; Brennan, 2001) and reported as such.
 """
 
 from fastapi import APIRouter, HTTPException
@@ -53,6 +57,8 @@ def _validate_score_matrix(scores: list[list[float]], min_persons: int = 3,
             detail=f"Need at least {min_persons} persons, got {n_persons}.",
         )
 
+    if not all(np.isfinite(v) for row in scores for v in row):
+        raise HTTPException(status_code=422, detail="Scores must be finite numbers (no missing values).")
     lengths = [len(row) for row in scores]
     if len(set(lengths)) != 1:
         raise HTTPException(
@@ -103,30 +109,28 @@ def _anova_p_x_i(X: np.ndarray) -> dict:
     # E(MS_p) = sigma2_pi + n_i * sigma2_p
     # E(MS_i) = sigma2_pi + n_p * sigma2_i
     # E(MS_pi) = sigma2_pi
-    sigma2_pi = ms_residual
-    sigma2_p = max(0.0, (ms_persons - ms_residual) / n_i)
-    sigma2_i = max(0.0, (ms_items - ms_residual) / n_p)
+    raw = {
+        "person": (ms_persons - ms_residual) / n_i,
+        "item": (ms_items - ms_residual) / n_p,
+        "person_x_item": ms_residual,
+    }
+    comp = {k: max(0.0, v) for k, v in raw.items()}
+    sigma2_p, sigma2_i, sigma2_pi = comp["person"], comp["item"], comp["person_x_item"]
 
     total_var = sigma2_p + sigma2_i + sigma2_pi
 
     return {
         "anova_table": {
-            "persons": {"ss": round(ss_persons, 4), "df": df_persons, "ms": round(ms_persons, 4)},
-            "items": {"ss": round(ss_items, 4), "df": df_items, "ms": round(ms_items, 4)},
-            "residual_pi": {"ss": round(ss_residual, 4), "df": df_residual, "ms": round(ms_residual, 4)},
-            "total": {"ss": round(ss_total, 4), "df": n_p * n_i - 1},
+            "persons": {"ss": float(ss_persons), "df": df_persons, "ms": float(ms_persons)},
+            "items": {"ss": float(ss_items), "df": df_items, "ms": float(ms_items)},
+            "residual_pi": {"ss": float(ss_residual), "df": df_residual, "ms": float(ms_residual)},
+            "total": {"ss": float(ss_total), "df": n_p * n_i - 1},
         },
-        "variance_components": {
-            "person": round(sigma2_p, 6),
-            "item": round(sigma2_i, 6),
-            "person_x_item": round(sigma2_pi, 6),
-        },
-        "percent_variance": {
-            "person": round(sigma2_p / total_var * 100, 2) if total_var > 0 else 0.0,
-            "item": round(sigma2_i / total_var * 100, 2) if total_var > 0 else 0.0,
-            "person_x_item": round(sigma2_pi / total_var * 100, 2) if total_var > 0 else 0.0,
-        },
-        "total_variance": round(total_var, 6),
+        "variance_components": {k: float(v) for k, v in comp.items()},
+        "variance_components_raw": {k: float(v) for k, v in raw.items()},
+        "negative_components_set_to_zero": [k for k, v in raw.items() if v < 0],
+        "percent_variance": {k: (float(v / total_var * 100) if total_var > 0 else 0.0) for k, v in comp.items()},
+        "total_variance": float(total_var),
         "n_persons": n_p,
         "n_items": n_i,
     }
@@ -180,45 +184,39 @@ def _anova_p_x_i_x_o(X_3d: np.ndarray) -> dict:
     ms_res = ss_residual / df_res if df_res > 0 else 0.0
 
     # Variance components via EMS for fully crossed design
-    sigma2_pio = ms_res
-    sigma2_pi = max(0.0, (ms_pi - ms_res) / n_o)
-    sigma2_po = max(0.0, (ms_po - ms_res) / n_i)
-    sigma2_io = max(0.0, (ms_io - ms_res) / n_p)
-    sigma2_p = max(0.0, (ms_p - ms_pi - ms_po + ms_res) / (n_i * n_o))
-    sigma2_i = max(0.0, (ms_i - ms_pi - ms_io + ms_res) / (n_p * n_o))
-    sigma2_o = max(0.0, (ms_o - ms_po - ms_io + ms_res) / (n_p * n_i))
-
-    components = {
-        "person": sigma2_p,
-        "item": sigma2_i,
-        "occasion": sigma2_o,
-        "person_x_item": sigma2_pi,
-        "person_x_occasion": sigma2_po,
-        "item_x_occasion": sigma2_io,
-        "residual": sigma2_pio,
+    raw = {
+        "person": (ms_p - ms_pi - ms_po + ms_res) / (n_i * n_o),
+        "item": (ms_i - ms_pi - ms_io + ms_res) / (n_p * n_o),
+        "occasion": (ms_o - ms_po - ms_io + ms_res) / (n_p * n_i),
+        "person_x_item": (ms_pi - ms_res) / n_o,
+        "person_x_occasion": (ms_po - ms_res) / n_i,
+        "item_x_occasion": (ms_io - ms_res) / n_p,
+        "residual": ms_res,
     }
+    components = {k: max(0.0, v) for k, v in raw.items()}
 
     total_var = sum(components.values())
 
     anova_table = {
-        "persons": {"ss": round(ss_p, 4), "df": df_p, "ms": round(ms_p, 4)},
-        "items": {"ss": round(ss_i, 4), "df": df_i, "ms": round(ms_i, 4)},
-        "occasions": {"ss": round(ss_o, 4), "df": df_o, "ms": round(ms_o, 4)},
-        "person_x_item": {"ss": round(ss_pi, 4), "df": df_pi, "ms": round(ms_pi, 4)},
-        "person_x_occasion": {"ss": round(ss_po, 4), "df": df_po, "ms": round(ms_po, 4)},
-        "item_x_occasion": {"ss": round(ss_io, 4), "df": df_io, "ms": round(ms_io, 4)},
-        "residual": {"ss": round(ss_residual, 4), "df": df_res, "ms": round(ms_res, 4)},
-        "total": {"ss": round(ss_total, 4), "df": n_p * n_i * n_o - 1},
+        "persons": {"ss": float(ss_p), "df": df_p, "ms": float(ms_p)},
+        "items": {"ss": float(ss_i), "df": df_i, "ms": float(ms_i)},
+        "occasions": {"ss": float(ss_o), "df": df_o, "ms": float(ms_o)},
+        "person_x_item": {"ss": float(ss_pi), "df": df_pi, "ms": float(ms_pi)},
+        "person_x_occasion": {"ss": float(ss_po), "df": df_po, "ms": float(ms_po)},
+        "item_x_occasion": {"ss": float(ss_io), "df": df_io, "ms": float(ms_io)},
+        "residual": {"ss": float(ss_residual), "df": df_res, "ms": float(ms_res)},
+        "total": {"ss": float(ss_total), "df": n_p * n_i * n_o - 1},
     }
 
-    percent_var = {k: round(v / total_var * 100, 2) if total_var > 0 else 0.0
-                   for k, v in components.items()}
+    percent_var = {k: (float(v / total_var * 100) if total_var > 0 else 0.0) for k, v in components.items()}
 
     return {
         "anova_table": anova_table,
-        "variance_components": {k: round(v, 6) for k, v in components.items()},
+        "variance_components": {k: float(v) for k, v in components.items()},
+        "variance_components_raw": {k: float(v) for k, v in raw.items()},
+        "negative_components_set_to_zero": [k for k, v in raw.items() if v < 0],
         "percent_variance": percent_var,
-        "total_variance": round(total_var, 6),
+        "total_variance": float(total_var),
         "n_persons": n_p,
         "n_items": n_i,
         "n_occasions": n_o,
@@ -245,12 +243,12 @@ def _compute_g_coefficients_p_x_i(sigma2_p: float, sigma2_i: float,
     sem_absolute = float(np.sqrt(sigma2_abs))
 
     return {
-        "relative_error_variance": round(sigma2_rel, 6),
-        "absolute_error_variance": round(sigma2_abs, 6),
-        "generalizability_coefficient": round(g_coeff, 4),
-        "dependability_coefficient": round(phi_coeff, 4),
-        "sem_relative": round(sem_relative, 4),
-        "sem_absolute": round(sem_absolute, 4),
+        "relative_error_variance": float(sigma2_rel),
+        "absolute_error_variance": float(sigma2_abs),
+        "generalizability_coefficient": float(g_coeff),
+        "dependability_coefficient": float(phi_coeff),
+        "sem_relative": sem_relative,
+        "sem_absolute": sem_absolute,
     }
 
 
@@ -279,12 +277,12 @@ def _compute_g_coefficients_p_x_i_x_o(components: dict,
     sem_absolute = float(np.sqrt(sigma2_abs))
 
     return {
-        "relative_error_variance": round(sigma2_rel, 6),
-        "absolute_error_variance": round(sigma2_abs, 6),
-        "generalizability_coefficient": round(g_coeff, 4),
-        "dependability_coefficient": round(phi_coeff, 4),
-        "sem_relative": round(sem_relative, 4),
-        "sem_absolute": round(sem_absolute, 4),
+        "relative_error_variance": float(sigma2_rel),
+        "absolute_error_variance": float(sigma2_abs),
+        "generalizability_coefficient": float(g_coeff),
+        "dependability_coefficient": float(phi_coeff),
+        "sem_relative": sem_relative,
+        "sem_absolute": sem_absolute,
     }
 
 
@@ -325,19 +323,15 @@ def g_study(req: GStudyRequest):
         )
 
     else:  # p_x_i_x_o
-        if req.facet_structure is None:
+        fs = req.facet_structure or {}
+        n_occasions = fs.get("n_occasions")
+        n_cols = len(req.scores[0]) if req.scores else 0
+        n_items = fs.get("n_items") or (n_cols // n_occasions if n_occasions else None)
+        if not n_occasions or not n_items or n_items * n_occasions != n_cols:
             raise HTTPException(
                 status_code=422,
-                detail="facet_structure required for p_x_i_x_o design. "
-                       "Provide {'n_items': int, 'n_occasions': int}.",
-            )
-
-        n_items = req.facet_structure.get("n_items")
-        n_occasions = req.facet_structure.get("n_occasions")
-        if n_items is None or n_occasions is None:
-            raise HTTPException(
-                status_code=422,
-                detail="facet_structure must include 'n_items' and 'n_occasions'.",
+                detail="For p x i x o, give the number of occasions (facet_structure.n_occasions). Columns must be "
+                       "ordered occasion by occasion: all items at occasion 1, then all items at occasion 2, ...",
             )
 
         n_persons = len(req.scores)
@@ -350,6 +344,7 @@ def g_study(req: GStudyRequest):
                            f"({n_items} items x {n_occasions} occasions). Got {len(row)}.",
                 )
 
+        _validate_score_matrix(req.scores)
         if n_persons < 3:
             raise HTTPException(status_code=422, detail="Need at least 3 persons.")
         if n_items < 2:

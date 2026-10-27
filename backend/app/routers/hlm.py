@@ -8,6 +8,7 @@ from pydantic import BaseModel
 import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
+from app.mixed import fit_mixedlm, fixed_effect_se
 from scipy import stats as sp_stats
 
 router = APIRouter()
@@ -94,7 +95,7 @@ def two_level_hlm(req: TwoLevelRequest):
 
     # ── Null model (intercept-only) for ICC ───────────────────────────
     try:
-        null_model = smf.mixedlm("y ~ 1", df, groups=df["group"]).fit(reml=req.reml)
+        null_model = fit_mixedlm(smf.mixedlm("y ~ 1", df, groups=df["group"]), reml=req.reml)
     except Exception as exc:
         raise HTTPException(422, f"Null model failed to converge: {exc}")
 
@@ -110,10 +111,10 @@ def two_level_hlm(req: TwoLevelRequest):
         re_formula = "~ " + " + ".join(pred_names)
 
     try:
-        model = smf.mixedlm(
+        model = fit_mixedlm(smf.mixedlm(
             fixed_formula, df, groups=df["group"],
             re_formula=re_formula,
-        ).fit(reml=req.reml)
+        ), reml=req.reml)
     except np.linalg.LinAlgError:
         raise HTTPException(
             422,
@@ -131,7 +132,7 @@ def two_level_hlm(req: TwoLevelRequest):
     fixed_effects = []
     for name in fe_params.index:
         est = float(fe_params[name])
-        se = float(model.bse_fe[name])
+        se = float(fixed_effect_se(model)[0][name])
         z_val = est / se if se > 0 else float("nan")
         p_val = float(2 * sp_stats.norm.sf(abs(z_val)))
         fixed_effects.append({
@@ -253,19 +254,19 @@ def three_level_hlm(req: ThreeLevelRequest):
 
     # ── Null model for ICCs ───────────────────────────────────────────
     try:
-        null_l3 = smf.mixedlm("y ~ 1", df, groups=df["l3"]).fit(reml=req.reml)
+        null_l3 = fit_mixedlm(smf.mixedlm("y ~ 1", df, groups=df["l3"]), reml=req.reml)
     except Exception as exc:
         raise HTTPException(422, f"Level-3 null model failed: {exc}")
 
     try:
-        null_full = smf.mixedlm(
+        null_full = fit_mixedlm(smf.mixedlm(
             "y ~ 1", df, groups=df["l3"],
             re_formula="1", vc_formula={"l2_nested": "0 + C(l2_nested)"},
-        ).fit(reml=req.reml)
+        ), reml=req.reml)
     except Exception:
         # Fallback: fit level-2 grouping separately
         try:
-            null_l2 = smf.mixedlm("y ~ 1", df, groups=df["l2_nested"]).fit(reml=req.reml)
+            null_l2 = fit_mixedlm(smf.mixedlm("y ~ 1", df, groups=df["l2_nested"]), reml=req.reml)
             var_l2 = float(null_l2.cov_re.iloc[0, 0])
         except Exception as exc:
             raise HTTPException(422, f"Three-level null model failed: {exc}")
@@ -286,23 +287,23 @@ def three_level_hlm(req: ThreeLevelRequest):
     # ── Full model ────────────────────────────────────────────────────
     fixed_formula = "y ~ " + " + ".join(pred_names) if pred_names else "y ~ 1"
     try:
-        model = smf.mixedlm(
+        model = fit_mixedlm(smf.mixedlm(
             fixed_formula, df, groups=df["l3"],
             re_formula="1",
             vc_formula={"l2_nested": "0 + C(l2_nested)"},
-        ).fit(reml=req.reml)
+        ), reml=req.reml)
     except Exception:
         # Simpler fallback: treat l2_nested as the grouping variable
         try:
-            model = smf.mixedlm(
+            model = fit_mixedlm(smf.mixedlm(
                 fixed_formula, df, groups=df["l2_nested"],
-            ).fit(reml=req.reml)
+            ), reml=req.reml)
         except Exception as exc:
             raise HTTPException(422, f"Three-level model failed to converge: {exc}")
 
     # ── Fixed effects ─────────────────────────────────────────────────
     fe = model.fe_params
-    bse = model.bse
+    bse = fixed_effect_se(model)[0]
     fixed_effects = []
     for name in fe.index:
         est = float(fe[name])
@@ -418,23 +419,23 @@ def growth_curve(req: GrowthCurveRequest):
 
     # ── Fit model ─────────────────────────────────────────────────────
     try:
-        model = smf.mixedlm(
+        model = fit_mixedlm(smf.mixedlm(
             fixed_formula, df, groups=df["subject"],
             re_formula=re_formula,
-        ).fit(reml=True)
+        ), reml=True)
     except (np.linalg.LinAlgError, Exception):
         # Fallback: random intercept + slope without correlation
         try:
-            model = smf.mixedlm(
+            model = fit_mixedlm(smf.mixedlm(
                 fixed_formula, df, groups=df["subject"],
                 re_formula="~ time",
-            ).fit(reml=True)
+            ), reml=True)
         except Exception as exc:
             raise HTTPException(422, f"Growth curve model failed to converge: {exc}")
 
     # ── Fixed effects ─────────────────────────────────────────────────
     fe = model.fe_params
-    bse = model.bse
+    bse = fixed_effect_se(model)[0]
     fixed_effects = []
     for name in fe.index:
         est = float(fe[name])

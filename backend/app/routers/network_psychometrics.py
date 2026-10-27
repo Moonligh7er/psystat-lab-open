@@ -1,11 +1,31 @@
-"""Network Psychometrics — psychological network analysis (Borsboom, Epskamp)."""
+"""Network Psychometrics — psychological network analysis (Borsboom, Epskamp).
+
+Estimation follows qgraph::EBICglasso (Epskamp & Fried, 2018): the graphical lasso is fit
+to the Pearson correlation matrix over 100 penalty values (log-spaced from the largest
+absolute correlation down to 1% of it, diagonal not penalized), and the network with the
+lowest EBIC (gamma = 0.5 by default) is kept, without refitting. Edge weights are partial
+correlations. Each graphical lasso fit is solved to tight tolerance (scikit-learn's
+coordinate-descent solver), so the selected network reproduces qgraph's to about 1e-5.
+
+Centrality follows qgraph::centrality: strength = sum |w|, expected influence = sum w,
+closeness = 1 / (sum of shortest-path lengths to reachable nodes) and betweenness =
+number of shortest paths through a node (counted in both directions, ties shared), with
+path lengths 1/|w|. Bridge centrality follows networktools::bridge, the case-dropping
+CS-coefficient follows bootnet::corStability, and the comparison test follows
+NetworkComparisonTest::NCT. Checked against those packages in tests/test_network.py.
+"""
+
+import heapq
+import warnings
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import numpy as np
-from scipy import stats as sp_stats
+from sklearn.covariance import graphical_lasso
 
 router = APIRouter()
+
+METHODS = ("ebicglasso", "partial", "correlation")
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -13,8 +33,9 @@ router = APIRouter()
 class EstimateRequest(BaseModel):
     data: list[list[float]]  # rows = subjects, cols = variables
     variable_names: list[str] | None = None
-    method: str = "partial"  # "partial" or "correlation"
-    threshold: float | None = None  # optional manual threshold for correlation method
+    method: str = "ebicglasso"  # "ebicglasso", "partial" or "correlation"
+    gamma: float = 0.5  # EBIC hyperparameter (ebicglasso only)
+    threshold: float | None = None  # optional |r| cut-off (correlation method only)
 
 class CentralityRequest(BaseModel):
     adjacency: list[list[float]]  # weighted adjacency matrix
@@ -23,21 +44,25 @@ class CentralityRequest(BaseModel):
 class StabilityRequest(BaseModel):
     data: list[list[float]]  # raw data (subjects × variables)
     variable_names: list[str] | None = None
-    method: str = "partial"
-    n_boots: int = 100
-    drop_proportions: list[float] | None = None  # defaults to [0.10, 0.20, ..., 0.75]
+    method: str = "ebicglasso"
+    gamma: float = 0.5
+    n_boots: int = 30  # subsamples per drop proportion
+    drop_proportions: list[float] | None = None  # defaults to bootnet's 10 levels, 0.05 to 0.75
+    seed: int = 1
 
 class BridgeRequest(BaseModel):
     adjacency: list[list[float]]
-    communities: list[int]  # community assignment per node (0-indexed)
+    communities: list[int]  # community assignment per node
     variable_names: list[str] | None = None
 
 class CompareRequest(BaseModel):
     data_group1: list[list[float]]  # group 1: subjects × variables
     data_group2: list[list[float]]  # group 2: subjects × variables
     variable_names: list[str] | None = None
-    method: str = "partial"
-    n_permutations: int = 1000
+    method: str = "ebicglasso"
+    gamma: float = 0.5
+    n_permutations: int = 100
+    seed: int = 1
 
 
 # ── Helpers ───────────────────────────────────────────────────────────
@@ -49,233 +74,303 @@ def _variable_names(names: list[str] | None, p: int) -> list[str]:
     return [f"V{i+1}" for i in range(p)]
 
 
-def _partial_correlation_matrix(data: np.ndarray) -> np.ndarray:
-    """Compute partial correlation matrix via precision matrix inversion."""
-    cov = np.cov(data, rowvar=False)
+def _data_matrix(rows: list[list[float]], label: str = "Data") -> np.ndarray:
     try:
-        prec = np.linalg.inv(cov)
-    except np.linalg.LinAlgError:
-        prec = np.linalg.pinv(cov)
-    diag = np.sqrt(np.diag(prec))
-    diag[diag == 0] = 1.0
-    pcor = -prec / np.outer(diag, diag)
-    np.fill_diagonal(pcor, 0.0)
-    return pcor
+        data = np.array(rows, dtype=float)
+    except ValueError:
+        raise HTTPException(400, f"{label} rows must all have the same number of values.")
+    if data.ndim != 2:
+        raise HTTPException(400, f"{label} must be a 2D array (subjects × variables).")
+    if not np.all(np.isfinite(data)):
+        raise HTTPException(400, f"{label} must contain only finite numbers (no missing values).")
+    if data.shape[1] < 2:
+        raise HTTPException(400, f"{label} needs at least 2 variables.")
+    if np.any(np.std(data, axis=0) == 0):
+        raise HTTPException(400, f"Every variable in {label.lower()} must vary (a column is constant).")
+    return data
 
 
-def _correlation_network_bic(data: np.ndarray) -> np.ndarray:
-    """Correlation network with BIC-based edge selection.
+def _check_method(method: str):
+    if method not in METHODS:
+        raise HTTPException(400, f"Method must be one of: {', '.join(METHODS)}.")
 
-    For each pair (i, j), include the edge only if the partial correlation
-    improves BIC over the null (no edge) model.
-    """
-    n, p = data.shape
-    corr = np.corrcoef(data, rowvar=False)
-    adj = np.zeros((p, p))
 
-    for i in range(p):
-        for j in range(i + 1, p):
-            r = corr[i, j]
-            # Null model: no edge (residual variance = var of y)
-            var_y = np.var(data[:, j], ddof=1)
-            if var_y <= 0:
-                continue
-            ss_null = np.sum((data[:, j] - np.mean(data[:, j])) ** 2)
-            ll_null = -n / 2.0 * np.log(2 * np.pi * ss_null / n) - n / 2.0
-            bic_null = -2 * ll_null + 1 * np.log(n)  # 1 param: intercept
+def _wi2net(K: np.ndarray) -> np.ndarray:
+    """Precision matrix -> partial correlation network (qgraph::wi2net)."""
+    d = np.sqrt(np.diag(K))
+    net = -K / np.outer(d, d)
+    net = np.triu(net, 1)
+    return net + net.T
 
-            # Edge model: linear regression y ~ x
-            x = data[:, i]
-            y = data[:, j]
-            slope = np.sum((x - x.mean()) * (y - y.mean())) / np.sum((x - x.mean()) ** 2) if np.var(x) > 0 else 0
-            intercept = y.mean() - slope * x.mean()
-            residuals = y - (slope * x + intercept)
-            ss_edge = np.sum(residuals ** 2)
-            if ss_edge <= 0:
-                ss_edge = 1e-300
-            ll_edge = -n / 2.0 * np.log(2 * np.pi * ss_edge / n) - n / 2.0
-            bic_edge = -2 * ll_edge + 2 * np.log(n)  # 2 params: intercept + slope
 
-            if bic_edge < bic_null:
-                adj[i, j] = r
-                adj[j, i] = r
+def _ebicglasso(R: np.ndarray, n: int, gamma: float = 0.5, nlambda: int = 100,
+                lambda_min_ratio: float = 0.01, tol: float = 1e-8) -> tuple[np.ndarray, dict]:
+    """qgraph::EBICglasso (refit = FALSE, threshold = FALSE, diagonal not penalized)."""
+    p = R.shape[0]
+    lam_max = float(np.max(np.abs(R - np.eye(p))))
+    if lam_max == 0:
+        return np.zeros((p, p)), {"lambda": None, "ebic": None, "lambda_max": 0.0}
+    lambdas = np.exp(np.linspace(np.log(lambda_min_ratio * lam_max), np.log(lam_max), nlambda))
+    lower = np.tril_indices(p, -1)
+    best = None
+    for i, lam in enumerate(lambdas):
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                _, K = graphical_lasso(R, alpha=float(lam), tol=tol, enet_tol=tol * 1e-2, max_iter=2000)
+        except (FloatingPointError, ValueError):
+            continue
+        sign, logdet = np.linalg.slogdet(K)
+        if sign <= 0:
+            continue
+        E = int(np.count_nonzero(K[lower]))
+        loglik = n / 2.0 * (logdet - float(np.trace(K @ R)))
+        ebic = -2.0 * loglik + E * np.log(n) + 4.0 * E * gamma * np.log(p)
+        if best is None or ebic < best[0]:
+            best = (ebic, i, K)
+    if best is None:
+        raise HTTPException(422, "The graphical lasso failed for every penalty value.")
+    ebic, i, K = best
+    notes = []
+    if i == 0:
+        notes.append("The least-penalized network on the path was selected, so the assumption of a sparse network may not hold.")
+    elif lambdas[i] < 0.1 * lam_max:
+        notes.append("A dense network was selected (lambda < 0.1 × lambda max). Small edges may be false positives; interpret them with care.")
+    net = _wi2net(K)
+    if not np.any(net):
+        notes.append("The selected network has no edges.")
+    return net, {"lambda": float(lambdas[i]), "lambda_max": lam_max, "ebic": float(ebic),
+                 "gamma": gamma, "n_lambda": nlambda, "lambda_min_ratio": lambda_min_ratio, "notes": notes}
 
-    return adj
+
+def _correlation(data: np.ndarray) -> np.ndarray:
+    R = np.corrcoef(data, rowvar=False)
+    if np.min(np.linalg.eigvalsh(R)) <= 1e-10:
+        raise HTTPException(
+            422,
+            "The correlation matrix is not positive definite (more variables than independent cases, "
+            "or a variable is an exact combination of others). Remove redundant variables or collect more data.",
+        )
+    return R
+
+
+def _estimate_network(data: np.ndarray, method: str, gamma: float = 0.5,
+                      threshold: float | None = None) -> tuple[np.ndarray, dict]:
+    """Estimate a network; returns (adjacency, details)."""
+    n = data.shape[0]
+    if method == "correlation":
+        R = np.corrcoef(data, rowvar=False)
+        adj = R - np.eye(R.shape[0])
+        if threshold is not None:
+            adj = np.where(np.abs(adj) >= threshold, adj, 0.0)
+        return adj, {"threshold": threshold}
+    R = _correlation(data)
+    if method == "partial":
+        return _wi2net(np.linalg.inv(R)), {}
+    return _ebicglasso(R, n, gamma)
 
 
 def _adjacency_to_edgelist(adj: np.ndarray, names: list[str]) -> list[dict]:
     """Convert adjacency matrix to list of edges with weights."""
-    edges = []
     p = adj.shape[0]
-    for i in range(p):
-        for j in range(i + 1, p):
-            w = adj[i, j]
-            if abs(w) > 1e-10:
-                edges.append({
-                    "from": names[i],
-                    "to": names[j],
-                    "weight": float(w),
-                })
-    return edges
+    return [{"from": names[i], "to": names[j], "weight": float(adj[i, j])}
+            for i in range(p) for j in range(i + 1, p) if adj[i, j] != 0]
 
 
-def _shortest_paths(adj: np.ndarray) -> np.ndarray:
-    """Floyd-Warshall shortest paths on absolute inverse weights."""
-    p = adj.shape[0]
-    dist = np.full((p, p), np.inf)
-    np.fill_diagonal(dist, 0.0)
-    for i in range(p):
-        for j in range(p):
-            if i != j and abs(adj[i, j]) > 1e-10:
-                dist[i, j] = 1.0 / abs(adj[i, j])
-    for k in range(p):
-        for i in range(p):
-            for j in range(p):
-                if dist[i, k] + dist[k, j] < dist[i, j]:
-                    dist[i, j] = dist[i, k] + dist[k, j]
-    return dist
+def _shortest_paths(D: np.ndarray, source: int, eps: float = 1e-10):
+    """Dijkstra from one source on a distance matrix (inf = no edge).
+
+    Returns (dist, sigma, preds, order): distances, number of shortest paths, the
+    predecessors on shortest paths and the order nodes were settled. Path lengths within
+    a relative 1e-10 count as ties, as in igraph.
+    """
+    p = D.shape[0]
+    dist = np.full(p, np.inf)
+    sigma = np.zeros(p)
+    preds: list[list[int]] = [[] for _ in range(p)]
+    dist[source] = 0.0
+    sigma[source] = 1.0
+    done = np.zeros(p, dtype=bool)
+    order = []
+    heap = [(0.0, source)]
+    while heap:
+        d, v = heapq.heappop(heap)
+        if done[v]:
+            continue
+        done[v] = True
+        order.append(v)
+        for w in range(p):
+            if done[w] or not np.isfinite(D[v, w]):
+                continue
+            nd = d + D[v, w]
+            if np.isfinite(dist[w]) and abs(nd - dist[w]) <= eps * max(nd, dist[w]):
+                sigma[w] += sigma[v]
+                preds[w].append(v)
+            elif nd < dist[w]:
+                dist[w] = nd
+                sigma[w] = sigma[v]
+                preds[w] = [v]
+                heapq.heappush(heap, (nd, w))
+    return dist, sigma, preds, order
 
 
-def _betweenness(adj: np.ndarray) -> np.ndarray:
-    """Betweenness centrality via counting shortest paths (unweighted on presence)."""
-    p = adj.shape[0]
-    betw = np.zeros(p)
-    # Use inverse absolute weight as distance
-    dist = _shortest_paths(adj)
+def _distances(W: np.ndarray) -> np.ndarray:
+    with np.errstate(divide="ignore"):
+        D = np.where(W != 0, 1.0 / np.abs(W), np.inf)
+    np.fill_diagonal(D, np.inf)
+    return D
 
+
+def _closeness_betweenness(W: np.ndarray) -> tuple[list, np.ndarray]:
+    """igraph closeness and betweenness as called by qgraph::centrality."""
+    p = W.shape[0]
+    D = _distances(W)
+    closeness: list = []
+    betweenness = np.zeros(p)
     for s in range(p):
-        for t in range(p):
-            if s == t:
-                continue
-            if np.isinf(dist[s, t]):
-                continue
-            for v in range(p):
-                if v == s or v == t:
-                    continue
-                # Check if v is on a shortest path from s to t
-                if abs(dist[s, v] + dist[v, t] - dist[s, t]) < 1e-10:
-                    # Count all shortest paths through v (approximation: assume unique)
-                    betw[v] += 1.0
-    # Normalize
-    denom = (p - 1) * (p - 2)
-    if denom > 0:
-        betw /= denom
-    return betw
+        dist, sigma, preds, order = _shortest_paths(D, s)
+        reach = np.isfinite(dist) & (np.arange(p) != s)
+        closeness.append(float(1.0 / dist[reach].sum()) if reach.any() else None)
+        delta = np.zeros(p)
+        for w in reversed(order):
+            for v in preds[w]:
+                delta[v] += sigma[v] / sigma[w] * (1.0 + delta[w])
+            if w != s:
+                betweenness[w] += delta[w]
+    return closeness, betweenness
+
+
+def _square(adj_rows: list[list[float]]) -> np.ndarray:
+    try:
+        adj = np.array(adj_rows, dtype=float)
+    except ValueError:
+        raise HTTPException(400, "Adjacency must be a square 2D matrix.")
+    if adj.ndim != 2 or adj.shape[0] != adj.shape[1]:
+        raise HTTPException(400, "Adjacency must be a square 2D matrix.")
+    if not np.all(np.isfinite(adj)):
+        raise HTTPException(400, "Adjacency must contain only finite numbers.")
+    if adj.shape[0] < 2:
+        raise HTTPException(400, "Need at least 2 nodes.")
+    if not np.allclose(adj, adj.T, atol=1e-10):
+        raise HTTPException(400, "Adjacency must be symmetric (undirected network).")
+    adj = (adj + adj.T) / 2
+    np.fill_diagonal(adj, 0.0)
+    return adj
 
 
 def _compute_centrality(adj: np.ndarray, names: list[str]) -> dict:
-    """Compute all four centrality measures."""
+    """Strength, closeness, betweenness and expected influence (qgraph::centrality)."""
     p = adj.shape[0]
-
-    # Strength centrality
     strength = np.sum(np.abs(adj), axis=1)
-
-    # Expected influence (signed)
     expected_influence = np.sum(adj, axis=1)
+    closeness, betw = _closeness_betweenness(adj)
 
-    # Closeness centrality
-    dist = _shortest_paths(adj)
-    closeness = np.zeros(p)
-    for i in range(p):
-        reachable = dist[i, :][dist[i, :] < np.inf]
-        reachable = reachable[reachable > 0]
-        if len(reachable) > 0:
-            closeness[i] = len(reachable) / np.sum(reachable)
-
-    # Betweenness
-    betw = _betweenness(adj)
-
-    # Standardize (z-scores)
     def _zscore(arr):
-        m, s = arr.mean(), arr.std()
-        return ((arr - m) / s if s > 0 else np.zeros_like(arr)).tolist()
+        a = np.array([np.nan if v is None else v for v in arr], dtype=float)
+        ok = np.isfinite(a)
+        if ok.sum() < 2:
+            return [None] * p
+        m, s = a[ok].mean(), a[ok].std(ddof=1)
+        return [None if not ok[i] else (float((a[i] - m) / s) if s > 0 else 0.0) for i in range(p)]
 
-    table = []
-    for i in range(p):
-        table.append({
-            "variable": names[i],
-            "strength": float(strength[i]),
-            "closeness": float(closeness[i]),
-            "betweenness": float(betw[i]),
-            "expected_influence": float(expected_influence[i]),
-        })
+    table = [{
+        "variable": names[i],
+        "strength": float(strength[i]),
+        "closeness": closeness[i],
+        "betweenness": float(betw[i]),
+        "expected_influence": float(expected_influence[i]),
+    } for i in range(p)]
 
-    z_strength = _zscore(strength)
-    z_closeness = _zscore(closeness)
-    z_betweenness = _zscore(betw)
-    z_ei = _zscore(expected_influence)
+    z = {k: _zscore(v) for k, v in
+         (("strength", strength), ("closeness", closeness), ("betweenness", betw), ("expected_influence", expected_influence))}
+    standardized = [{"variable": names[i], **{k: z[k][i] for k in z}} for i in range(p)]
 
-    standardized = []
-    for i in range(p):
-        standardized.append({
-            "variable": names[i],
-            "strength": z_strength[i],
-            "closeness": z_closeness[i],
-            "betweenness": z_betweenness[i],
-            "expected_influence": z_ei[i],
-        })
-
+    clo = np.array([-np.inf if c is None else c for c in closeness])
     most_central = {
         "strength": names[int(np.argmax(strength))],
-        "closeness": names[int(np.argmax(closeness))],
-        "betweenness": names[int(np.argmax(betw))],
-        "expected_influence": names[int(np.argmax(np.abs(expected_influence)))],
+        "closeness": names[int(np.argmax(clo))] if np.isfinite(clo).any() else None,
+        "betweenness": names[int(np.argmax(betw))] if betw.max() > 0 else None,
+        "expected_influence": names[int(np.argmax(expected_influence))],
     }
-
+    notes = []
+    if any(c is None for c in closeness):
+        notes.append("Closeness is undefined for nodes with no edges and is left blank for them.")
+    if betw.max() == 0:
+        notes.append("No node lies on a shortest path between two others, so betweenness is 0 everywhere.")
     return {
         "centrality_table": table,
         "standardized_centrality": standardized,
         "most_central_nodes": most_central,
+        "centrality_notes": notes,
     }
 
 
-def _estimate_network(data: np.ndarray, method: str) -> np.ndarray:
-    """Estimate network adjacency matrix using specified method."""
-    if method == "partial":
-        return _partial_correlation_matrix(data)
-    else:
-        return _correlation_network_bic(data)
+def _cor0(x: np.ndarray, y: np.ndarray) -> float:
+    """bootnet's cor0: the correlation, or 0 when either vector is constant."""
+    if np.std(x) == 0 or np.std(y) == 0:
+        return 0.0
+    return float(np.corrcoef(x, y)[0, 1])
+
+
+def _cs_coefficient(levels: list[float], cors: list[list[float]], cor: float = 0.7) -> float:
+    """bootnet::corStability: the largest drop proportion at which more than 95% of the
+    subsample correlations exceed `cor` (0 if there is none)."""
+    ok = [lvl for lvl, cs in zip(levels, cors) if cs and np.mean(np.array(cs) > cor) > 0.95]
+    return float(max(ok)) if ok else 0.0
+
+
+def _cs_label(cs: float) -> str:
+    if cs >= 0.5:
+        return "Stable (CS ≥ 0.5)"
+    if cs >= 0.25:
+        return "Acceptable for interpretation (CS ≥ 0.25), but not ≥ 0.5"
+    return "Unstable (CS < 0.25): do not interpret the ordering of nodes on this index"
+
+
+def _holm(pvals: list[float]) -> list[float]:
+    m = len(pvals)
+    order = np.argsort(pvals)
+    adj = np.empty(m)
+    running = 0.0
+    for rank, idx in enumerate(order):
+        running = max(running, min(1.0, (m - rank) * pvals[idx]))
+        adj[idx] = running
+    return adj.tolist()
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────
 
 @router.post("/estimate")
 def estimate_network(req: EstimateRequest):
-    """Estimate a psychological network from multivariate data.
+    """Estimate a psychological network from multivariate data, with centrality indices.
 
-    Supports partial correlation networks and correlation networks with
-    BIC-based edge selection (LASSO-like thresholding).
+    Methods: "ebicglasso" (regularized partial correlations, qgraph::EBICglasso),
+    "partial" (unregularized partial correlations) or "correlation" (Pearson
+    correlations, optionally thresholded at |r| >= threshold).
     """
-    data = np.array(req.data)
-    if data.ndim != 2:
-        raise HTTPException(400, "Data must be a 2D array (subjects × variables).")
+    _check_method(req.method)
+    data = _data_matrix(req.data)
     n, p = data.shape
     if n < 3:
         raise HTTPException(400, "Need at least 3 subjects.")
-    if p < 2:
-        raise HTTPException(400, "Need at least 2 variables.")
-    if req.method not in ("partial", "correlation"):
-        raise HTTPException(400, "Method must be 'partial' or 'correlation'.")
+    if req.method != "correlation" and n <= p:
+        raise HTTPException(400, "Partial-correlation networks need more subjects than variables.")
+    if not 0 <= req.gamma <= 1:
+        raise HTTPException(400, "gamma must be between 0 and 1.")
 
     names = _variable_names(req.variable_names, p)
-
-    if req.method == "partial":
-        adj = _partial_correlation_matrix(data)
-    else:
-        if req.threshold is not None:
-            # Simple threshold on correlation matrix
-            corr = np.corrcoef(data, rowvar=False)
-            np.fill_diagonal(corr, 0.0)
-            adj = np.where(np.abs(corr) >= req.threshold, corr, 0.0)
-        else:
-            adj = _correlation_network_bic(data)
+    adj, details = _estimate_network(data, req.method, req.gamma, req.threshold)
 
     edges = _adjacency_to_edgelist(adj, names)
     max_edges = p * (p - 1) // 2
     n_edges = len(edges)
-    sparsity = 1.0 - (n_edges / max_edges) if max_edges > 0 else 1.0
+    notes = list(details.pop("notes", []))
+    if req.method == "partial":
+        notes.append("Unregularized partial correlations: every pair gets an edge, including ones that are only sampling noise.")
+    if req.method == "correlation":
+        notes.append("Correlation networks show marginal associations, which include indirect ones; partial-correlation networks do not.")
 
-    return {
+    result = {
         "method": req.method,
         "n_subjects": n,
         "n_variables": p,
@@ -284,20 +379,20 @@ def estimate_network(req: EstimateRequest):
         "edge_list": edges,
         "n_edges": n_edges,
         "max_possible_edges": max_edges,
-        "sparsity": float(sparsity),
+        "density": float(n_edges / max_edges) if max_edges else 0.0,
+        "sparsity": float(1.0 - n_edges / max_edges) if max_edges else 1.0,
+        "estimation": details,
+        "notes": notes,
     }
+    result.update(_compute_centrality(adj, names))
+    return result
 
 
 @router.post("/centrality")
 def centrality_analysis(req: CentralityRequest):
     """Compute network centrality indices: strength, closeness, betweenness, expected influence."""
-    adj = np.array(req.adjacency)
-    if adj.ndim != 2 or adj.shape[0] != adj.shape[1]:
-        raise HTTPException(400, "Adjacency must be a square 2D matrix.")
+    adj = _square(req.adjacency)
     p = adj.shape[0]
-    if p < 2:
-        raise HTTPException(400, "Need at least 2 nodes.")
-
     names = _variable_names(req.variable_names, p)
     result = _compute_centrality(adj, names)
     result["n_nodes"] = p
@@ -306,298 +401,261 @@ def centrality_analysis(req: CentralityRequest):
 
 @router.post("/stability")
 def stability_analysis(req: StabilityRequest):
-    """Case-dropping bootstrap for network centrality stability.
+    """Case-dropping subsample stability of strength and expected influence (bootnet).
 
-    Computes the CS-coefficient: largest proportion of cases that can be
-    dropped while maintaining centrality correlation with original >= 0.7.
+    For each drop proportion, n_boots subsamples without replacement are drawn, the
+    network is re-estimated and its centrality correlated with the full-sample values.
+    CS-coefficient = largest drop proportion at which more than 95% of those correlations
+    exceed 0.7 (Epskamp, Borsboom & Fried, 2018).
     """
-    data = np.array(req.data)
-    if data.ndim != 2:
-        raise HTTPException(400, "Data must be a 2D array (subjects × variables).")
+    _check_method(req.method)
+    data = _data_matrix(req.data)
     n, p = data.shape
     if n < 10:
         raise HTTPException(400, "Need at least 10 subjects for stability analysis.")
-    if p < 2:
-        raise HTTPException(400, "Need at least 2 variables.")
 
     names = _variable_names(req.variable_names, p)
-    n_boots = max(10, min(req.n_boots, 500))
+    levels = req.drop_proportions or list(np.linspace(0.05, 0.75, 10))
+    levels = sorted({float(dp) for dp in levels if 0 < dp < 1})
+    if not levels:
+        raise HTTPException(400, "drop_proportions must be between 0 and 1.")
+    n_boots = max(10, min(req.n_boots, 200))
+    if n_boots * len(levels) > 1000:
+        raise HTTPException(400, "At most 1000 subsamples per request (n_boots × number of drop proportions).")
+    rng = np.random.default_rng(req.seed)
 
-    drop_proportions = req.drop_proportions or [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.75]
-    drop_proportions = [dp for dp in drop_proportions if 0 < dp < 1]
+    orig_adj, _ = _estimate_network(data, req.method, req.gamma)
+    orig = {"strength": np.abs(orig_adj).sum(axis=1), "expected_influence": orig_adj.sum(axis=1)}
 
-    # Estimate original network
-    orig_adj = _estimate_network(data, req.method)
-    orig_strength = np.sum(np.abs(orig_adj), axis=1)
-    orig_ei = np.sum(orig_adj, axis=1)
-
-    stability_curves = {"strength": [], "expected_influence": []}
-
-    for drop_prop in sorted(drop_proportions):
-        keep_n = max(p + 1, int(n * (1.0 - drop_prop)))
-        cors_strength = []
-        cors_ei = []
-
+    curves = {k: [] for k in orig}
+    cors_by_stat = {k: [] for k in orig}
+    actual_levels = []
+    for drop in levels:
+        keep_n = int(round(n * (1.0 - drop)))
+        if keep_n <= p + 1:
+            continue
+        actual = 1.0 - keep_n / n
+        actual_levels.append(actual)
+        cors = {k: [] for k in orig}
+        failed = 0
         for _ in range(n_boots):
-            idx = np.random.choice(n, size=keep_n, replace=False)
-            sub_data = data[idx, :]
+            idx = rng.choice(n, size=keep_n, replace=False)
             try:
-                sub_adj = _estimate_network(sub_data, req.method)
-                sub_strength = np.sum(np.abs(sub_adj), axis=1)
-                sub_ei = np.sum(sub_adj, axis=1)
-                r_s = np.corrcoef(orig_strength, sub_strength)[0, 1]
-                r_e = np.corrcoef(orig_ei, sub_ei)[0, 1]
-                if not np.isnan(r_s):
-                    cors_strength.append(r_s)
-                if not np.isnan(r_e):
-                    cors_ei.append(r_e)
-            except Exception:
+                sub, _ = _estimate_network(data[idx], req.method, req.gamma)
+            except HTTPException:
+                failed += 1
                 continue
+            cors["strength"].append(_cor0(orig["strength"], np.abs(sub).sum(axis=1)))
+            cors["expected_influence"].append(_cor0(orig["expected_influence"], sub.sum(axis=1)))
+        for k in orig:
+            arr = np.array(cors[k])
+            cors_by_stat[k].append(cors[k])
+            curves[k].append({
+                "drop_proportion": actual,
+                "keep_n": keep_n,
+                "mean_correlation": float(arr.mean()) if arr.size else None,
+                "q05_correlation": float(np.quantile(arr, 0.05)) if arr.size else None,
+                "proportion_above_0_7": float(np.mean(arr > 0.7)) if arr.size else None,
+                "n_successful_boots": int(arr.size),
+                "n_failed": failed,
+            })
 
-        mean_r_s = float(np.mean(cors_strength)) if cors_strength else 0.0
-        mean_r_e = float(np.mean(cors_ei)) if cors_ei else 0.0
-
-        stability_curves["strength"].append({
-            "drop_proportion": float(drop_prop),
-            "keep_n": keep_n,
-            "mean_correlation": mean_r_s,
-            "n_successful_boots": len(cors_strength),
-        })
-        stability_curves["expected_influence"].append({
-            "drop_proportion": float(drop_prop),
-            "keep_n": keep_n,
-            "mean_correlation": mean_r_e,
-            "n_successful_boots": len(cors_ei),
-        })
-
-    # CS-coefficient: largest drop proportion where mean correlation >= 0.7
-    def _cs_coeff(curve):
-        cs = 0.0
-        for pt in curve:
-            if pt["mean_correlation"] >= 0.7:
-                cs = pt["drop_proportion"]
-            else:
-                break
-        return float(cs)
-
-    cs_strength = _cs_coeff(stability_curves["strength"])
-    cs_ei = _cs_coeff(stability_curves["expected_influence"])
-
+    cs = {k: _cs_coefficient(actual_levels, cors_by_stat[k]) for k in orig}
     return {
         "n_subjects": n,
         "n_variables": p,
+        "variable_names": names,
         "method": req.method,
-        "n_bootstraps": n_boots,
-        "cs_coefficient": {
-            "strength": cs_strength,
-            "expected_influence": cs_ei,
-        },
-        "interpretation": {
-            "strength": (
-                "Stable (CS >= 0.5)" if cs_strength >= 0.5 else
-                "Moderate stability (CS >= 0.25)" if cs_strength >= 0.25 else
-                "Unstable (CS < 0.25)"
-            ),
-            "expected_influence": (
-                "Stable (CS >= 0.5)" if cs_ei >= 0.5 else
-                "Moderate stability (CS >= 0.25)" if cs_ei >= 0.25 else
-                "Unstable (CS < 0.25)"
-            ),
-        },
-        "stability_curves": stability_curves,
+        "n_boots_per_level": n_boots,
+        "seed": req.seed,
+        "cs_coefficient": cs,
+        "interpretation": {k: _cs_label(v) for k, v in cs.items()},
+        "stability_curves": curves,
+        "notes": [
+            "CS-coefficient = largest proportion of cases that can be dropped while more than 95% of subsample "
+            "centrality values still correlate above 0.7 with the full sample (bootnet::corStability). "
+            "Epskamp et al. (2018) suggest at least 0.25, preferably 0.5.",
+            "Correlations are Pearson; bootnet's EBICglasso default uses polychoric correlations for ordinal items, "
+            "so results differ from bootnet when items are ordinal.",
+        ],
     }
 
 
 @router.post("/bridge")
 def bridge_centrality(req: BridgeRequest):
-    """Bridge centrality for community structure in networks.
+    """Bridge centrality for community structure in networks (networktools::bridge).
 
-    Identifies nodes that act as bridges connecting different communities.
+    Bridge strength = sum of |w| to nodes in other communities; bridge expected influence
+    (1-step) = signed sum of those edges; 2-step adds each neighbour's influence on the
+    other communities, weighted by the connecting edge. Bridge betweenness counts how often
+    a node lies on a shortest path between nodes of different communities; bridge
+    closeness = 1 / mean shortest-path length to nodes in other communities. As in
+    networktools, the two path-based indices use positive edges only.
     """
-    adj = np.array(req.adjacency)
-    if adj.ndim != 2 or adj.shape[0] != adj.shape[1]:
-        raise HTTPException(400, "Adjacency must be a square 2D matrix.")
+    adj = _square(req.adjacency)
     p = adj.shape[0]
     communities = np.array(req.communities)
     if len(communities) != p:
         raise HTTPException(400, "Length of communities must equal number of nodes.")
-
-    names = _variable_names(req.variable_names, p)
-    unique_comms = np.unique(communities)
-    n_communities = len(unique_comms)
-
-    if n_communities < 2:
+    unique_comms = list(dict.fromkeys(communities.tolist()))
+    if len(unique_comms) < 2:
         raise HTTPException(400, "Need at least 2 communities for bridge centrality.")
 
-    # Bridge strength: sum of absolute edge weights to nodes in OTHER communities
-    bridge_strength = np.zeros(p)
-    bridge_ei = np.zeros(p)
-    for i in range(p):
-        for j in range(p):
-            if i != j and communities[i] != communities[j]:
-                bridge_strength[i] += abs(adj[i, j])
-                bridge_ei[i] += adj[i, j]
+    names = _variable_names(req.variable_names, p)
+    other = communities[:, None] != communities[None, :]
+    bridge_strength = np.sum(np.abs(adj) * other, axis=1)
+    bridge_ei1 = np.sum(adj * other, axis=1)
 
-    # Bridge betweenness: betweenness restricted to paths crossing communities
-    dist = _shortest_paths(adj)
+    # Influence of each node j on community c (1-step, excluding j itself)
+    infl = {c: (adj * (communities == c)[None, :]).sum(axis=1) for c in unique_comms}
+    bridge_ei2 = bridge_ei1.copy()
+    for i in range(p):
+        for c in unique_comms:
+            if c != communities[i]:
+                bridge_ei2[i] += float(adj[i] @ infl[c])
+
+    # Path-based indices on the positive-edge graph
+    D = _distances(np.where(adj > 0, adj, 0.0))
+    paths = [_shortest_paths(D, s) for s in range(p)]
+    dist = np.array([pt[0] for pt in paths])
+    sigma = np.array([pt[1] for pt in paths])
     bridge_betw = np.zeros(p)
     for s in range(p):
         for t in range(p):
-            if s == t or communities[s] == communities[t]:
-                continue
-            if np.isinf(dist[s, t]):
+            if not other[s, t] or not np.isfinite(dist[s, t]):
                 continue
             for v in range(p):
-                if v == s or v == t:
+                if v in (s, t):
                     continue
-                if abs(dist[s, v] + dist[v, t] - dist[s, t]) < 1e-10:
-                    bridge_betw[v] += 1.0
-    denom = (p - 1) * (p - 2)
-    if denom > 0:
-        bridge_betw /= denom
-
-    # Bridge closeness: closeness restricted to nodes in other communities
-    bridge_closeness = np.zeros(p)
+                if np.isfinite(dist[s, v]) and np.isfinite(dist[v, t]) and \
+                        abs(dist[s, v] + dist[v, t] - dist[s, t]) <= 1e-10 * dist[s, t]:
+                    bridge_betw[v] += sigma[s, v] * sigma[v, t]
+    bridge_betw /= 2.0
+    bridge_closeness = []
     for i in range(p):
-        other_dists = []
-        for j in range(p):
-            if communities[i] != communities[j] and not np.isinf(dist[i, j]) and dist[i, j] > 0:
-                other_dists.append(dist[i, j])
-        if other_dists:
-            bridge_closeness[i] = len(other_dists) / sum(other_dists)
+        d = dist[i, other[i]]
+        d = d[np.isfinite(d)]
+        bridge_closeness.append(float(1.0 / d.mean()) if d.size else None)
 
-    # Build table
-    table = []
-    for i in range(p):
-        table.append({
-            "variable": names[i],
-            "community": int(communities[i]),
-            "bridge_strength": float(bridge_strength[i]),
-            "bridge_betweenness": float(bridge_betw[i]),
-            "bridge_closeness": float(bridge_closeness[i]),
-            "bridge_expected_influence": float(bridge_ei[i]),
-        })
+    table = [{
+        "variable": names[i],
+        "community": communities[i].item(),
+        "bridge_strength": float(bridge_strength[i]),
+        "bridge_betweenness": float(bridge_betw[i]),
+        "bridge_closeness": bridge_closeness[i],
+        "bridge_expected_influence": float(bridge_ei1[i]),
+        "bridge_expected_influence_2step": float(bridge_ei2[i]),
+    } for i in range(p)]
 
-    # Identify top bridge nodes (above mean + 1 SD on bridge strength)
-    bs_mean = bridge_strength.mean()
-    bs_std = bridge_strength.std()
-    threshold_val = bs_mean + bs_std if bs_std > 0 else bs_mean
+    # Top 20% on bridge strength (the cut-off Jones et al., 2021, used as an example)
+    cut = float(np.quantile(bridge_strength, 0.8))
     bridge_nodes = [
-        {"variable": names[i], "community": int(communities[i]),
-         "bridge_strength": float(bridge_strength[i])}
-        for i in range(p) if bridge_strength[i] > threshold_val
+        {"variable": names[i], "community": communities[i].item(), "bridge_strength": float(bridge_strength[i])}
+        for i in range(p) if bridge_strength[i] >= cut and bridge_strength[i] > 0
     ]
 
     return {
         "n_nodes": p,
-        "n_communities": n_communities,
-        "community_sizes": {int(c): int(np.sum(communities == c)) for c in unique_comms},
+        "n_communities": len(unique_comms),
+        "community_sizes": {str(c): int(np.sum(communities == c)) for c in unique_comms},
         "bridge_centrality_table": table,
         "identified_bridge_nodes": bridge_nodes,
+        "notes": ["Bridge nodes listed are those in the top 20% on bridge strength. That cut-off is a convention, not a test."],
     }
 
 
 @router.post("/compare")
 def compare_networks(req: CompareRequest):
-    """Network comparison test between two groups via permutation testing.
+    """Network Comparison Test (van Borkulo et al., 2022) between two independent groups.
 
-    Tests differences in global network strength, individual edge weights,
-    and individual node strengths.
+    Statistics: M = largest absolute difference in any edge (network structure invariance),
+    S = absolute difference in global strength (sum of |edges|), each edge's absolute
+    difference, and node strength / expected influence differences. Reference
+    distributions come from permuting group membership; p = (exceedances + 1) / (permutations + 1).
     """
-    d1 = np.array(req.data_group1)
-    d2 = np.array(req.data_group2)
-    if d1.ndim != 2 or d2.ndim != 2:
-        raise HTTPException(400, "Both data matrices must be 2D.")
+    _check_method(req.method)
+    d1 = _data_matrix(req.data_group1, "Group 1 data")
+    d2 = _data_matrix(req.data_group2, "Group 2 data")
     if d1.shape[1] != d2.shape[1]:
         raise HTTPException(400, "Both groups must have the same number of variables.")
     p = d1.shape[1]
     n1, n2 = d1.shape[0], d2.shape[0]
-    if n1 < 3 or n2 < 3:
-        raise HTTPException(400, "Each group needs at least 3 subjects.")
+    if min(n1, n2) <= p:
+        raise HTTPException(400, "Each group needs more subjects than variables.")
 
     names = _variable_names(req.variable_names, p)
-    n_perm = max(100, min(req.n_permutations, 5000))
+    n_perm = max(20, min(req.n_permutations, 1000))
+    rng = np.random.default_rng(req.seed)
+    iu = np.triu_indices(p, 1)
 
-    # Observed networks
-    adj1 = _estimate_network(d1, req.method)
-    adj2 = _estimate_network(d2, req.method)
+    def stats(a1, a2):
+        diff = np.abs(a1 - a2)[iu]
+        return (abs(np.abs(a1[iu]).sum() - np.abs(a2[iu]).sum()), diff.max(), diff,
+                np.abs(a1).sum(axis=1) - np.abs(a2).sum(axis=1), a1.sum(axis=1) - a2.sum(axis=1))
 
-    # Observed differences
-    obs_global_diff = float(np.sum(np.abs(adj1)) - np.sum(np.abs(adj2)))
-    obs_edge_diff = adj1 - adj2
-    obs_node_strength_diff = np.sum(np.abs(adj1), axis=1) - np.sum(np.abs(adj2), axis=1)
+    adj1, _ = _estimate_network(d1, req.method, req.gamma)
+    adj2, _ = _estimate_network(d2, req.method, req.gamma)
+    S_obs, M_obs, edge_obs, str_obs, ei_obs = stats(adj1, adj2)
 
-    # Permutation test
     combined = np.vstack([d1, d2])
-    n_total = n1 + n2
-    perm_global = np.zeros(n_perm)
-    perm_edge = np.zeros((n_perm, p, p))
-    perm_node = np.zeros((n_perm, p))
+    S_perm, M_perm, edge_perm, str_perm, ei_perm = [], [], [], [], []
+    for _ in range(n_perm):
+        idx = rng.permutation(n1 + n2)
+        try:
+            pa1, _ = _estimate_network(combined[idx[:n1]], req.method, req.gamma)
+            pa2, _ = _estimate_network(combined[idx[n1:]], req.method, req.gamma)
+        except HTTPException:
+            continue
+        s, m, e, st, ei = stats(pa1, pa2)
+        S_perm.append(s); M_perm.append(m); edge_perm.append(e); str_perm.append(st); ei_perm.append(ei)
+    B = len(S_perm)
+    if B == 0:
+        raise HTTPException(422, "Every permutation failed to estimate a network.")
+    S_perm, M_perm = np.array(S_perm), np.array(M_perm)
+    edge_perm, str_perm, ei_perm = np.array(edge_perm), np.array(str_perm), np.array(ei_perm)
 
-    for b in range(n_perm):
-        perm_idx = np.random.permutation(n_total)
-        perm_d1 = combined[perm_idx[:n1], :]
-        perm_d2 = combined[perm_idx[n1:], :]
-        pa1 = _estimate_network(perm_d1, req.method)
-        pa2 = _estimate_network(perm_d2, req.method)
-        perm_global[b] = np.sum(np.abs(pa1)) - np.sum(np.abs(pa2))
-        perm_edge[b] = pa1 - pa2
-        perm_node[b] = np.sum(np.abs(pa1), axis=1) - np.sum(np.abs(pa2), axis=1)
+    def pval(perm, obs):
+        return (np.sum(perm >= obs - 1e-12, axis=0) + 1) / (B + 1)
 
-    # p-values (two-tailed)
-    p_global = float(np.mean(np.abs(perm_global) >= abs(obs_global_diff)))
+    edge_p = pval(edge_perm, edge_obs)
+    edge_p_holm = _holm(edge_p.tolist())
+    edges = [{
+        "from": names[i], "to": names[j],
+        "weight_group1": float(adj1[i, j]), "weight_group2": float(adj2[i, j]),
+        "abs_difference": float(edge_obs[k]),
+        "p_value": float(edge_p[k]), "p_value_holm": float(edge_p_holm[k]),
+    } for k, (i, j) in enumerate(zip(*iu))]
 
-    edge_pvalues = np.zeros((p, p))
-    for i in range(p):
-        for j in range(i + 1, p):
-            edge_pvalues[i, j] = float(np.mean(
-                np.abs(perm_edge[:, i, j]) >= abs(obs_edge_diff[i, j])
-            ))
-            edge_pvalues[j, i] = edge_pvalues[i, j]
-
-    node_pvalues = np.zeros(p)
-    for i in range(p):
-        node_pvalues[i] = float(np.mean(
-            np.abs(perm_node[:, i]) >= abs(obs_node_strength_diff[i])
-        ))
-
-    # Significant edges
-    sig_edges = []
-    for i in range(p):
-        for j in range(i + 1, p):
-            if edge_pvalues[i, j] < 0.05:
-                sig_edges.append({
-                    "from": names[i],
-                    "to": names[j],
-                    "observed_diff": float(obs_edge_diff[i, j]),
-                    "p_value": float(edge_pvalues[i, j]),
-                })
-
-    # Node results
-    node_results = []
-    for i in range(p):
-        node_results.append({
-            "variable": names[i],
-            "strength_group1": float(np.sum(np.abs(adj1[i, :]))),
-            "strength_group2": float(np.sum(np.abs(adj2[i, :]))),
-            "observed_diff": float(obs_node_strength_diff[i]),
-            "p_value": float(node_pvalues[i]),
-        })
+    str_p = pval(np.abs(str_perm), np.abs(str_obs))
+    ei_p = pval(np.abs(ei_perm), np.abs(ei_obs))
+    nodes = [{
+        "variable": names[i],
+        "strength_group1": float(np.abs(adj1[i]).sum()), "strength_group2": float(np.abs(adj2[i]).sum()),
+        "strength_difference": float(str_obs[i]), "strength_p_value": float(str_p[i]),
+        "expected_influence_difference": float(ei_obs[i]), "expected_influence_p_value": float(ei_p[i]),
+    } for i in range(p)]
 
     return {
         "n_group1": n1,
         "n_group2": n2,
         "n_variables": p,
         "method": req.method,
-        "n_permutations": n_perm,
+        "n_permutations": B,
+        "seed": req.seed,
+        "network_invariance": {"M": float(M_obs), "p_value": float(pval(M_perm, M_obs))},
         "global_strength": {
-            "group1": float(np.sum(np.abs(adj1))),
-            "group2": float(np.sum(np.abs(adj2))),
-            "observed_diff": obs_global_diff,
-            "p_value": p_global,
+            "group1": float(np.abs(adj1[iu]).sum()),
+            "group2": float(np.abs(adj2[iu]).sum()),
+            "S": float(S_obs),
+            "p_value": float(pval(S_perm, S_obs)),
         },
-        "edge_differences": sig_edges,
-        "node_strength_differences": node_results,
+        "edge_tests": edges,
+        "significant_edges_holm": [e for e in edges if e["p_value_holm"] < 0.05],
+        "node_tests": nodes,
         "adjacency_group1": adj1.tolist(),
         "adjacency_group2": adj2.tolist(),
+        "notes": [
+            "Edge and node p-values are per test; p_value_holm adjusts edge p-values for the number of edges.",
+            f"With {B} permutations the smallest possible p-value is {1 / (B + 1):.4f}.",
+        ],
     }

@@ -1,11 +1,25 @@
-"""Diagnostic Classification Models — DINA, DINO, G-DINA cognitive diagnostic models."""
+"""Diagnostic Classification Models — DINA, DINO, G-DINA cognitive diagnostic models.
+
+Marginal maximum likelihood via EM with a saturated (unstructured) attribute distribution,
+identity link, item success probabilities bounded to [1e-4, 1 - 1e-4] and no monotonicity
+constraint, as in the R package GDINA (Ma & de la Torre, 2020). DINA and DINO are the
+G-DINA model with the latent classes of each item collapsed into two groups ("has every
+required attribute" / "has at least one"), so the M-step is closed form for all three.
+Q-matrix validation uses the PVAF method of de la Torre & Chiu (2016) on the G-DINA fit.
+Checked against GDINA 2.13.2 in tests/test_dcm.py.
+"""
+
+from itertools import combinations
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import numpy as np
-from itertools import product
+from scipy import stats as sp_stats
 
 router = APIRouter()
+
+P_BOUNDS = (1e-4, 1 - 1e-4)
+MODELS = {"dina": "DINA", "dino": "DINO", "gdina": "G-DINA"}
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -13,439 +27,195 @@ router = APIRouter()
 class DinaRequest(BaseModel):
     responses: list[list[int]]  # N × J binary response matrix
     q_matrix: list[list[int]]   # J × K binary Q-matrix (items × attributes)
-    max_iter: int = 500
-    tol: float = 1e-6
+    max_iter: int = 5000
+    tol: float = 1e-8
+    random_starts: int = 5
+    seed: int = 1
 
-class DinoRequest(BaseModel):
-    responses: list[list[int]]  # N × J binary response matrix
-    q_matrix: list[list[int]]   # J × K binary Q-matrix
-    max_iter: int = 500
-    tol: float = 1e-6
+class DinoRequest(DinaRequest):
+    pass
 
-class GdinaRequest(BaseModel):
-    responses: list[list[int]]  # N × J binary response matrix
-    q_matrix: list[list[int]]   # J × K binary Q-matrix
-    max_iter: int = 500
-    tol: float = 1e-6
+class GdinaRequest(DinaRequest):
+    pass
 
-class CompareRequest(BaseModel):
-    responses: list[list[int]]
-    q_matrix: list[list[int]]
-    max_iter: int = 500
-    tol: float = 1e-6
+class CompareRequest(DinaRequest):
+    pass
 
-class QMatrixValidateRequest(BaseModel):
-    responses: list[list[int]]
-    q_matrix: list[list[int]]
-    max_iter: int = 300
-    tol: float = 1e-5
+class QMatrixValidateRequest(DinaRequest):
+    eps: float = 0.95  # PVAF cut-off
 
 
 # ── Helpers ───────────────────────────────────────────────────────────
 
-def _generate_all_patterns(K: int) -> np.ndarray:
-    """Generate all 2^K binary attribute patterns."""
-    return np.array(list(product([0, 1], repeat=K)), dtype=int)
+def _patterns(K: int) -> np.ndarray:
+    """All 2^K attribute patterns, ordered as GDINA::attributepattern (by number mastered)."""
+    rows = []
+    for m in range(K + 1):
+        for idx in combinations(range(K), m):
+            r = np.zeros(K, dtype=int)
+            r[list(idx)] = 1
+            rows.append(r)
+    return np.array(rows, dtype=int)
 
 
-def _aic(ll: float, n_params: int) -> float:
-    return -2.0 * ll + 2.0 * n_params
+def _pattern_label(row) -> str:
+    return "".join(str(int(v)) for v in row)
 
 
-def _bic(ll: float, n_params: int, n: int) -> float:
-    return -2.0 * ll + n_params * np.log(n)
+def _item_groups(patterns: np.ndarray, q_row: np.ndarray, model: str) -> tuple[np.ndarray, np.ndarray]:
+    """Group index of every latent class for one item, plus the group patterns.
 
-
-def _dina_eta(alpha: np.ndarray, q_row: np.ndarray) -> np.ndarray:
-    """DINA eta: 1 if subject has mastered ALL required attributes, else 0.
-
-    alpha: (L, K) all latent patterns or (N, K) subject profiles
-    q_row: (K,) Q-matrix row for one item
+    G-DINA: one group per reduced pattern of the required attributes (GDINA order).
+    DINA: 0 = lacks a required attribute, 1 = has them all. DINO: 0 = has none, 1 = has one or more.
     """
-    required = q_row > 0
-    if not np.any(required):
-        return np.ones(alpha.shape[0], dtype=int)
-    return np.all(alpha[:, required] >= 1, axis=1).astype(int)
+    req = np.where(q_row > 0)[0]
+    sub = patterns[:, req]
+    if model == "dina":
+        return sub.all(axis=1).astype(int), np.array([[0], [1]])
+    if model == "dino":
+        return sub.any(axis=1).astype(int), np.array([[0], [1]])
+    reduced = _patterns(len(req))
+    lookup = {tuple(r): i for i, r in enumerate(reduced)}
+    return np.array([lookup[tuple(r)] for r in sub]), reduced
 
 
-def _dino_eta(alpha: np.ndarray, q_row: np.ndarray) -> np.ndarray:
-    """DINO eta: 1 if subject has mastered ANY required attribute, else 0."""
-    required = q_row > 0
-    if not np.any(required):
-        return np.ones(alpha.shape[0], dtype=int)
-    return np.any(alpha[:, required] >= 1, axis=1).astype(int)
-
-
-def _em_dina(responses: np.ndarray, Q: np.ndarray, max_iter: int, tol: float):
-    """EM algorithm for DINA model."""
-    N, J = responses.shape
+def _fit(X: np.ndarray, Q: np.ndarray, model: str, max_iter: int, tol: float,
+         random_starts: int = 5, seed: int = 1) -> dict:
+    """Fit a DCM by EM from a rational start plus `random_starts` random ones; keep the best."""
+    N, J = X.shape
     K = Q.shape[1]
-    patterns = _generate_all_patterns(K)
-    L = patterns.shape[0]
+    patterns = _patterns(K)
+    L = len(patterns)
+    groups = [_item_groups(patterns, Q[j], model) for j in range(J)]
+    rng = np.random.default_rng(seed)
 
-    # Initialize
-    s = np.full(J, 0.2)  # slip
-    g = np.full(J, 0.2)  # guess
-    pi = np.ones(L) / L  # class proportions
-
-    # Precompute eta for all patterns × items
-    eta = np.zeros((L, J), dtype=int)
-    for j in range(J):
-        eta[:, j] = _dina_eta(patterns, Q[j])
-
-    ll_old = -np.inf
-    for iteration in range(max_iter):
-        # E-step: posterior P(alpha_l | X_i)
-        log_lik = np.zeros((N, L))
-        for c in range(L):
+    def em(start_p: list[np.ndarray], pi: np.ndarray):
+        gp = [p.copy() for p in start_p]
+        ll_old = -np.inf
+        converged = False
+        for it in range(1, max_iter + 1):
+            P = np.column_stack([gp[j][groups[j][0]] for j in range(J)])  # L × J
+            loglik = X @ np.log(P).T + (1 - X) @ np.log1p(-P).T + np.log(pi)
+            m = loglik.max(axis=1, keepdims=True)
+            post = np.exp(loglik - m)
+            s = post.sum(axis=1, keepdims=True)
+            ll = float(np.sum(m.ravel() + np.log(s.ravel())))
+            post /= s
+            Nc = post.sum(axis=0)
+            R1 = post.T @ X  # expected number correct per class and item
+            new_gp = []
             for j in range(J):
-                p1 = (1 - s[j]) ** eta[c, j] * g[j] ** (1 - eta[c, j])
-                p0 = s[j] ** eta[c, j] * (1 - g[j]) ** (1 - eta[c, j])
-                p = np.clip(p1, 1e-300, 1.0)
-                q = np.clip(p0, 1e-300, 1.0)
-                log_lik[:, c] += responses[:, j] * np.log(p) + (1 - responses[:, j]) * np.log(q)
-        log_lik += np.log(np.clip(pi, 1e-300, None))
+                g = groups[j][0]
+                n_g = np.bincount(g, weights=Nc, minlength=len(groups[j][1]))
+                r_g = np.bincount(g, weights=R1[:, j], minlength=len(groups[j][1]))
+                with np.errstate(invalid="ignore", divide="ignore"):
+                    pg = np.where(n_g > 0, r_g / n_g, gp[j])
+                new_gp.append(np.clip(pg, *P_BOUNDS))
+            new_pi = np.maximum(Nc / N, 1e-300)
+            change = max(max(np.max(np.abs(a - b)) for a, b in zip(new_gp, gp)), np.max(np.abs(new_pi - pi)))
+            gp, pi = new_gp, new_pi
+            if change < tol and abs(ll - ll_old) < 1e-6:
+                converged = True
+                break
+            ll_old = ll
+        # Final E-step at the returned parameters
+        P = np.column_stack([gp[j][groups[j][0]] for j in range(J)])
+        loglik = X @ np.log(P).T + (1 - X) @ np.log1p(-P).T + np.log(pi)
+        m = loglik.max(axis=1, keepdims=True)
+        post = np.exp(loglik - m)
+        s = post.sum(axis=1, keepdims=True)
+        ll = float(np.sum(m.ravel() + np.log(s.ravel())))
+        return {"gp": gp, "pi": pi, "post": post / s, "ll": ll, "iterations": it, "converged": converged}
 
-        # Normalize posteriors
-        max_ll = np.max(log_lik, axis=1, keepdims=True)
-        log_lik_shifted = log_lik - max_ll
-        posterior = np.exp(log_lik_shifted)
-        row_sums = posterior.sum(axis=1, keepdims=True)
-        row_sums[row_sums == 0] = 1.0
-        posterior /= row_sums
+    rational = [0.2 + 0.6 * grp[1].sum(axis=1) / max(1, grp[1].shape[1]) for grp in groups]
+    runs = [em(rational, np.full(L, 1.0 / L))]
+    for _ in range(max(0, random_starts)):
+        start = [np.sort(rng.uniform(0.05, 0.95, len(grp[1]))) if model != "gdina"
+                 else 0.1 + 0.8 * (grp[1].sum(axis=1) / max(1, grp[1].shape[1])) * rng.uniform(0.6, 1.0, len(grp[1]))
+                 for grp in groups]
+        runs.append(em(start, rng.dirichlet(np.ones(L))))
+    lls = np.array([r["ll"] for r in runs])
+    best = runs[int(np.argmax(lls))]
+    best["n_starts"] = len(runs)
+    best["n_reaching_best"] = int(np.sum(lls > lls.max() - 1e-4))
+    best["patterns"] = patterns
+    best["groups"] = groups
+    return best
 
-        # Log-likelihood
-        ll = np.sum(max_ll.ravel() + np.log(np.exp(log_lik_shifted).sum(axis=1)))
-        if abs(ll - ll_old) < tol:
-            break
-        ll_old = ll
 
-        # M-step
-        N_c = posterior.sum(axis=0)  # expected count per class
-        pi = N_c / N
+def _summarize(fit: dict, X: np.ndarray, Q: np.ndarray, model: str, attr_names: list[str]) -> dict:
+    N, J = X.shape
+    K = Q.shape[1]
+    patterns, post, pi, gp, groups = fit["patterns"], fit["post"], fit["pi"], fit["gp"], fit["groups"]
+    L = len(patterns)
+    n_item = sum(len(g) for g in gp)
+    npar = n_item + L - 1
+    ll = fit["ll"]
 
-        for j in range(J):
-            # Expected counts
-            eta_1 = eta[:, j] == 1
-            eta_0 = eta[:, j] == 0
-            r_1 = np.sum(posterior[:, eta_1] * responses[:, j:j+1], axis=(0, 1)) if np.any(eta_1) else 0
-            n_1 = np.sum(posterior[:, eta_1]) if np.any(eta_1) else 1e-10
-            r_0 = np.sum(posterior[:, eta_0] * responses[:, j:j+1], axis=(0, 1)) if np.any(eta_0) else 0
-            n_0 = np.sum(posterior[:, eta_0]) if np.any(eta_0) else 1e-10
-            s[j] = np.clip(1.0 - r_1 / n_1, 0.001, 0.999) if n_1 > 0 else 0.2
-            g[j] = np.clip(r_0 / n_0, 0.001, 0.999) if n_0 > 0 else 0.2
+    mastery = post @ patterns  # marginal P(mastery) per person and attribute
+    map_idx = post.argmax(axis=1)
 
-    # Final results
-    n_params = 2 * J + (L - 1)
-    aic_val = _aic(ll, n_params)
-    bic_val = _bic(ll, n_params, N)
+    items = []
+    for j in range(J):
+        req = [attr_names[k] for k in np.where(Q[j] > 0)[0]]
+        entry = {"item": j + 1, "attributes": req}
+        if model in ("dina", "dino"):
+            entry.update({"guess": float(gp[j][0]), "slip": float(1 - gp[j][1]),
+                          "discrimination": float(gp[j][1] - gp[j][0])})
+        entry["success_probabilities"] = [
+            {"pattern": _pattern_label(r), "probability": float(p)} for r, p in zip(groups[j][1], gp[j])
+        ]
+        items.append(entry)
 
-    # Attribute mastery probabilities per subject
-    attr_mastery = np.zeros((N, K))
-    for k in range(K):
-        for c in range(L):
-            if patterns[c, k] == 1:
-                attr_mastery[:, k] += posterior[:, c]
-
-    # Most likely class per subject
-    assignments = np.argmax(posterior, axis=1)
-    assigned_patterns = patterns[assignments]
-
-    # Classification accuracy per attribute
-    class_accuracy = []
-    for k in range(K):
-        probs_k = attr_mastery[:, k]
-        acc = np.mean(np.maximum(probs_k, 1 - probs_k))
-        class_accuracy.append({"attribute": k, "accuracy": float(acc)})
+    notes = []
+    if not fit["converged"]:
+        notes.append("EM reached the iteration limit before converging; treat the estimates with caution.")
+    if fit["n_reaching_best"] < 2 and fit["n_starts"] > 1:
+        notes.append("Only one of the starting values reached the best log-likelihood; the solution may be a local maximum.")
+    if N < 10 * L:
+        notes.append(f"With {L} latent classes, {N} people is a small sample; class proportions and item parameters will be imprecise.")
 
     return {
-        "item_parameters": [
-            {"item": j, "slip": float(s[j]), "guess": float(g[j]),
-             "discrimination": float(1 - s[j] - g[j])}
-            for j in range(J)
+        "model": MODELS[model],
+        "n_subjects": N,
+        "n_items": J,
+        "n_attributes": K,
+        "attribute_names": attr_names,
+        "item_parameters": items,
+        "latent_classes": [
+            {"pattern": _pattern_label(r), "proportion": float(p)} for r, p in zip(patterns, pi)
         ],
-        "attribute_mastery_probabilities": attr_mastery.tolist(),
-        "most_likely_profiles": assigned_patterns.tolist(),
-        "attribute_prevalence": [float(attr_mastery[:, k].mean()) for k in range(K)],
-        "class_proportions": pi.tolist(),
-        "model_fit": {
-            "log_likelihood": float(ll),
-            "neg2ll": float(-2 * ll),
-            "n_parameters": n_params,
-            "AIC": float(aic_val),
-            "BIC": float(bic_val),
+        "attribute_prevalence": {attr_names[k]: float(pi @ patterns[:, k]) for k in range(K)},
+        "attribute_mastery_probabilities": mastery.tolist(),
+        "most_likely_profiles": [_pattern_label(patterns[i]) for i in map_idx],
+        "classification_accuracy": {
+            # Posterior-based estimates for MAP classification (Wang et al., 2015), as GDINA::CA
+            "attribute": {attr_names[k]: float(np.mean(np.where(patterns[map_idx, k] == 1, mastery[:, k], 1 - mastery[:, k])))
+                          for k in range(K)},
+            "pattern": float(np.mean(post.max(axis=1))),
         },
-        "classification_accuracy": class_accuracy,
-        "n_iterations": iteration + 1,
+        "model_fit": {
+            "log_likelihood": ll,
+            "deviance": -2 * ll,
+            "n_parameters": npar,
+            "AIC": -2 * ll + 2 * npar,
+            "BIC": -2 * ll + npar * np.log(N),
+        },
+        "estimation": {
+            "iterations": fit["iterations"], "converged": fit["converged"],
+            "starts": fit["n_starts"], "starts_reaching_best": fit["n_reaching_best"],
+        },
+        "notes": notes,
     }
 
-
-def _em_dino(responses: np.ndarray, Q: np.ndarray, max_iter: int, tol: float):
-    """EM algorithm for DINO model."""
-    N, J = responses.shape
-    K = Q.shape[1]
-    patterns = _generate_all_patterns(K)
-    L = patterns.shape[0]
-
-    s = np.full(J, 0.2)
-    g = np.full(J, 0.2)
-    pi = np.ones(L) / L
-
-    # Precompute eta using DINO rule
-    eta = np.zeros((L, J), dtype=int)
-    for j in range(J):
-        eta[:, j] = _dino_eta(patterns, Q[j])
-
-    ll_old = -np.inf
-    for iteration in range(max_iter):
-        log_lik = np.zeros((N, L))
-        for c in range(L):
-            for j in range(J):
-                p1 = (1 - s[j]) ** eta[c, j] * g[j] ** (1 - eta[c, j])
-                p0 = s[j] ** eta[c, j] * (1 - g[j]) ** (1 - eta[c, j])
-                p = np.clip(p1, 1e-300, 1.0)
-                q = np.clip(p0, 1e-300, 1.0)
-                log_lik[:, c] += responses[:, j] * np.log(p) + (1 - responses[:, j]) * np.log(q)
-        log_lik += np.log(np.clip(pi, 1e-300, None))
-
-        max_ll = np.max(log_lik, axis=1, keepdims=True)
-        log_lik_shifted = log_lik - max_ll
-        posterior = np.exp(log_lik_shifted)
-        row_sums = posterior.sum(axis=1, keepdims=True)
-        row_sums[row_sums == 0] = 1.0
-        posterior /= row_sums
-
-        ll = np.sum(max_ll.ravel() + np.log(np.exp(log_lik_shifted).sum(axis=1)))
-        if abs(ll - ll_old) < tol:
-            break
-        ll_old = ll
-
-        N_c = posterior.sum(axis=0)
-        pi = N_c / N
-
-        for j in range(J):
-            eta_1 = eta[:, j] == 1
-            eta_0 = eta[:, j] == 0
-            r_1 = np.sum(posterior[:, eta_1] * responses[:, j:j+1], axis=(0, 1)) if np.any(eta_1) else 0
-            n_1 = np.sum(posterior[:, eta_1]) if np.any(eta_1) else 1e-10
-            r_0 = np.sum(posterior[:, eta_0] * responses[:, j:j+1], axis=(0, 1)) if np.any(eta_0) else 0
-            n_0 = np.sum(posterior[:, eta_0]) if np.any(eta_0) else 1e-10
-            s[j] = np.clip(1.0 - r_1 / n_1, 0.001, 0.999) if n_1 > 0 else 0.2
-            g[j] = np.clip(r_0 / n_0, 0.001, 0.999) if n_0 > 0 else 0.2
-
-    n_params = 2 * J + (L - 1)
-    aic_val = _aic(ll, n_params)
-    bic_val = _bic(ll, n_params, N)
-
-    attr_mastery = np.zeros((N, K))
-    for k in range(K):
-        for c in range(L):
-            if patterns[c, k] == 1:
-                attr_mastery[:, k] += posterior[:, c]
-
-    assignments = np.argmax(posterior, axis=1)
-    assigned_patterns = patterns[assignments]
-
-    class_accuracy = []
-    for k in range(K):
-        probs_k = attr_mastery[:, k]
-        acc = np.mean(np.maximum(probs_k, 1 - probs_k))
-        class_accuracy.append({"attribute": k, "accuracy": float(acc)})
-
-    return {
-        "item_parameters": [
-            {"item": j, "slip": float(s[j]), "guess": float(g[j]),
-             "discrimination": float(1 - s[j] - g[j])}
-            for j in range(J)
-        ],
-        "attribute_mastery_probabilities": attr_mastery.tolist(),
-        "most_likely_profiles": assigned_patterns.tolist(),
-        "attribute_prevalence": [float(attr_mastery[:, k].mean()) for k in range(K)],
-        "class_proportions": pi.tolist(),
-        "model_fit": {
-            "log_likelihood": float(ll),
-            "neg2ll": float(-2 * ll),
-            "n_parameters": n_params,
-            "AIC": float(aic_val),
-            "BIC": float(bic_val),
-        },
-        "classification_accuracy": class_accuracy,
-        "n_iterations": iteration + 1,
-    }
-
-
-def _em_gdina(responses: np.ndarray, Q: np.ndarray, max_iter: int, tol: float):
-    """EM algorithm for G-DINA (Generalized DINA) model.
-
-    Saturated model: estimates a separate response probability for every
-    possible reduced attribute pattern per item.
-    """
-    N, J = responses.shape
-    K = Q.shape[1]
-    patterns = _generate_all_patterns(K)
-    L = patterns.shape[0]
-    pi = np.ones(L) / L
-
-    # For each item j, enumerate its reduced attribute patterns
-    # (only the attributes required by Q[j])
-    item_info = []
-    for j in range(J):
-        required = np.where(Q[j] > 0)[0]
-        Kj = len(required)
-        if Kj == 0:
-            # No required attributes: single response probability
-            reduced_patterns = np.array([[0]])
-            n_reduced = 1
-        else:
-            reduced_patterns = _generate_all_patterns(Kj)
-            n_reduced = reduced_patterns.shape[0]
-        # Map each full pattern to a reduced pattern index
-        pattern_map = np.zeros(L, dtype=int)
-        for c in range(L):
-            if Kj == 0:
-                pattern_map[c] = 0
-            else:
-                reduced = tuple(patterns[c, required])
-                for ri, rp in enumerate(reduced_patterns):
-                    if tuple(rp) == reduced:
-                        pattern_map[c] = ri
-                        break
-        item_info.append({
-            "required": required,
-            "Kj": Kj,
-            "n_reduced": n_reduced,
-            "reduced_patterns": reduced_patterns,
-            "pattern_map": pattern_map,
-        })
-
-    # Initialize response probabilities per item per reduced pattern
-    item_probs = []
-    for j in range(J):
-        n_reduced = item_info[j]["n_reduced"]
-        # Initialize: low for no mastery, high for full mastery
-        probs = np.linspace(0.2, 0.8, n_reduced)
-        item_probs.append(probs)
-
-    ll_old = -np.inf
-    for iteration in range(max_iter):
-        # E-step
-        log_lik = np.zeros((N, L))
-        for c in range(L):
-            for j in range(J):
-                ri = item_info[j]["pattern_map"][c]
-                p = np.clip(item_probs[j][ri], 1e-300, 1 - 1e-300)
-                log_lik[:, c] += responses[:, j] * np.log(p) + (1 - responses[:, j]) * np.log(1 - p)
-        log_lik += np.log(np.clip(pi, 1e-300, None))
-
-        max_ll = np.max(log_lik, axis=1, keepdims=True)
-        log_lik_shifted = log_lik - max_ll
-        posterior = np.exp(log_lik_shifted)
-        row_sums = posterior.sum(axis=1, keepdims=True)
-        row_sums[row_sums == 0] = 1.0
-        posterior /= row_sums
-
-        ll = np.sum(max_ll.ravel() + np.log(np.exp(log_lik_shifted).sum(axis=1)))
-        if abs(ll - ll_old) < tol:
-            break
-        ll_old = ll
-
-        # M-step
-        N_c = posterior.sum(axis=0)
-        pi = N_c / N
-
-        for j in range(J):
-            n_reduced = item_info[j]["n_reduced"]
-            pm = item_info[j]["pattern_map"]
-            for ri in range(n_reduced):
-                classes_in_ri = np.where(pm == ri)[0]
-                weight = posterior[:, classes_in_ri].sum(axis=1)  # (N,)
-                total_weight = weight.sum()
-                if total_weight > 0:
-                    item_probs[j][ri] = np.clip(
-                        np.sum(weight * responses[:, j]) / total_weight,
-                        0.001, 0.999
-                    )
-
-    # Count parameters
-    n_params = sum(info["n_reduced"] for info in item_info) + (L - 1)
-    aic_val = _aic(ll, n_params)
-    bic_val = _bic(ll, n_params, N)
-
-    # Attribute mastery
-    attr_mastery = np.zeros((N, K))
-    for k in range(K):
-        for c in range(L):
-            if patterns[c, k] == 1:
-                attr_mastery[:, k] += posterior[:, c]
-
-    assignments = np.argmax(posterior, axis=1)
-    assigned_patterns = patterns[assignments]
-
-    # Item response function parameters
-    irf_params = []
-    for j in range(J):
-        reduced = item_info[j]["reduced_patterns"]
-        probs = item_probs[j]
-        irf = []
-        for ri in range(item_info[j]["n_reduced"]):
-            irf.append({
-                "pattern": reduced[ri].tolist(),
-                "probability": float(probs[ri]),
-            })
-        irf_params.append({"item": j, "response_function": irf})
-
-    # Item-level RMSEA
-    item_rmsea = []
-    for j in range(J):
-        pm = item_info[j]["pattern_map"]
-        obs_rates = []
-        exp_rates = []
-        for c in range(L):
-            ri = pm[c]
-            nc = posterior[:, c].sum()
-            if nc > 1:
-                obs_rate = np.sum(posterior[:, c] * responses[:, j]) / nc
-                obs_rates.append(obs_rate)
-                exp_rates.append(item_probs[j][ri])
-        if obs_rates:
-            obs_arr = np.array(obs_rates)
-            exp_arr = np.array(exp_rates)
-            rmsea_j = float(np.sqrt(np.mean((obs_arr - exp_arr) ** 2)))
-        else:
-            rmsea_j = 0.0
-        item_rmsea.append({"item": j, "RMSEA": rmsea_j})
-
-    class_accuracy = []
-    for k in range(K):
-        probs_k = attr_mastery[:, k]
-        acc = np.mean(np.maximum(probs_k, 1 - probs_k))
-        class_accuracy.append({"attribute": k, "accuracy": float(acc)})
-
-    return {
-        "item_response_functions": irf_params,
-        "attribute_mastery_probabilities": attr_mastery.tolist(),
-        "most_likely_profiles": assigned_patterns.tolist(),
-        "attribute_prevalence": [float(attr_mastery[:, k].mean()) for k in range(K)],
-        "class_proportions": pi.tolist(),
-        "model_fit": {
-            "log_likelihood": float(ll),
-            "neg2ll": float(-2 * ll),
-            "n_parameters": n_params,
-            "AIC": float(aic_val),
-            "BIC": float(bic_val),
-        },
-        "item_fit": item_rmsea,
-        "classification_accuracy": class_accuracy,
-        "n_iterations": iteration + 1,
-    }
-
-
-# ── Endpoints ─────────────────────────────────────────────────────────
 
 def _validate_inputs(responses, q_matrix):
     """Common validation for DCM inputs."""
-    R = np.array(responses)
-    Q = np.array(q_matrix)
+    try:
+        R = np.array(responses, dtype=float)
+        Q = np.array(q_matrix, dtype=int)
+    except ValueError:
+        raise HTTPException(400, "Responses and Q-matrix rows must all have the same length.")
     if R.ndim != 2:
         raise HTTPException(400, "Responses must be a 2D binary matrix (subjects x items).")
     if Q.ndim != 2:
@@ -454,187 +224,160 @@ def _validate_inputs(responses, q_matrix):
     if Q.shape[0] != J:
         raise HTTPException(400, f"Q-matrix rows ({Q.shape[0]}) must equal number of items ({J}).")
     K = Q.shape[1]
-    if K < 1 or K > 10:
-        raise HTTPException(400, "Number of attributes must be between 1 and 10.")
-    if N < 10:
-        raise HTTPException(400, "Need at least 10 subjects.")
+    if K < 1 or K > 8:
+        raise HTTPException(400, "Number of attributes must be between 1 and 8.")
     if J < 2:
         raise HTTPException(400, "Need at least 2 items.")
-    # Validate binary
+    if N < 2 ** K + 10:
+        raise HTTPException(400, f"Need more subjects than latent classes: at least {2 ** K + 10} for {K} attributes.")
     if not np.all((R == 0) | (R == 1)):
-        raise HTTPException(400, "Response matrix must be binary (0/1).")
+        raise HTTPException(400, "Response matrix must be binary (0/1) with no missing values.")
     if not np.all((Q == 0) | (Q == 1)):
         raise HTTPException(400, "Q-matrix must be binary (0/1).")
+    if np.any(Q.sum(axis=1) == 0):
+        raise HTTPException(400, "Every item must measure at least one attribute (a Q-matrix row is all zeros).")
+    if np.any(Q.sum(axis=0) == 0):
+        raise HTTPException(400, "Every attribute must be measured by at least one item (a Q-matrix column is all zeros).")
     return R, Q, N, J, K
 
+
+def _run(req, model: str) -> dict:
+    X, Q, N, J, K = _validate_inputs(req.responses, req.q_matrix)
+    names = [f"A{k + 1}" for k in range(K)]
+    fit = _fit(X, Q, model, req.max_iter, req.tol, req.random_starts, req.seed)
+    return _summarize(fit, X, Q, model, names)
+
+
+# ── Endpoints ─────────────────────────────────────────────────────────
 
 @router.post("/dina")
 def dina_model(req: DinaRequest):
     """DINA (Deterministic Inputs, Noisy And) model.
 
-    Estimates slip and guess parameters per item via EM. Classifies subjects
-    into attribute mastery profiles. Requires mastery of ALL attributes
-    specified in the Q-matrix for correct response.
+    Two parameters per item: guess = P(correct | lacks a required attribute) and
+    slip = P(wrong | has every required attribute).
     """
-    R, Q, N, J, K = _validate_inputs(req.responses, req.q_matrix)
-    result = _em_dina(R, Q, req.max_iter, req.tol)
-    result["model"] = "DINA"
-    result["n_subjects"] = N
-    result["n_items"] = J
-    result["n_attributes"] = K
-    return result
+    return _run(req, "dina")
 
 
 @router.post("/dino")
 def dino_model(req: DinoRequest):
     """DINO (Deterministic Inputs, Noisy Or) model.
 
-    Complementary to DINA: mastery of ANY required attribute suffices for
-    correct response. Estimates slip and guess parameters per item via EM.
+    Two parameters per item: guess = P(correct | has none of the required attributes) and
+    slip = P(wrong | has at least one).
     """
-    R, Q, N, J, K = _validate_inputs(req.responses, req.q_matrix)
-    result = _em_dino(R, Q, req.max_iter, req.tol)
-    result["model"] = "DINO"
-    result["n_subjects"] = N
-    result["n_items"] = J
-    result["n_attributes"] = K
-    return result
+    return _run(req, "dino")
 
 
 @router.post("/gdina")
 def gdina_model(req: GdinaRequest):
-    """G-DINA (Generalized DINA) model.
+    """G-DINA (Generalized DINA) model, identity link.
 
-    Saturated model that estimates a response probability for every possible
-    attribute pattern per item. Subsumes both DINA and DINO as special cases.
+    One success probability per combination of the item's required attributes; DINA and
+    DINO are special cases.
     """
-    R, Q, N, J, K = _validate_inputs(req.responses, req.q_matrix)
-    result = _em_gdina(R, Q, req.max_iter, req.tol)
-    result["model"] = "G-DINA"
-    result["n_subjects"] = N
-    result["n_items"] = J
-    result["n_attributes"] = K
-    return result
+    return _run(req, "gdina")
 
 
 @router.post("/compare")
 def compare_models(req: CompareRequest):
-    """Compare DINA, DINO, and G-DINA models on the same data.
+    """Fit DINA, DINO and G-DINA; compare by AIC/BIC and likelihood-ratio tests.
 
-    Returns fit comparison table (AIC, BIC, -2LL) and item-level model
-    selection based on BIC.
+    DINA and DINO are nested in G-DINA (identity link), so 2·(LL_GDINA − LL_reduced) is
+    compared with a chi-square on the difference in parameter counts, as GDINA::anova does.
     """
-    R, Q, N, J, K = _validate_inputs(req.responses, req.q_matrix)
+    X, Q, N, J, K = _validate_inputs(req.responses, req.q_matrix)
+    names = [f"A{k + 1}" for k in range(K)]
+    res = {m: _summarize(_fit(X, Q, m, req.max_iter, req.tol, req.random_starts, req.seed), X, Q, m, names)
+           for m in ("dina", "dino", "gdina")}
 
-    dina_result = _em_dina(R, Q, req.max_iter, req.tol)
-    dino_result = _em_dino(R, Q, req.max_iter, req.tol)
-    gdina_result = _em_gdina(R, Q, req.max_iter, req.tol)
-
-    fit_table = []
-    for name, res in [("DINA", dina_result), ("DINO", dino_result), ("G-DINA", gdina_result)]:
-        fit_table.append({
-            "model": name,
-            "log_likelihood": res["model_fit"]["log_likelihood"],
-            "neg2ll": res["model_fit"]["neg2ll"],
-            "n_parameters": res["model_fit"]["n_parameters"],
-            "AIC": res["model_fit"]["AIC"],
-            "BIC": res["model_fit"]["BIC"],
+    fit_table = [{"model": r["model"], **r["model_fit"]} for r in res.values()]
+    g = res["gdina"]["model_fit"]
+    lr_tests = []
+    for m in ("dina", "dino"):
+        f = res[m]["model_fit"]
+        df = g["n_parameters"] - f["n_parameters"]
+        chi2 = max(0.0, 2 * (g["log_likelihood"] - f["log_likelihood"]))
+        lr_tests.append({
+            "reduced_model": MODELS[m], "full_model": "G-DINA", "chi_square": chi2, "df": df,
+            "p_value": float(sp_stats.chi2.sf(chi2, df)) if df > 0 else None,
         })
-
-    # Best overall model by BIC
-    best_idx = int(np.argmin([r["BIC"] for r in fit_table]))
-    best_model = fit_table[best_idx]["model"]
-
-    # Item-level comparison using observed vs expected per item
-    # Use the model with lowest overall BIC as recommendation
-    item_selection = []
-    for j in range(J):
-        item_selection.append({
-            "item": j,
-            "recommended_model": best_model,
-            "note": "Item-level selection based on overall model BIC.",
-        })
-
+    notes = [
+        "Likelihood-ratio tests assume regular conditions; when item probabilities sit at their bounds the p-values are approximate.",
+    ]
+    if all(Q.sum(axis=1) == 1):
+        notes.append("Every item measures one attribute, so DINA, DINO and G-DINA are the same model here.")
     return {
         "n_subjects": N,
         "n_items": J,
         "n_attributes": K,
         "fit_comparison": fit_table,
-        "best_model": best_model,
-        "item_level_selection": item_selection,
-        "dina_fit": dina_result["model_fit"],
-        "dino_fit": dino_result["model_fit"],
-        "gdina_fit": gdina_result["model_fit"],
+        "best_by_aic": min(fit_table, key=lambda r: r["AIC"])["model"],
+        "best_by_bic": min(fit_table, key=lambda r: r["BIC"])["model"],
+        "likelihood_ratio_tests": lr_tests,
+        "classification_accuracy": {MODELS[m]: r["classification_accuracy"] for m, r in res.items()},
+        "notes": notes,
     }
 
 
 @router.post("/qmatrix-validate")
 def qmatrix_validate(req: QMatrixValidateRequest):
-    """Q-matrix validation via item-level fit comparison.
+    """Empirical Q-matrix validation, PVAF method (de la Torre & Chiu, 2016; GDINA::Qval).
 
-    For each item-attribute entry in the Q-matrix, tests whether flipping
-    it (0->1 or 1->0) improves model fit (BIC). Returns suggested
-    modifications with improvement statistics.
+    Using the G-DINA fit, every possible q-vector for an item is scored by the proportion
+    of variance accounted for (PVAF): the posterior-weighted variance of the item's success
+    probabilities across the classes it distinguishes, relative to the q-vector that uses
+    all attributes. The suggested q-vector is the one with the fewest attributes whose PVAF
+    reaches `eps` (largest PVAF breaks ties).
     """
-    R, Q, N, J, K = _validate_inputs(req.responses, req.q_matrix)
+    X, Q, N, J, K = _validate_inputs(req.responses, req.q_matrix)
+    if not 0 < req.eps < 1:
+        raise HTTPException(400, "eps must be between 0 and 1.")
+    fit = _fit(X, Q, "gdina", req.max_iter, req.tol, req.random_starts, req.seed)
+    patterns, post, pi = fit["patterns"], fit["post"], fit["pi"]
+    Nc = post.sum(axis=0)
+    R1 = post.T @ X
+    candidates = _patterns(K)[1:]
 
-    # Baseline fit using DINA
-    baseline = _em_dina(R, Q, req.max_iter, req.tol)
-    baseline_bic = baseline["model_fit"]["BIC"]
-    baseline_ll = baseline["model_fit"]["log_likelihood"]
+    def zeta2(j: int, q: np.ndarray) -> float:
+        g, _ = _item_groups(patterns, q, "gdina")
+        n_groups = g.max() + 1
+        w = np.bincount(g, weights=pi, minlength=n_groups)
+        n_g = np.bincount(g, weights=Nc, minlength=n_groups)
+        r_g = np.bincount(g, weights=R1[:, j], minlength=n_groups)
+        P = np.divide(r_g, n_g, out=np.zeros(n_groups), where=n_g > 0)
+        return float(np.sum(w * (P - np.sum(w * P)) ** 2))
 
-    suggestions = []
-    Q_modified = Q.copy()
-
-    for j in range(J):
-        for k in range(K):
-            # Flip entry
-            Q_test = Q.copy()
-            Q_test[j, k] = 1 - Q_test[j, k]
-
-            # Check that item still measures at least one attribute
-            if Q_test[j, :].sum() == 0:
-                continue
-
-            try:
-                test_result = _em_dina(R, Q_test, req.max_iter, req.tol)
-                test_bic = test_result["model_fit"]["BIC"]
-                test_ll = test_result["model_fit"]["log_likelihood"]
-                bic_improvement = baseline_bic - test_bic
-                ll_improvement = test_ll - baseline_ll
-
-                if bic_improvement > 0:
-                    suggestions.append({
-                        "item": j,
-                        "attribute": k,
-                        "current_value": int(Q[j, k]),
-                        "suggested_value": int(Q_test[j, k]),
-                        "bic_improvement": float(bic_improvement),
-                        "ll_improvement": float(ll_improvement),
-                        "original_bic": float(baseline_bic),
-                        "modified_bic": float(test_bic),
-                    })
-            except Exception:
-                continue
-
-    # Sort by BIC improvement
-    suggestions.sort(key=lambda x: x["bic_improvement"], reverse=True)
-
-    # Build suggested Q-matrix applying top non-conflicting changes
+    items = []
     Q_suggested = Q.copy()
-    applied = set()
-    for sug in suggestions:
-        key = (sug["item"], sug["attribute"])
-        if key not in applied:
-            Q_suggested[sug["item"], sug["attribute"]] = sug["suggested_value"]
-            applied.add(key)
+    for j in range(J):
+        full = zeta2(j, np.ones(K, dtype=int))
+        pvaf = [zeta2(j, q) / full if full > 0 else 0.0 for q in candidates]
+        ok = [i for i, v in enumerate(pvaf) if v >= req.eps]
+        best = min(ok, key=lambda i: (candidates[i].sum(), -pvaf[i])) if ok else len(candidates) - 1
+        sug = candidates[best]
+        Q_suggested[j] = sug
+        items.append({
+            "item": j + 1,
+            "current_q": _pattern_label(Q[j]),
+            "suggested_q": _pattern_label(sug),
+            "changed": bool(np.any(sug != Q[j])),
+            "pvaf": {_pattern_label(q): float(v) for q, v in zip(candidates, pvaf)},
+        })
 
+    changed = [it for it in items if it["changed"]]
     return {
         "n_items": J,
         "n_attributes": K,
-        "baseline_bic": float(baseline_bic),
-        "n_suggested_modifications": len(suggestions),
-        "suggested_modifications": suggestions,
+        "eps": req.eps,
         "original_q_matrix": Q.tolist(),
         "suggested_q_matrix": Q_suggested.tolist(),
+        "n_suggested_changes": len(changed),
+        "items": items,
+        "notes": [
+            "Suggestions are empirical and should be checked against the content of each item before the Q-matrix is changed.",
+            "This is a single pass on the G-DINA fit to the Q-matrix as given, so an item that is missing an attribute "
+            "can still look adequate; refit with any changed q-vectors and validate again.",
+        ],
     }

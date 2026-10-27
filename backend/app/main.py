@@ -109,6 +109,7 @@ ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "").split(",") if os.environ
     "http://localhost:3000",
 ]
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -142,7 +143,6 @@ async def _global_exception_handler(request: Request, exc: Exception):
     )
 
 
-# ── Auth middleware — verifies Supabase JWT on protected routes ────────
 
 # ── Rate limiter — SQLite-backed for persistence across deploys ────────
 import sqlite3
