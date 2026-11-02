@@ -164,25 +164,6 @@
   }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 
-  /* ── Animated background ───────────────────────────────────────── */
-  .hero-bg {
-    position: fixed; inset: 0; z-index: -1; overflow: hidden;
-    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,.12), transparent 70%),
-                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(6,182,212,.06), transparent),
-                var(--bg);
-  }
-  .hero-bg .orb {
-    position: absolute; border-radius: 50%; filter: blur(80px); opacity: .25;
-    animation: float 20s ease-in-out infinite alternate;
-  }
-  .hero-bg .orb:nth-child(1) { width: 500px; height: 500px; background: #6366F1; top: -15%; left: 10%; }
-  .hero-bg .orb:nth-child(2) { width: 400px; height: 400px; background: #06B6D4; top: 30%; right: -5%; animation-delay: -7s; }
-  .hero-bg .orb:nth-child(3) { width: 350px; height: 350px; background: #EC4899; bottom: 10%; left: -8%; animation-delay: -13s; }
-  @keyframes float {
-    0% { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(30px, -40px) scale(1.08); }
-  }
-
   /* ── Nav ────────────────────────────────────────────────────────── */
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
@@ -305,7 +286,7 @@
   section .section-head p { color: var(--text2); max-width: 600px; margin: 0 auto; font-size: 1.05rem; }
 
   /* ── Problem / Pain ────────────────────────────────────────────── */
-  .pain { background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%); }
+  .pain { background: linear-gradient(180deg, transparent, rgba(19,25,38,.74) 18%, rgba(19,25,38,.74) 82%, transparent); }
   .pain-grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 24px;
@@ -462,7 +443,7 @@
 
   /* ── Social Proof ──────────────────────────────────────────────── */
   .social-proof {
-    background: linear-gradient(180deg, var(--bg), var(--surface), var(--bg));
+    background: linear-gradient(180deg, transparent, rgba(19,25,38,.74) 18%, rgba(19,25,38,.74) 82%, transparent);
   }
   .proof-grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -710,11 +691,9 @@
 </script>
 </head>
 <body>
+<canvas data-stat-bg="neurons" data-dim="0.2"></canvas>
 
 <!-- Background -->
-<div class="hero-bg" aria-hidden="true">
-  <div class="orb"></div><div class="orb"></div><div class="orb"></div>
-</div>
 
 <!-- Nav -->
 <nav>
@@ -1343,7 +1322,7 @@
 </section>
 
 <!-- Research Lifecycle -->
-<section style="background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%);">
+<section style="background: linear-gradient(180deg, transparent, rgba(19,25,38,.74) 18%, rgba(19,25,38,.74) 82%, transparent);">
   <div class="container">
     <div class="section-head reveal-on-scroll">
       <div class="overline">Research Lifecycle</div>
@@ -1449,7 +1428,7 @@
 </section>
 
 <!-- Data & UX -->
-<section style="background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%);">
+<section style="background: linear-gradient(180deg, transparent, rgba(19,25,38,.74) 18%, rgba(19,25,38,.74) 82%, transparent);">
   <div class="container">
     <div class="section-head reveal-on-scroll">
       <div class="overline">Data &amp; UX</div>
@@ -1886,5 +1865,6 @@ document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el
   document.body.appendChild(d);
 })();
 </script>
+<script src="/js/stat-backgrounds.js"></script>
 </body>
 </html>
