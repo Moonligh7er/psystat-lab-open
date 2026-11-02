@@ -165,7 +165,7 @@
         if (this.pts.every(q => Math.hypot(q[0] - x, q[1] - y) > D)) this.pts.push([x, y]);
       }
       this.layer = new Field(cols, rows, cell); this.lit = false;
-      this.v = this.pts.map(() => rnd(0, .9)); this.drive = this.pts.map(() => rnd(.3, .55)); this.rest = this.pts.map(() => 0); this.flash = this.pts.map(() => 0);
+      this.v = this.pts.map(() => rnd(0, .9)); this.drive = this.pts.map(() => rnd(.09, .15)); this.rest = this.pts.map(() => 0); this.flash = this.pts.map(() => 0);
       this.syn = this.pts.map((a, i) => this.pts.map((b, j) => [Math.hypot(a[0] - b[0], a[1] - b[1]), j]).filter(e => e[1] !== i).sort((x, y) => x[0] - y[0]).slice(0, 3).map(([d, j]) => {
         const b = this.pts[j], bend = rnd(-.28, .28), mx = (a[0] + b[0]) / 2 - (b[1] - a[1]) * bend, my = (a[1] + b[1]) / 2 + (b[0] - a[0]) * bend, path = [];
         for (let u = 0; u <= 1.0001; u += 1 / 14) path.push([(1 - u) ** 2 * a[0] + 2 * u * (1 - u) * mx + u * u * b[0], (1 - u) ** 2 * a[1] + 2 * u * (1 - u) * my + u * u * b[1]]);
@@ -181,14 +181,14 @@
     step(dt) {
       const { v, rest, flash } = this;
       for (let i = 0; i < v.length; i++) {
-        flash[i] = Math.max(0, flash[i] - dt * 2);
+        flash[i] = Math.max(0, flash[i] - dt * .55);
         if (rest[i] > 0) { rest[i] -= dt; continue; }
-        v[i] += dt * (this.drive[i] + .25 * gauss() - .25 * v[i]);
+        v[i] += dt * (this.drive[i] + .1 * gauss() - .08 * v[i]);
         if (v[i] < -.3) v[i] = -.3;
-        if (v[i] >= 1) { v[i] = 0; rest[i] = .9; flash[i] = 1; if (this.spikes.length < 110) for (const s of this.syn[i]) this.spikes.push({ s, u: 0 }); }
+        if (v[i] >= 1) { v[i] = 0; rest[i] = 3; flash[i] = 1; if (this.spikes.length < 110) for (const s of this.syn[i]) this.spikes.push({ s, u: 0 }); }
       }
       for (const q of this.spikes) {
-        q.u += dt * 210 / Math.max(60, q.s.len);
+        q.u += dt * 52 / Math.max(60, q.s.len);
         if (q.u >= 1) { q.dead = true; if (rest[q.s.to] <= 0) v[q.s.to] += q.s.w; }
       }
       this.spikes = this.spikes.filter(q => !q.dead);
@@ -199,10 +199,10 @@
         for (const row of this.syn) for (const s of row) for (let k = 1; k < s.path.length; k++) this.layer.line(s.path[k - 1][0], s.path[k - 1][1], s.path[k][0], s.path[k][1], cell * .9, p.c2, .55);
         for (const [x, y] of this.pts) { const m = Math.floor(rnd(4, 7)), a0 = rnd(0, 6.28); for (let k = 0; k < m; k++) this.branch(x, y, a0 + k * 6.28 / m + rnd(-.3, .3), rnd(16, 34), 2, p, cell); }
       }
-      F.add(this.layer, .8 + .2 * Math.sin(t * .4));
+      F.add(this.layer, .8 + .2 * Math.sin(t * .12));
       const at = (s, u) => { const f = Math.min(s.path.length - 1.001, u * (s.path.length - 1)), i = Math.floor(f), e = f - i, a = s.path[i], b = s.path[i + 1]; return [a[0] + (b[0] - a[0]) * e, a[1] + (b[1] - a[1]) * e]; };
       for (const q of this.spikes) {
-        const c = q.s.w < 0 ? p.c4 : p.c3, [x, y] = at(q.s, q.u), [bx, by] = at(q.s, Math.max(0, q.u - .22));
+        const c = q.s.w < 0 ? p.c4 : p.c3, [x, y] = at(q.s, q.u), [bx, by] = at(q.s, Math.max(0, q.u - .14));
         F.line(bx, by, x, y, cell, c, .5); F.glow(x, y, cell * 3, c, .95);
       }
       this.pts.forEach(([x, y], i) => {
