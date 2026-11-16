@@ -18,6 +18,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from scipy import stats as sp_stats
 
+from app.formula_safety import internal_names, model_error, relabel
 from app.mixed import fit_mixedlm, fixed_effect_se
 from app.sem_engine import (Model, Param, TwoLevelSEM, _key, cfa_params, two_level_fit_measures,
                             two_level_reference_models)
@@ -321,18 +322,30 @@ def random_slopes_sem(req: RandomSlopesSEMRequest):
             raise HTTPException(400, f"Random slope '{rs}' must be in predictors list.")
     zc = sp_stats.norm.ppf(0.5 + req.confidence / 2)
 
-    fixed_terms = list(req.predictors) + l2
+    # Column names come from the request; formulas only ever see internal names
+    # (patsy evaluates formula terms as Python code).
+    preds_i, map_p = internal_names(req.predictors, "p")
+    l2_i, map_w = internal_names(l2, "w")
+    name_map = {"_o0": req.outcome, **map_p, **map_w}
+    to_i = {**dict(zip(req.predictors, preds_i)), **dict(zip(l2, l2_i))}
+    m = pd.DataFrame({"_o0": df[req.outcome].values, "_g0": df[req.group_ids].values})
+    for lbl, n in to_i.items():
+        m[n] = df[lbl].values
+    fixed_terms = list(preds_i) + l2_i
+    inter = set()
+    k = 0
     for w in l2:
         for rs in req.random_slopes:
-            col = f"{w}_x_{rs}"
-            df[col] = df[w] * df[rs]
-            fixed_terms.append(col)
-    formula = f"{req.outcome} ~ " + " + ".join(fixed_terms)
-    re_formula = "~ " + " + ".join(req.random_slopes) if req.random_slopes else "~ 1"
+            col = f"_v{k}"; k += 1
+            m[col] = m[to_i[w]] * m[to_i[rs]]
+            name_map[col] = f"{w}_x_{rs}"
+            fixed_terms.append(col); inter.add(col)
+    formula = "_o0 ~ " + " + ".join(fixed_terms)
+    re_formula = "~ " + " + ".join(to_i[r] for r in req.random_slopes) if req.random_slopes else "~ 1"
     try:
-        model = fit_mixedlm(smf.mixedlm(formula, df, groups=df[req.group_ids], re_formula=re_formula), reml=True)
+        model = fit_mixedlm(smf.mixedlm(formula, m, groups=m["_g0"], re_formula=re_formula), reml=True)
     except Exception as exc:
-        raise HTTPException(422, f"Model failed to converge: {exc}. Try centering predictors or removing random slopes.")
+        raise HTTPException(422, model_error("The random-slopes model", exc) + " Try centering predictors or removing random slopes.")
 
     fe, bse = model.fe_params, fixed_effect_se(model)[0]
     fixed = []
@@ -351,18 +364,18 @@ def random_slopes_sem(req: RandomSlopesSEMRequest):
             den = np.sqrt(cov_re.loc[a, a] * cov_re.loc[b, b])
             random["correlations"][f"{a} ~ {b}"] = float(cov_re.loc[a, b] / den) if den > 0 else None
 
-    cross = [f for f in fixed if "_x_" in f["name"]]
+    cross = [f for f in fixed if f["name"] in inter]
 
     # Within / between (contextual) effects, random-intercept model per predictor
     contextual = {}
     for x in req.predictors:
-        d2 = df[[req.outcome, x, req.group_ids]].copy()
-        d2["x_between"] = d2.groupby(req.group_ids)[x].transform("mean")
-        d2["x_within"] = d2[x] - d2["x_between"]
+        d2 = pd.DataFrame({"_o0": m["_o0"].values, "_g0": m["_g0"].values, "_x": m[to_i[x]].values})
+        d2["x_between"] = d2.groupby("_g0")["_x"].transform("mean")
+        d2["x_within"] = d2["_x"] - d2["x_between"]
         if d2["x_between"].std() == 0 or d2["x_within"].std() == 0:
             continue
         try:
-            m2 = fit_mixedlm(smf.mixedlm(f"{req.outcome} ~ x_within + x_between", d2, groups=d2[req.group_ids]), reml=True)
+            m2 = fit_mixedlm(smf.mixedlm("_o0 ~ x_within + x_between", d2, groups=d2["_g0"]), reml=True)
         except Exception:
             continue
         b = m2.fe_params
@@ -378,7 +391,7 @@ def random_slopes_sem(req: RandomSlopesSEMRequest):
 
     k_re = len(re_names)
     n_params = len(fe) + k_re * (k_re + 1) // 2 + 1
-    return {
+    return relabel({
         "n_observations": N,
         "n_groups": J,
         "n_dropped_incomplete": dropped,
@@ -401,7 +414,7 @@ def random_slopes_sem(req: RandomSlopesSEMRequest):
             "Cross-level interaction terms use the variables as entered; centre them first if the main effects should be interpretable at the mean.",
             "Contextual effect = between-cluster effect minus within-cluster effect of the predictor (random-intercept model with the cluster mean and the deviation from it).",
         ],
-    }
+    }, name_map)
 
 
 # ══════════════════════════════════════════════════════════════════════

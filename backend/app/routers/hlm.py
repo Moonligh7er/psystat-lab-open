@@ -8,6 +8,7 @@ from pydantic import BaseModel
 import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
+from app.formula_safety import internal_names, model_error, relabel
 from app.mixed import fit_mixedlm, fixed_effect_se
 from scipy import stats as sp_stats
 
@@ -71,9 +72,10 @@ def two_level_hlm(req: TwoLevelRequest):
         raise HTTPException(400, "Need at least 2 groups for multilevel modeling.")
 
     # Build dataframe
-    pred_names = req.predictor_names or [f"x{i+1}" for i in range(n_pred)]
-    if len(pred_names) != n_pred:
+    labels = req.predictor_names or [f"x{i+1}" for i in range(n_pred)]
+    if len(labels) != n_pred:
         raise HTTPException(400, "predictor_names length must match number of level-1 predictors.")
+    pred_names, name_map = internal_names(labels, "p")
 
     df = pd.DataFrame({"y": req.dependent, "group": req.groups})
     for i, name in enumerate(pred_names):
@@ -97,7 +99,7 @@ def two_level_hlm(req: TwoLevelRequest):
     try:
         null_model = fit_mixedlm(smf.mixedlm("y ~ 1", df, groups=df["group"]), reml=req.reml)
     except Exception as exc:
-        raise HTTPException(422, f"Null model failed to converge: {exc}")
+        raise HTTPException(422, model_error("The null model", exc))
 
     var_between = float(null_model.cov_re.iloc[0, 0])
     var_within = float(null_model.scale)
@@ -122,7 +124,7 @@ def two_level_hlm(req: TwoLevelRequest):
             "removing redundant predictors, or setting random_slopes=false.",
         )
     except Exception as exc:
-        raise HTTPException(422, f"Model failed to converge: {exc}")
+        raise HTTPException(422, model_error("The multilevel model", exc))
 
     # ── Fixed effects ─────────────────────────────────────────────────
     # Wald z tests (statsmodels). Residual-df t tests would ignore the clustering; with few
@@ -185,7 +187,7 @@ def two_level_hlm(req: TwoLevelRequest):
     bic = -2 * llf + n_params * np.log(n)
     deviance = -2 * llf
 
-    return {
+    return relabel({
         "fixed_effects": fixed_effects,
         "random_effects": {
             "variance_components": var_components,
@@ -214,7 +216,7 @@ def two_level_hlm(req: TwoLevelRequest):
         "estimation": "REML" if req.reml else "ML",
         "tests_note": "Fixed-effect tests are Wald z; with few groups they are optimistic. AIC/BIC from a REML fit compare only models with the same fixed effects.",
         "interpretation": _interpret_two_level(icc, fixed_effects, r2_marginal, r2_conditional),
-    }
+    }, name_map)
 
 
 @router.post("/three-level")
@@ -237,9 +239,10 @@ def three_level_hlm(req: ThreeLevelRequest):
     if len(unique_l2) < len(unique_l3) + 1:
         raise HTTPException(400, "Need more level-2 groups than level-3 groups.")
 
-    pred_names = req.predictor_names or [f"x{i+1}" for i in range(n_pred)]
-    if len(pred_names) != n_pred:
+    labels = req.predictor_names or [f"x{i+1}" for i in range(n_pred)]
+    if len(labels) != n_pred:
         raise HTTPException(400, "predictor_names length must match number of predictors.")
+    pred_names, name_map = internal_names(labels, "p")
 
     df = pd.DataFrame({
         "y": req.dependent,
@@ -256,7 +259,7 @@ def three_level_hlm(req: ThreeLevelRequest):
     try:
         null_l3 = fit_mixedlm(smf.mixedlm("y ~ 1", df, groups=df["l3"]), reml=req.reml)
     except Exception as exc:
-        raise HTTPException(422, f"Level-3 null model failed: {exc}")
+        raise HTTPException(422, model_error("The level-3 null model", exc))
 
     try:
         null_full = fit_mixedlm(smf.mixedlm(
@@ -269,7 +272,7 @@ def three_level_hlm(req: ThreeLevelRequest):
             null_l2 = fit_mixedlm(smf.mixedlm("y ~ 1", df, groups=df["l2_nested"]), reml=req.reml)
             var_l2 = float(null_l2.cov_re.iloc[0, 0])
         except Exception as exc:
-            raise HTTPException(422, f"Three-level null model failed: {exc}")
+            raise HTTPException(422, model_error("The three-level null model", exc))
 
         var_l3 = float(null_l3.cov_re.iloc[0, 0])
         var_resid = float(null_l3.scale)
@@ -299,7 +302,7 @@ def three_level_hlm(req: ThreeLevelRequest):
                 fixed_formula, df, groups=df["l2_nested"],
             ), reml=req.reml)
         except Exception as exc:
-            raise HTTPException(422, f"Three-level model failed to converge: {exc}")
+            raise HTTPException(422, model_error("The three-level model", exc))
 
     # ── Fixed effects ─────────────────────────────────────────────────
     fe = model.fe_params
@@ -327,7 +330,7 @@ def three_level_hlm(req: ThreeLevelRequest):
     aic = -2 * llf + 2 * n_params
     bic = -2 * llf + n_params * np.log(n)
 
-    return {
+    return relabel({
         "fixed_effects": fixed_effects,
         "variance_components": {
             "level3_intercept": var_l3,
@@ -368,7 +371,7 @@ def three_level_hlm(req: ThreeLevelRequest):
                 else "Clustering is modest; a simpler model may suffice."
             )
         ),
-    }
+    }, name_map)
 
 
 @router.post("/growth-curve")
@@ -394,10 +397,12 @@ def growth_curve(req: GrowthCurveRequest):
 
     # Covariates (time-invariant)
     cov_names: list[str] = []
+    name_map: dict[str, str] = {}
     if req.covariates is not None:
-        cov_names = req.covariate_names or [f"cov{j+1}" for j in range(len(req.covariates))]
-        if len(cov_names) != len(req.covariates):
+        labels = req.covariate_names or [f"cov{j+1}" for j in range(len(req.covariates))]
+        if len(labels) != len(req.covariates):
             raise HTTPException(400, "covariate_names length must match number of covariates.")
+        cov_names, name_map = internal_names(labels, "c")
         for j, col in enumerate(req.covariates):
             if len(col) != n:
                 raise HTTPException(400, "Each covariate must have the same length as dependent.")
@@ -431,7 +436,7 @@ def growth_curve(req: GrowthCurveRequest):
                 re_formula="~ time",
             ), reml=True)
         except Exception as exc:
-            raise HTTPException(422, f"Growth curve model failed to converge: {exc}")
+            raise HTTPException(422, model_error("The growth curve model", exc))
 
     # ── Fixed effects ─────────────────────────────────────────────────
     fe = model.fe_params
@@ -497,7 +502,7 @@ def growth_curve(req: GrowthCurveRequest):
     aic = -2 * llf + 2 * n_params
     bic = -2 * llf + n_params * np.log(n)
 
-    return {
+    return relabel({
         "fixed_effects": fixed_effects,
         "random_effects": {
             "variance_components": var_components,
@@ -524,7 +529,7 @@ def growth_curve(req: GrowthCurveRequest):
         "n_observations": n,
         "n_subjects": n_subjects,
         "interpretation": _interpret_growth(avg_slope, re_corr, fixed_effects),
-    }
+    }, name_map)
 
 
 @router.post("/icc")
