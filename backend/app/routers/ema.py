@@ -6,11 +6,14 @@ for intensive longitudinal data.
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 
 router = APIRouter()
+
+MAX_EMA_VARIABLES = 200   # variables analysed per request
+MAX_LAGGED_VARIABLES = 50  # cross-lagged pairs grow with the square of this
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -25,20 +28,20 @@ class EMAObservation(BaseModel):
 class EMADescriptiveRequest(BaseModel):
     """Descriptive statistics for EMA data."""
     observations: list[EMAObservation]
-    variable_names: list[str] | None = None
+    variable_names: list[str] | None = Field(None, max_length=MAX_EMA_VARIABLES)
 
 
 class EMALaggedRequest(BaseModel):
     """Lagged analysis for EMA data."""
     observations: list[EMAObservation]
-    variables: list[str]
+    variables: list[str] = Field(..., max_length=MAX_LAGGED_VARIABLES)
     lag: int = 1
 
 
 class EMADynamicsRequest(BaseModel):
     """Affective dynamics analysis."""
     observations: list[EMAObservation]
-    variables: list[str]
+    variables: list[str] = Field(..., max_length=MAX_EMA_VARIABLES)
 
 
 class EMAComplianceRequest(BaseModel):
@@ -46,7 +49,7 @@ class EMAComplianceRequest(BaseModel):
     observations: list[EMAObservation]
     expected_per_day: int = 5
     total_days: int | None = None
-    variables: list[str] | None = None
+    variables: list[str] | None = Field(None, max_length=MAX_EMA_VARIABLES)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────
@@ -142,6 +145,8 @@ def ema_descriptive(req: EMADescriptiveRequest):
 
     if not target_vars:
         raise HTTPException(status_code=422, detail="No valid variables found")
+    if len(target_vars) > MAX_EMA_VARIABLES:
+        raise HTTPException(status_code=422, detail=f"Too many variables ({len(target_vars)}); at most {MAX_EMA_VARIABLES} can be analysed at once. Use variable_names to choose them.")
 
     variable_results = {}
     for var in target_vars:
@@ -212,7 +217,7 @@ def ema_lagged(req: EMALaggedRequest):
         all_vars.update(obs.variables.keys())
     for v in variables:
         if v not in all_vars:
-            raise HTTPException(status_code=422, detail=f"Variable '{v}' not found in data")
+            raise HTTPException(status_code=422, detail=f"Variable '{str(v)[:60]}' not found in data")
 
     # Autocorrelations (inertia) per person
     autocorr_results: dict[str, list] = {v: [] for v in variables}
@@ -344,7 +349,7 @@ def ema_dynamics(req: EMADynamicsRequest):
         all_vars.update(obs.variables.keys())
     for v in variables:
         if v not in all_vars:
-            raise HTTPException(status_code=422, detail=f"Variable '{v}' not found")
+            raise HTTPException(status_code=422, detail=f"Variable '{str(v)[:60]}' not found")
 
     results_by_var: dict[str, dict] = {}
 

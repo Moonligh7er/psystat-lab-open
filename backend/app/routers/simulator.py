@@ -5,18 +5,28 @@ Monte Carlo power simulation.
 """
 from __future__ import annotations
 import math
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional
 import numpy as np
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from scipy import stats as sp_stats
 
+from app.routers._limits import MAX_RESAMPLE_WORK, too_large
+
 router = APIRouter()
+
+# ── Limits (public API, single process) ──────────────────────────────────
+MAX_N = 100_000                  # cases per simulated dataset
+MAX_SAMPLE_SIZES = 50            # points on a power curve
+MAX_GENERATED_CELLS = 2_000_000  # values in one generated dataset
+MAX_TOTAL_SIMULATIONS = 100_000  # n_simulations x number of sample sizes
+MAX_VARIABLES = 50               # variables / predictors / time points / factors
+MAX_FACTORIAL_CELLS = 1_000      # product of factor levels
 
 # ── Models ───────────────────────────────────────────────────────────────
 
 class SimulationRequest(BaseModel):
-    n: int
+    n: int = Field(..., le=MAX_N)
     design: str  # "between", "within", "factorial", "correlational", "regression"
     params: Dict[str, Any]
     seed: Optional[int] = None
@@ -29,7 +39,7 @@ class PowerSimRequest(BaseModel):
     test_type: str  # "t-test", "anova", "correlation", "regression"
     n_simulations: int = 1000
     alpha: float = 0.05
-    sample_sizes: List[int]
+    sample_sizes: List[Annotated[int, Field(le=MAX_N)]] = Field(..., max_length=MAX_SAMPLE_SIZES)
 
 # ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -164,6 +174,51 @@ def _gen_regression(rng, n, p):
 _GEN = {"between": _gen_between, "within": _gen_within, "factorial": _gen_factorial,
         "correlational": _gen_correlational, "regression": _gen_regression}
 
+def _count(value, what: str, lo: int = 1, hi: int = MAX_VARIABLES) -> int:
+    try:
+        k = int(value)
+    except (TypeError, ValueError):
+        raise HTTPException(422, f"{what} must be a whole number.")
+    if not lo <= k <= hi:
+        raise HTTPException(422, f"{what} must be between {lo} and {hi}.")
+    return k
+
+
+def _cells_per_dataset(design: str, n: int, p: Dict[str, Any]) -> int:
+    """Validate the size-controlling params and return the values one simulated dataset holds."""
+    if design == "between":
+        gs = p.get("group_sizes")
+        if gs and len(gs) == 2:
+            a, b = (_count(g, "Each group size", 1, MAX_N) for g in gs)
+            return 2 * (a + b)
+        return 2 * n
+    if design == "within":
+        return n * _count(p.get("n_timepoints", 2), "n_timepoints", 1)
+    if design == "factorial":
+        factors = p.get("factors", [{"name": "A", "levels": 2}, {"name": "B", "levels": 2}])
+        if not isinstance(factors, list) or not 1 <= len(factors) <= 10:
+            raise HTTPException(422, "factors must list between 1 and 10 factors.")
+        cells = 1
+        for f in factors:
+            if not isinstance(f, dict):
+                raise HTTPException(422, "Each factor must have a name and a number of levels.")
+            cells *= _count(f.get("levels"), "Factor levels", 1, MAX_FACTORIAL_CELLS)
+            if cells > MAX_FACTORIAL_CELLS:
+                raise too_large(f"The factorial design has too many cells; the maximum is {MAX_FACTORIAL_CELLS:,}.")
+        return max(n // cells, 2) * cells * (len(factors) + 1)
+    if design == "correlational":
+        k = len(p.get("variables") or [None, None])
+        if k > MAX_VARIABLES:
+            raise too_large(f"At most {MAX_VARIABLES} variables can be simulated.")
+        return n * k
+    if design == "regression":
+        k = len(p.get("predictors") or [None])
+        if k > MAX_VARIABLES:
+            raise too_large(f"At most {MAX_VARIABLES} predictors can be simulated.")
+        return n * (k + 1)
+    return n
+
+
 # ── Power test runner ────────────────────────────────────────────────────
 
 def _p_value(data, test_type, params):
@@ -224,15 +279,22 @@ def _p_value(data, test_type, params):
 # ── Endpoints ────────────────────────────────────────────────────────────
 
 @router.post("/generate")
-async def generate_data(req: SimulationRequest):
+def generate_data(req: SimulationRequest):
     """Generate a synthetic dataset for the requested design."""
     if req.design not in _GEN:
-        raise HTTPException(400, f"Unknown design '{req.design}'. Supported: {list(_GEN.keys())}")
+        raise HTTPException(400, f"Unknown design. Supported: {list(_GEN.keys())}")
     if req.n < 4:
         raise HTTPException(400, "Sample size must be at least 4.")
+    if _cells_per_dataset(req.design, req.n, req.params) > MAX_GENERATED_CELLS:
+        raise too_large(f"The dataset would be too large; at most {MAX_GENERATED_CELLS:,} values can be generated.")
     seed = req.seed if req.seed is not None else int(np.random.SeedSequence().entropy % (2**31))
     rng = np.random.default_rng(seed)
-    data, ground_truth, variables = _GEN[req.design](rng, req.n, req.params)
+    try:
+        data, ground_truth, variables = _GEN[req.design](rng, req.n, req.params)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(422, "The simulation parameters are invalid for this design.")
     missing_count = _inject_missing(rng, data, req.missing_rate, req.missing_mechanism)
     out_data: Dict[str, list] = {}
     desc: Dict[str, Any] = {}
@@ -243,14 +305,23 @@ async def generate_data(req: SimulationRequest):
             "missing_count": missing_count, "seed": seed, "variables": variables, "descriptives": desc}
 
 @router.post("/power-simulation")
-async def power_simulation(req: PowerSimRequest):
+def power_simulation(req: PowerSimRequest):
     """Monte Carlo power simulation across multiple sample sizes."""
     if req.design not in _GEN:
-        raise HTTPException(400, f"Unknown design '{req.design}'. Supported: {list(_GEN.keys())}")
+        raise HTTPException(400, f"Unknown design. Supported: {list(_GEN.keys())}")
     if req.n_simulations < 10 or req.n_simulations > 50000:
         raise HTTPException(400, "n_simulations must be between 10 and 50 000.")
     if not req.sample_sizes:
         raise HTTPException(400, "sample_sizes must contain at least one value.")
+    sizes = [n for n in req.sample_sizes if n >= 4]
+    if req.n_simulations * len(sizes) > MAX_TOTAL_SIMULATIONS:
+        raise too_large(
+            f"Too many simulations: n_simulations x number of sample sizes must be at most {MAX_TOTAL_SIMULATIONS:,}.")
+    total_cells = sum(req.n_simulations * _cells_per_dataset(req.design, n, req.params) for n in sizes)
+    if total_cells > MAX_RESAMPLE_WORK:
+        raise too_large(
+            f"This power simulation is too large (more than {MAX_RESAMPLE_WORK:,} simulated values in total). "
+            "Use fewer simulations or smaller sample sizes.")
     rng = np.random.default_rng(42)
     power_curve: List[Dict[str, Any]] = []
     recommended_n: Optional[int] = None
@@ -261,7 +332,10 @@ async def power_simulation(req: PowerSimRequest):
         sig = 0
         for _ in range(req.n_simulations):
             s = int(rng.integers(0, 2**31))
-            data, gt, _ = _GEN[req.design](np.random.default_rng(s), n, req.params)
+            try:
+                data, gt, _ = _GEN[req.design](np.random.default_rng(s), n, req.params)
+            except Exception:
+                raise HTTPException(422, "The simulation parameters are invalid for this design.")
             if true_es is None:
                 true_es = gt.get("true_effect_size", 0)
             pv = _p_value(data, req.test_type, req.params)

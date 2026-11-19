@@ -16,23 +16,33 @@ maximised independently in R).
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from scipy import stats as sp_stats
 from scipy.special import logsumexp
+
+from app.routers._limits import MAX_ITER, MIN_TOL
 
 router = APIRouter()
 
 TINY = 1e-300
 
+# Size limits (public API, single process): EM cost is starts x iterations x T x N x (J S + S^2)
+MAX_TIMEPOINTS = 50
+MAX_PARTICIPANTS = 20_000
+MAX_INDICATORS = 100
+MAX_LTA_CLASSES = 10
+MAX_EM_WORK = 20_000_000_000
+MAX_REFINE_WORK = 20_000_000_000   # the final tight-tolerance refinement of the best start
+
 
 class LTAAnalyzeRequest(BaseModel):
     """Latent transition analysis with a given number of classes."""
     indicators: list[list[list[float]]]  # [time_points][participants][indicators], 0/1
-    n_classes: int = 2
+    n_classes: int = Field(2, le=MAX_LTA_CLASSES)
     measurement_invariance: bool = True
     transitions: str = "time_specific"  # or "homogeneous"
-    max_iter: int = 2000
-    tol: float = 1e-8
+    max_iter: int = Field(2000, ge=1, le=MAX_ITER)
+    tol: float = Field(1e-8, ge=MIN_TOL)
     n_starts: int = 20
 
 
@@ -42,18 +52,18 @@ class LTACompareRequest(BaseModel):
     max_classes: int = 5
     measurement_invariance: bool = True
     transitions: str = "time_specific"
-    max_iter: int = 2000
-    tol: float = 1e-8
+    max_iter: int = Field(2000, ge=1, le=MAX_ITER)
+    tol: float = Field(1e-8, ge=MIN_TOL)
     n_starts: int = 20
 
 
 class LTAMoverStayerRequest(BaseModel):
     indicators: list[list[list[float]]]
-    n_classes: int = 2
+    n_classes: int = Field(2, le=MAX_LTA_CLASSES)
     measurement_invariance: bool = True
     transitions: str = "time_specific"
-    max_iter: int = 3000
-    tol: float = 1e-8
+    max_iter: int = Field(3000, ge=1, le=MAX_ITER)
+    tol: float = Field(1e-8, ge=MIN_TOL)
     n_starts: int = 20
 
 
@@ -63,12 +73,18 @@ def _prepare(indicators, n_classes):
     T = len(indicators)
     if T < 2:
         raise HTTPException(422, "Need at least 2 time points.")
+    if T > MAX_TIMEPOINTS:
+        raise HTTPException(422, f"Too many time points ({T}); the maximum is {MAX_TIMEPOINTS}.")
     arrays = []
     for t, block in enumerate(indicators):
         if not block or len({len(r) for r in block}) != 1:
             raise HTTPException(422, f"Time point {t + 1} must be a rectangular participants x indicators matrix.")
         arrays.append(np.array(block, dtype=float))
     N, J = arrays[0].shape
+    if N > MAX_PARTICIPANTS:
+        raise HTTPException(422, f"Too many participants ({N}); the maximum is {MAX_PARTICIPANTS:,}.")
+    if J > MAX_INDICATORS:
+        raise HTTPException(422, f"Too many indicators ({J}); the maximum is {MAX_INDICATORS}.")
     if any(a.shape != (N, J) for a in arrays):
         raise HTTPException(422, "Every time point needs the same participants (rows) and indicators (columns).")
     if not all(np.isin(a, (0, 1)).all() for a in arrays):
@@ -164,6 +180,23 @@ def _fit_hmm(X, K, *, invariant, homogeneous, stayer, max_iter, tol, rng, init=N
             "iterations": it + 1}
 
 
+def _iter_cost(X, K, stayer):
+    T, N, J = X.shape
+    S = 2 * K if stayer else K
+    return T * N * (J * S + S * S)
+
+
+def _check_work(X, models, *, max_iter, n_starts):
+    """Refuse fits whose worst-case EM cost (all starts running to max_iter) exceeds MAX_EM_WORK.
+    `models` lists (n_classes, stayer) for every model the request fits."""
+    if not 1 <= n_starts <= 200:
+        raise HTTPException(422, "n_starts must be between 1 and 200.")
+    work = n_starts * max_iter * sum(_iter_cost(X, K, stayer) for K, stayer in models)
+    if work > MAX_EM_WORK:
+        raise HTTPException(422, f"This model is too large to fit here (starts x iterations x data size exceeds "
+                                 f"{MAX_EM_WORK:,}). Use fewer starts, iterations or classes.")
+
+
 def _best(X, K, *, invariant, homogeneous, stayer, max_iter, tol, n_starts):
     if not 1 <= n_starts <= 200:
         raise HTTPException(422, "n_starts must be between 1 and 200.")
@@ -175,7 +208,9 @@ def _best(X, K, *, invariant, homogeneous, stayer, max_iter, tol, n_starts):
     best = max(runs, key=lambda r: r["ll"])
     replicated = int(sum(abs(r["ll"] - best["ll"]) < 1e-3 * (1 + abs(best["ll"]) / 1000) for r in runs))
     # EM converges slowly near the optimum: continue from the best start with a tight tolerance
-    best = _fit_hmm(X, K, invariant=invariant, homogeneous=homogeneous, stayer=stayer, max_iter=200000,
+    # (bounded so the refinement's worst case stays within MAX_REFINE_WORK on large data)
+    refine_iter = int(min(200000, max(1000, MAX_REFINE_WORK // _iter_cost(X, K, stayer))))
+    best = _fit_hmm(X, K, invariant=invariant, homogeneous=homogeneous, stayer=stayer, max_iter=refine_iter,
                     tol=1e-13, rng=None, init=best)
     best["starts"] = n_starts
     best["best_ll_replicated"] = replicated
@@ -256,6 +291,7 @@ def lta_analyze(req: LTAAnalyzeRequest):
     _check_options(req.transitions)
     X, N, J, T = _prepare(req.indicators, req.n_classes)
     K = req.n_classes
+    _check_work(X, [(K, False)], max_iter=req.max_iter, n_starts=req.n_starts)
     res = _order_classes(_best(X, K, invariant=req.measurement_invariance, homogeneous=req.transitions == "homogeneous",
                                stayer=False, max_iter=req.max_iter, tol=req.tol, n_starts=req.n_starts), K)
     out = {
@@ -292,6 +328,8 @@ def lta_compare(req: LTACompareRequest):
     if req.max_classes < req.min_classes or req.max_classes > 8:
         raise HTTPException(422, "Choose 2 <= min_classes <= max_classes <= 8.")
     X, N, J, T = _prepare(req.indicators, req.min_classes)
+    _check_work(X, [(K, False) for K in range(req.min_classes, req.max_classes + 1) if N >= 10 * K],
+                max_iter=req.max_iter, n_starts=req.n_starts)
     table = []
     for K in range(req.min_classes, req.max_classes + 1):
         if N < 10 * K:
@@ -319,6 +357,7 @@ def lta_mover_stayer(req: LTAMoverStayerRequest):
     X, N, J, T = _prepare(req.indicators, req.n_classes)
     K = req.n_classes
     hom = req.transitions == "homogeneous"
+    _check_work(X, [(K, False), (K, True)], max_iter=req.max_iter, n_starts=req.n_starts)
     base = _order_classes(_best(X, K, invariant=req.measurement_invariance, homogeneous=hom, stayer=False,
                                 max_iter=req.max_iter, tol=req.tol, n_starts=req.n_starts), K)
     ms = _order_classes(_best(X, K, invariant=req.measurement_invariance, homogeneous=hom, stayer=True,

@@ -9,24 +9,30 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from scipy import stats as sp_stats
 import statsmodels.api as sm
 
+from app.routers._limits import MAX_RESAMPLE_WORK, too_large
+
 router = APIRouter()
+
+MAX_SPECIFICATIONS = 2_000   # product of option counts across decisions
+MAX_DECISIONS = 12
+MAX_OPTIONS = 50
 
 # ── Models ───────────────────────────────────────────────────────────────
 
 class DecisionPoint(BaseModel):
-    name: str
-    options: List[Dict[str, Any]]
+    name: str = Field(..., max_length=200)
+    options: List[Dict[str, Any]] = Field(..., max_length=MAX_OPTIONS)
 
 class MultiverseRequest(BaseModel):
     data: Dict[str, List[float]]
     dv: str; iv: str
     covariates: Optional[List[str]] = None
     test_type: str  # "t-test", "correlation", "regression", "anova"
-    decisions: List[DecisionPoint]
+    decisions: List[DecisionPoint] = Field(..., max_length=MAX_DECISIONS)
 
 class MultiverseSummaryRequest(BaseModel):
     total_specifications: int; significant_count: int; significant_percentage: float
@@ -37,6 +43,10 @@ class MultiverseSummaryRequest(BaseModel):
     test_type: str = "t-test"; dv: str = "dv"; iv: str = "iv"
 
 # ── Helpers ──────────────────────────────────────────────────────────────
+
+def _short(name, limit: int = 60) -> str:
+    name = str(name)
+    return name if len(name) <= limit else name[:limit] + "..."
 
 def _safe(v) -> Optional[float]:
     v = float(v)
@@ -134,31 +144,42 @@ def _run_test(df, dv, iv, covariates, test_type, variant="default"):
 # ── Endpoints ────────────────────────────────────────────────────────────
 
 @router.post("/run")
-async def run_multiverse(req: MultiverseRequest):
+def run_multiverse(req: MultiverseRequest):
     """Run every specification and return the specification curve."""
     if req.dv not in req.data:
-        raise HTTPException(400, f"DV '{req.dv}' not found in data columns")
+        raise HTTPException(400, f"DV '{_short(req.dv)}' not found in data columns")
     if req.iv not in req.data:
-        raise HTTPException(400, f"IV '{req.iv}' not found in data columns")
-    df_base = pd.DataFrame(req.data)
+        raise HTTPException(400, f"IV '{_short(req.iv)}' not found in data columns")
+    # Size the specification space before building it: the cartesian product grows multiplicatively.
+    n_specs = math.prod(len(d.options) for d in req.decisions)
+    if n_specs > MAX_SPECIFICATIONS:
+        raise too_large(f"Too many specifications ({n_specs:,}); the maximum is {MAX_SPECIFICATIONS:,}.")
+    n_rows = max((len(v) for v in req.data.values()), default=0)
+    if n_specs * max(n_rows, 1) > MAX_RESAMPLE_WORK:
+        raise too_large(f"This multiverse is too large: specifications x rows must be at most {MAX_RESAMPLE_WORK:,}.")
+    try:
+        df_base = pd.DataFrame(req.data)
+    except ValueError:
+        raise HTTPException(422, "All data columns must have the same length.")
     decision_names = [d.name for d in req.decisions]
     combos = list(product(*[d.options for d in req.decisions]))
-    if len(combos) > 5000:
-        raise HTTPException(400, f"Too many specifications ({len(combos)}). Keep under 5 000.")
     results: List[Dict[str, Any]] = []
     for spec_id, combo in enumerate(combos, 1):
         dmap = dict(zip(decision_names, combo))
         df, variant = df_base.copy(), "default"
-        for name, opt in dmap.items():
-            val = opt.get("method", opt.get("value", "none"))
-            if name == "outlier_handling": df = _apply_outlier(df, req.dv, val)
-            elif name == "missing_data": df = _apply_missing(df, req.dv, val)
-            elif name == "transform": df = _apply_transform(df, req.dv, val)
-            elif name == "subgroup":
-                if val != "all" and "group_col" in opt and "group_val" in opt:
-                    gcol = opt["group_col"]
-                    if gcol in df.columns: df = df[df[gcol] == opt["group_val"]].copy()
-            elif name == "test_variant": variant = val
+        try:
+            for name, opt in dmap.items():
+                val = opt.get("method", opt.get("value", "none"))
+                if name == "outlier_handling": df = _apply_outlier(df, req.dv, val)
+                elif name == "missing_data": df = _apply_missing(df, req.dv, val)
+                elif name == "transform": df = _apply_transform(df, req.dv, val)
+                elif name == "subgroup":
+                    if val != "all" and "group_col" in opt and "group_val" in opt:
+                        gcol = opt["group_col"]
+                        if gcol in df.columns: df = df[df[gcol] == opt["group_val"]].copy()
+                elif name == "test_variant": variant = val
+        except Exception:
+            continue  # an option that cannot be applied to these data yields no specification
         # Covariates for this spec
         cd = dmap.get("covariates")
         covs = cd.get("include") if cd else (req.covariates or None)
@@ -197,7 +218,7 @@ async def run_multiverse(req: MultiverseRequest):
     }
 
 @router.post("/summary")
-async def multiverse_summary(req: MultiverseSummaryRequest):
+def multiverse_summary(req: MultiverseSummaryRequest):
     """Return a plain-English + APA-formatted summary of multiverse results."""
     total, sig, pct = req.total_specifications, req.significant_count, req.significant_percentage
     med_es = req.median_effect_size
@@ -207,7 +228,7 @@ async def multiverse_summary(req: MultiverseSummaryRequest):
         f"A multiverse analysis was conducted across {total} unique analytical specifications.",
         f"Of these, {sig} ({pct}%) produced statistically significant results (p < .05).",
     ]
-    if med_es is not None:
+    if med_es is not None and es_lo is not None and es_hi is not None:
         parts.append(f"The median effect size was {med_es:.3f} (range: {es_lo:.3f} to {es_hi:.3f}).")
     parts.append(f"Overall robustness: {verdict}.")
     # Most influential decision
@@ -225,7 +246,7 @@ async def multiverse_summary(req: MultiverseSummaryRequest):
     apa = (f"A specification curve analysis examined the robustness of the relationship "
            f"between {req.iv} and {req.dv} across {total} specifications varying analyst decisions. "
            f"{sig} specifications ({pct}%) yielded significant results (p < .05). ")
-    if med_es is not None:
+    if med_es is not None and es_lo is not None and es_hi is not None:
         apa += f"The median effect size was {med_es:.2f} (range = {es_lo:.2f}\u2013{es_hi:.2f}). "
     apa += f"The finding was classified as \u201c{verdict.lower()}\u201d."
     return {"narrative": narrative, "apa_text": apa, "robustness_verdict": verdict}

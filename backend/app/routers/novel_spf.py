@@ -26,7 +26,12 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from scipy import stats as scipy_stats
 
+from app.routers._limits import MAX_RESAMPLES
+
 router = APIRouter()
+
+MAX_VARIABLES = 50
+MAX_WORK = 500_000_000  # pairs x (case-dropping + bootstrap replicates) x n
 
 DROP_SHARES = [round(x, 2) for x in np.arange(0.05, 0.751, 0.05)]
 N_DROP_REPS = 500
@@ -141,18 +146,28 @@ def _holm(pvals: list[float]) -> list[float]:
 # ── Endpoint ──────────────────────────────────────────────────────────
 
 @router.post("/analyze")
-async def scale_persistent_features(req: SPFRequest):
+def scale_persistent_features(req: SPFRequest):
     names = list(req.data.keys())
     if len(names) < 2:
         raise HTTPException(422, "Need at least 2 variables.")
     lengths = {k: len(v) for k, v in req.data.items()}
     if len(set(lengths.values())) > 1:
-        raise HTTPException(422, f"All variables must have the same length. Got: {lengths}")
+        raise HTTPException(422, "All variables must have the same number of values.")
     n_total = next(iter(lengths.values()))
     if n_total < 10:
         raise HTTPException(422, "Need at least 10 observations.")
-    if not 200 <= req.n_bootstrap <= 20000:
-        raise HTTPException(422, "n_bootstrap must be between 200 and 20000.")
+    if not 200 <= req.n_bootstrap <= MAX_RESAMPLES:
+        raise HTTPException(422, f"n_bootstrap must be between 200 and {MAX_RESAMPLES:,}.")
+    if len(names) > MAX_VARIABLES:
+        raise HTTPException(422, f"At most {MAX_VARIABLES} variables can be analysed at once.")
+    n_pairs = len(names) * (len(names) - 1) // 2
+    work = n_pairs * (len(DROP_SHARES) * N_DROP_REPS + req.n_bootstrap) * n_total
+    if work > MAX_WORK:
+        raise HTTPException(
+            422,
+            f"This analysis is too large ({n_pairs} pairs x {n_total:,} cases); the limit is "
+            f"{MAX_WORK:,} resampled values. Use fewer variables, cases or bootstrap replicates.",
+        )
 
     rng = np.random.default_rng(20240101)
     rows = []

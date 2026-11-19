@@ -3,7 +3,7 @@ reduction, model comparison, regression prediction, feature selection,
 and cross-validation for behavioral science research."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 import numpy as np
 from scipy import stats as sp_stats
@@ -58,7 +58,85 @@ from sklearn.feature_selection import (
 )
 from sklearn.inspection import permutation_importance
 
+from app.routers._limits import too_large
+
 router = APIRouter()
+
+# ── Limits (public API, single process) ───────────────────────────────
+MAX_ML_SAMPLES = 50_000
+MAX_ML_FEATURES = 1_000
+MAX_ML_CELLS = 5_000_000          # samples x features
+MAX_KERNEL_SAMPLES = 10_000       # SVM / SVR fit cost grows ~n^2 to n^3
+MAX_CLUSTER_SAMPLES = 10_000      # silhouette score is O(n^2)
+MAX_PAIRWISE_SAMPLES = 5_000      # hierarchical clustering, t-SNE
+MAX_SELECTION_FEATURES = 200      # RFE refits once per eliminated feature
+MAX_LOOCV_SAMPLES = 2_000         # leave-one-out fits one model per case
+MAX_CLUSTERS = 50
+MAX_ALGORITHMS = 10
+
+# Allowed hyperparameters: name -> (type, low, high) for numbers, or a set of allowed strings.
+_HP_RULES = {
+    "max_iter": (int, 1, 10_000),
+    "C": (float, 1e-6, 1e6),
+    "solver": {"lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"},
+    "n_estimators": (int, 1, 500),
+    "max_depth": (int, 1, 50),
+    "min_samples_split": (int, 2, 1_000),
+    "kernel": {"linear", "poly", "rbf", "sigmoid"},
+    "n_neighbors": (int, 1, 200),
+    "weights": {"uniform", "distance"},
+    "alpha": (float, 0.0, 1e6),
+    "l1_ratio": (float, 0.0, 1.0),
+}
+
+
+def _clean_hp(hyperparameters: Optional[dict]) -> dict:
+    """Validate the hyperparameters a client may set; unknown names are ignored as before."""
+    out = {}
+    for name, value in (hyperparameters or {}).items():
+        rule = _HP_RULES.get(name)
+        if rule is None or (value is None and name == "max_depth"):
+            if name == "max_depth":
+                out[name] = None
+            continue
+        if isinstance(rule, set):
+            if value not in rule:
+                raise HTTPException(422, f"Hyperparameter {name} must be one of {sorted(rule)}.")
+            out[name] = value
+            continue
+        kind, lo, hi = rule
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or (kind is int and value != int(value)):
+            raise HTTPException(422, f"Hyperparameter {name} must be a {'whole number' if kind is int else 'number'}.")
+        if not lo <= value <= hi:
+            raise HTTPException(422, f"Hyperparameter {name} must be between {lo} and {hi}.")
+        out[name] = kind(value)
+    return out
+
+
+def _as_matrix(features, max_samples: int = MAX_ML_SAMPLES, max_features: int = MAX_ML_FEATURES) -> np.ndarray:
+    """The feature matrix as floats, refusing ragged, non-numeric or oversized input."""
+    try:
+        X = np.array(features, dtype=float)
+    except (ValueError, TypeError):
+        raise HTTPException(400, "Features must be a rectangular table of numbers.")
+    if X.ndim != 2 or X.shape[0] == 0 or X.shape[1] == 0:
+        raise HTTPException(400, "Features must be a non-empty rectangular table of numbers.")
+    if not np.all(np.isfinite(X)):
+        raise HTTPException(400, "Features must not contain missing or infinite values.")
+    n, k = X.shape
+    if n > max_samples:
+        raise too_large(f"Too many samples ({n:,}); this analysis accepts at most {max_samples:,}.")
+    if k > max_features:
+        raise too_large(f"Too many features ({k:,}); this analysis accepts at most {max_features:,}.")
+    if n * k > MAX_ML_CELLS:
+        raise too_large(f"The feature table is too large; samples x features must be at most {MAX_ML_CELLS:,}.")
+    return X
+
+
+def _check_kernel_size(algorithm: str, n: int) -> None:
+    if algorithm in ("svm", "svr") and n > MAX_KERNEL_SAMPLES:
+        raise too_large(f"{algorithm.upper()} accepts at most {MAX_KERNEL_SAMPLES:,} samples; "
+                        "use another algorithm for larger datasets.")
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -67,7 +145,7 @@ class ClassificationRequest(BaseModel):
     features: list[list[float]]
     labels: list
     algorithm: str = "logistic_regression"  # logistic_regression/random_forest/svm/knn/decision_tree
-    test_size: float = 0.2
+    test_size: float = Field(0.2, gt=0, lt=1)
     hyperparameters: Optional[dict] = None
     feature_names: Optional[list[str]] = None
 
@@ -75,9 +153,9 @@ class ClassificationRequest(BaseModel):
 class ClusteringRequest(BaseModel):
     features: list[list[float]]
     algorithm: str = "kmeans"  # kmeans/hierarchical/dbscan
-    n_clusters: Optional[int] = 3
-    eps: Optional[float] = 0.5           # DBSCAN
-    min_samples: Optional[int] = 5       # DBSCAN
+    n_clusters: Optional[int] = Field(3, le=MAX_CLUSTERS)
+    eps: Optional[float] = Field(0.5, gt=0)           # DBSCAN
+    min_samples: Optional[int] = Field(5, le=1_000)   # DBSCAN
     linkage: Optional[str] = "ward"      # hierarchical
     labels: Optional[list] = None        # optional ground-truth for viz
     feature_names: Optional[list[str]] = None
@@ -86,8 +164,8 @@ class ClusteringRequest(BaseModel):
 class DimensionalityReductionRequest(BaseModel):
     features: list[list[float]]
     method: str = "pca"  # pca/tsne/umap_approx
-    n_components: int = 2
-    perplexity: float = 30.0  # t-SNE
+    n_components: int = Field(2, ge=1, le=100)
+    perplexity: float = Field(30.0, gt=0, le=1_000)  # t-SNE
     labels: Optional[list] = None
     feature_names: Optional[list[str]] = None
 
@@ -95,7 +173,7 @@ class DimensionalityReductionRequest(BaseModel):
 class ModelComparisonRequest(BaseModel):
     features: list[list[float]]
     labels: list
-    algorithms: list[str]
+    algorithms: list[str] = Field(..., max_length=MAX_ALGORITHMS)
     feature_names: Optional[list[str]] = None
 
 
@@ -103,7 +181,7 @@ class PredictionRequest(BaseModel):
     features: list[list[float]]
     target: list[float]
     algorithm: str = "linear"  # linear/ridge/lasso/elastic_net/random_forest/svr
-    test_size: float = 0.2
+    test_size: float = Field(0.2, gt=0, lt=1)
     hyperparameters: Optional[dict] = None
     feature_names: Optional[list[str]] = None
 
@@ -112,7 +190,7 @@ class FeatureSelectionRequest(BaseModel):
     features: list[list[float]]
     target: list
     task: str = "classification"  # classification/regression
-    top_k: Optional[int] = None
+    top_k: Optional[int] = Field(None, ge=1, le=MAX_SELECTION_FEATURES)
     feature_names: Optional[list[str]] = None
 
 
@@ -121,8 +199,8 @@ class CrossValidationRequest(BaseModel):
     target: list
     algorithm: str = "logistic_regression"
     cv_strategy: str = "kfold"  # kfold/stratified/loocv/repeated
-    n_splits: int = 5
-    n_repeats: int = 10
+    n_splits: int = Field(5, ge=2, le=20)
+    n_repeats: int = Field(10, ge=1, le=20)
     task: str = "classification"  # classification/regression
     feature_names: Optional[list[str]] = None
 
@@ -131,7 +209,7 @@ class CrossValidationRequest(BaseModel):
 
 def _build_classifier(algorithm: str, hyperparameters: Optional[dict] = None):
     """Instantiate a sklearn classifier by name."""
-    hp = hyperparameters or {}
+    hp = _clean_hp(hyperparameters)
     constructors = {
         "logistic_regression": lambda: LogisticRegression(
             max_iter=hp.get("max_iter", 1000),
@@ -164,7 +242,7 @@ def _build_classifier(algorithm: str, hyperparameters: Optional[dict] = None):
     if algorithm not in constructors:
         raise HTTPException(
             400,
-            f"Unknown classification algorithm '{algorithm}'. "
+            "Unknown classification algorithm. "
             f"Choose from: {list(constructors.keys())}",
         )
     return constructors[algorithm]()
@@ -172,7 +250,7 @@ def _build_classifier(algorithm: str, hyperparameters: Optional[dict] = None):
 
 def _build_regressor(algorithm: str, hyperparameters: Optional[dict] = None):
     """Instantiate a sklearn regressor by name."""
-    hp = hyperparameters or {}
+    hp = _clean_hp(hyperparameters)
     constructors = {
         "linear": lambda: LinearRegression(),
         "ridge": lambda: Ridge(alpha=hp.get("alpha", 1.0)),
@@ -195,7 +273,7 @@ def _build_regressor(algorithm: str, hyperparameters: Optional[dict] = None):
     if algorithm not in constructors:
         raise HTTPException(
             400,
-            f"Unknown regression algorithm '{algorithm}'. "
+            "Unknown regression algorithm. "
             f"Choose from: {list(constructors.keys())}",
         )
     return constructors[algorithm]()
@@ -243,11 +321,12 @@ def classification(req: ClassificationRequest):
     Supports logistic regression, random forest, SVM, KNN, and decision tree
     with stratified train/test splitting and 5-fold cross-validation.
     """
+    X = _as_matrix(req.features)
+    _check_kernel_size(req.algorithm, X.shape[0])
     try:
-        X = np.array(req.features, dtype=float)
         y = np.array(req.labels)
-    except (ValueError, TypeError) as exc:
-        raise HTTPException(400, f"Invalid feature/label data: {exc}")
+    except (ValueError, TypeError):
+        raise HTTPException(400, "Labels must be a flat list of values.")
 
     if X.shape[0] != y.shape[0]:
         raise HTTPException(400, "Number of samples in features and labels must match.")
@@ -268,8 +347,8 @@ def classification(req: ClassificationRequest):
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=req.test_size, random_state=42, stratify=y,
         )
-    except ValueError as exc:
-        raise HTTPException(400, f"Train/test split failed — likely too few samples per class: {exc}")
+    except ValueError:
+        raise HTTPException(400, "Train/test split failed — likely too few samples per class.")
 
     # Scale features
     scaler = StandardScaler()
@@ -410,10 +489,9 @@ def clustering(req: ClusteringRequest):
 
     Supports KMeans, Agglomerative (hierarchical), and DBSCAN.
     """
-    try:
-        X = np.array(req.features, dtype=float)
-    except (ValueError, TypeError) as exc:
-        raise HTTPException(400, f"Invalid feature data: {exc}")
+    X = _as_matrix(req.features, max_samples=MAX_CLUSTER_SAMPLES)
+    if req.algorithm.lower() == "hierarchical" and X.shape[0] > MAX_PAIRWISE_SAMPLES:
+        raise too_large(f"Hierarchical clustering accepts at most {MAX_PAIRWISE_SAMPLES:,} samples.")
 
     if X.shape[0] < 4:
         raise HTTPException(400, "At least 4 samples are required for clustering.")
@@ -480,7 +558,7 @@ def clustering(req: ClusteringRequest):
     else:
         raise HTTPException(
             400,
-            f"Unknown clustering algorithm '{algorithm}'. "
+            "Unknown clustering algorithm. "
             f"Choose from: kmeans, hierarchical, dbscan.",
         )
 
@@ -588,10 +666,12 @@ def dimensionality_reduction(req: DimensionalityReductionRequest):
 
     Supports PCA, t-SNE, and a PCA-based UMAP approximation.
     """
-    try:
-        X = np.array(req.features, dtype=float)
-    except (ValueError, TypeError) as exc:
-        raise HTTPException(400, f"Invalid feature data: {exc}")
+    X = _as_matrix(req.features)
+    if req.method.lower() in ("tsne", "umap_approx"):
+        if X.shape[0] > MAX_PAIRWISE_SAMPLES:
+            raise too_large(f"t-SNE accepts at most {MAX_PAIRWISE_SAMPLES:,} samples.")
+        if req.n_components > 3:
+            raise HTTPException(422, "t-SNE supports at most 3 components.")
 
     n_samples, n_features = X.shape
     feature_names = req.feature_names or [f"feature_{i}" for i in range(n_features)]
@@ -696,7 +776,7 @@ def dimensionality_reduction(req: DimensionalityReductionRequest):
     else:
         raise HTTPException(
             400,
-            f"Unknown method '{method}'. Choose from: pca, tsne, umap_approx.",
+            "Unknown method. Choose from: pca, tsne, umap_approx.",
         )
 
     # Build 2D scatter data for visualization
@@ -761,11 +841,14 @@ def dimensionality_reduction(req: DimensionalityReductionRequest):
 def model_comparison(req: ModelComparisonRequest):
     """Compare multiple classifiers using stratified 10-fold cross-validation
     with statistical testing (Friedman + Nemenyi post-hoc)."""
+    X = _as_matrix(req.features)
     try:
-        X = np.array(req.features, dtype=float)
         y = np.array(req.labels)
-    except (ValueError, TypeError) as exc:
-        raise HTTPException(400, f"Invalid data: {exc}")
+    except (ValueError, TypeError):
+        raise HTTPException(400, "Labels must be a flat list of values.")
+    req.algorithms = list(dict.fromkeys(req.algorithms))  # each algorithm once
+    for alg in req.algorithms:
+        _check_kernel_size(alg, X.shape[0])
 
     if X.shape[0] != y.shape[0]:
         raise HTTPException(400, "Features and labels must have the same number of samples.")
@@ -952,11 +1035,12 @@ def model_comparison(req: ModelComparisonRequest):
 def prediction(req: PredictionRequest):
     """Train and evaluate a regression model for predicting continuous
     behavioral outcomes."""
+    X = _as_matrix(req.features)
+    _check_kernel_size(req.algorithm, X.shape[0])
     try:
-        X = np.array(req.features, dtype=float)
         y = np.array(req.target, dtype=float)
-    except (ValueError, TypeError) as exc:
-        raise HTTPException(400, f"Invalid data: {exc}")
+    except (ValueError, TypeError):
+        raise HTTPException(400, "The target must be a list of numbers.")
 
     if X.shape[0] != y.shape[0]:
         raise HTTPException(400, "Features and target must have the same number of samples.")
@@ -1105,13 +1189,13 @@ def prediction(req: PredictionRequest):
 def feature_selection(req: FeatureSelectionRequest):
     """Identify the most important predictors using multiple methods —
     particularly useful for reducing large item pools in behavioral research."""
+    X = _as_matrix(req.features, max_features=MAX_SELECTION_FEATURES)
     try:
-        X = np.array(req.features, dtype=float)
         y = np.array(req.target)
         if req.task == "regression":
             y = y.astype(float)
-    except (ValueError, TypeError) as exc:
-        raise HTTPException(400, f"Invalid data: {exc}")
+    except (ValueError, TypeError):
+        raise HTTPException(400, "The target must be a flat list of values.")
 
     if X.shape[0] != y.shape[0]:
         raise HTTPException(400, "Features and target must have the same number of samples.")
@@ -1313,13 +1397,17 @@ def feature_selection(req: FeatureSelectionRequest):
 def cross_validation(req: CrossValidationRequest):
     """Flexible cross-validation with learning curve analysis for behavioral
     science models."""
+    X = _as_matrix(req.features)
+    _check_kernel_size(req.algorithm, X.shape[0])
+    if req.cv_strategy.lower() == "loocv" and X.shape[0] > MAX_LOOCV_SAMPLES:
+        raise too_large(f"Leave-one-out cross-validation accepts at most {MAX_LOOCV_SAMPLES:,} samples; "
+                        "use k-fold for larger datasets.")
     try:
-        X = np.array(req.features, dtype=float)
         y = np.array(req.target)
         if req.task == "regression":
             y = y.astype(float)
-    except (ValueError, TypeError) as exc:
-        raise HTTPException(400, f"Invalid data: {exc}")
+    except (ValueError, TypeError):
+        raise HTTPException(400, "The target must be a flat list of values.")
 
     if X.shape[0] != y.shape[0]:
         raise HTTPException(400, "Features and target must have the same number of samples.")
@@ -1363,7 +1451,7 @@ def cross_validation(req: CrossValidationRequest):
     else:
         raise HTTPException(
             400,
-            f"Unknown cv_strategy '{strategy}'. Choose from: kfold, stratified, loocv, repeated.",
+            "Unknown cv_strategy. Choose from: kfold, stratified, loocv, repeated.",
         )
 
     # Run cross-validation

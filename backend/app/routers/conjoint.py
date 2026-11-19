@@ -11,7 +11,38 @@ from pydantic import BaseModel
 import numpy as np
 from scipy.optimize import minimize
 
+from app.routers._limits import MAX_RESAMPLES
+
 router = APIRouter()
+
+# Size limits: the likelihood loops over tasks in Python, the numerical Hessian evaluates it
+# 2 p (p + 1) times, and every bootstrap replicate refits the model.
+MAX_TASKS = 20_000
+MAX_ALTERNATIVES = 20
+MAX_PARAMS = 60
+MAX_HESSIAN_WORK = 5_000_000      # likelihood evaluations x tasks for the standard errors
+MAX_BOOTSTRAP_WORK = 200_000      # bootstrap replicates x tasks
+MAX_PREDICT_PROFILES = 10_000
+
+
+def _nm(x) -> str:
+    """A user-supplied name for an error message, quoted and cut to 60 characters."""
+    t = str(x)
+    return "'" + (t if len(t) <= 60 else t[:57] + "...") + "'"
+
+
+def _check_model_size(n_tasks: int, n_params: int):
+    if n_params > MAX_PARAMS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Too many attribute levels: {n_params} parameters (limit {MAX_PARAMS}).",
+        )
+    if 2 * n_params * (n_params + 1) * n_tasks > MAX_HESSIAN_WORK:
+        raise HTTPException(
+            status_code=422,
+            detail=f"This design is too large ({n_tasks:,} tasks x {n_params} parameters); "
+                   f"use fewer tasks or attribute levels.",
+        )
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -45,6 +76,10 @@ class ImportanceRequest(BaseModel):
 def _validate_conjoint_inputs(profiles, choices):
     """Validate conjoint input data."""
     n_tasks = len(profiles)
+    if n_tasks > MAX_TASKS:
+        raise HTTPException(status_code=422, detail=f"Conjoint analysis is limited to {MAX_TASKS:,} choice tasks.")
+    if any(len(task) > MAX_ALTERNATIVES for task in profiles):
+        raise HTTPException(status_code=422, detail=f"Each task is limited to {MAX_ALTERNATIVES} alternatives.")
     if n_tasks < 5:
         raise HTTPException(
             status_code=422,
@@ -82,6 +117,8 @@ def _extract_attribute_levels(profiles: list[list[dict]]) -> tuple[list[str], di
             for attr, level in alt.items():
                 if attr not in levels_per_attr:
                     levels_per_attr[attr] = set()
+                if isinstance(level, (dict, list)):
+                    raise HTTPException(status_code=422, detail="Attribute levels must be text or numbers.")
                 levels_per_attr[attr].add(level)
 
     attributes = sorted(levels_per_attr.keys())
@@ -179,7 +216,8 @@ def _fit_conditional_logit(X_tasks: list[np.ndarray], choices: list[int],
     if not result.success:
         raise HTTPException(
             status_code=422,
-            detail=f"Conditional logit did not converge: {result.message}",
+            detail="The conditional logit model did not converge. An attribute level that is always "
+                   "(or never) chosen, or levels that always appear together, can cause this.",
         )
 
     beta = result.x
@@ -315,7 +353,7 @@ def conjoint_analyze(req: ConjointAnalyzeRequest):
         if set(req.attribute_names) != set(attributes):
             raise HTTPException(
                 status_code=422,
-                detail=f"attribute_names {req.attribute_names} don't match attributes found in data: {attributes}.",
+                detail="attribute_names must list exactly the attributes found in the profiles.",
             )
 
     # Reference levels: first level alphabetically for each attribute
@@ -332,6 +370,7 @@ def conjoint_analyze(req: ConjointAnalyzeRequest):
             status_code=422,
             detail="No estimable parameters. Each attribute needs at least 2 levels.",
         )
+    _check_model_size(len(req.profiles), n_params)
 
     # Fit model
     beta, ll, null_ll = _fit_conditional_logit(X_tasks, req.choices, n_params)
@@ -426,6 +465,8 @@ def predict_choice_shares(req: PredictRequest):
             status_code=422,
             detail="Need at least 2 profiles for choice share prediction.",
         )
+    if len(req.profiles) > MAX_PREDICT_PROFILES:
+        raise HTTPException(status_code=422, detail=f"At most {MAX_PREDICT_PROFILES:,} profiles can be scored.")
 
     utilities_dict = req.utilities
 
@@ -438,19 +479,24 @@ def predict_choice_shares(req: PredictRequest):
             if attr not in utilities_dict:
                 raise HTTPException(
                     status_code=422,
-                    detail=f"Attribute '{attr}' in profile {i} not found in utilities.",
+                    detail=f"Attribute {_nm(attr)} in profile {i} not found in utilities.",
                 )
+            if not isinstance(utilities_dict[attr], dict):
+                raise HTTPException(status_code=422, detail="utilities must map each attribute to {level: utility}.")
             if level_str not in utilities_dict[attr]:
                 raise HTTPException(
                     status_code=422,
-                    detail=f"Level '{level_str}' for attribute '{attr}' not found in utilities.",
+                    detail=f"Level {_nm(level_str)} for attribute {_nm(attr)} not found in utilities.",
                 )
             level_data = utilities_dict[attr][level_str]
             # Handle both dict (with "utility" key) and plain float
-            if isinstance(level_data, dict):
-                utility += level_data.get("utility", 0.0)
-            else:
-                utility += float(level_data)
+            try:
+                if isinstance(level_data, dict):
+                    utility += float(level_data.get("utility", 0.0))
+                else:
+                    utility += float(level_data)
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=422, detail="Each utility must be a number.")
         v.append(utility)
 
     v = np.array(v)
@@ -512,6 +558,15 @@ def attribute_importance(req: ImportanceRequest):
         raise HTTPException(
             status_code=422,
             detail="No estimable parameters.",
+        )
+    _check_model_size(len(req.profiles), n_params)
+    if not 1 <= req.n_bootstrap <= MAX_RESAMPLES:
+        raise HTTPException(status_code=422, detail=f"n_bootstrap must be between 1 and {MAX_RESAMPLES:,}.")
+    if req.n_bootstrap * len(req.profiles) > MAX_BOOTSTRAP_WORK:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Too many bootstrap replicates for {len(req.profiles):,} tasks: use at most "
+                   f"{max(1, MAX_BOOTSTRAP_WORK // len(req.profiles)):,} (limit: replicates x tasks <= {MAX_BOOTSTRAP_WORK:,}).",
         )
 
     # Fit full model

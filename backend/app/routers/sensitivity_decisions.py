@@ -29,7 +29,17 @@ from pydantic import BaseModel
 from scipy import stats as sp_stats
 from scipy.stats import mstats
 
+from app.errors import safe_detail
+
 router = APIRouter()
+
+
+class _SpecError(ValueError):
+    """A problem described in our own words; its message is safe to return."""
+
+
+def _spec_error(e: Exception) -> str:
+    return str(e) if isinstance(e, _SpecError) else safe_detail("This specification", e)
 
 
 class SensitivityRequest(BaseModel):
@@ -166,11 +176,11 @@ def _group_spec(g1, g2, outlier, transform, variant, alpha) -> SpecResult:
         else:
             raise ValueError(f"Unknown test variant: {variant}")
         if not np.isfinite(p):
-            raise ValueError("test undefined (no variation)")
+            raise _SpecError("test undefined (no variation)")
         return SpecResult(**base, statistic=_f(stat), p_value=_f(p), effect_size=_f(es),
                           significant=float(p) < alpha, n_used=len(a) + len(b))
     except Exception as e:
-        return SpecResult(**base, significant=False, n_used=0, error=str(e))
+        return SpecResult(**base, significant=False, n_used=0, error=_spec_error(e))
 
 
 def _corr_spec(x, y, outlier, transform, variant, alpha) -> SpecResult:
@@ -202,11 +212,11 @@ def _corr_spec(x, y, outlier, transform, variant, alpha) -> SpecResult:
         else:
             raise ValueError(f"Unknown test variant: {variant}")
         if not np.isfinite(p):
-            raise ValueError("test undefined (no variation)")
+            raise _SpecError("test undefined (no variation)")
         return SpecResult(**base, statistic=_f(stat), p_value=_f(p), effect_size=_f(stat),
                           significant=float(p) < alpha, n_used=len(xs))
     except Exception as e:
-        return SpecResult(**base, significant=False, n_used=0, error=str(e))
+        return SpecResult(**base, significant=False, n_used=0, error=_spec_error(e))
 
 
 def _most_sensitive(specs: List[SpecResult]) -> str:
@@ -226,7 +236,7 @@ def _most_sensitive(specs: List[SpecResult]) -> str:
 # ── Endpoint ─────────────────────────────────────────────────────────────
 
 @router.post("/analyze", response_model=SensitivityResponse)
-async def analyze_sensitivity(req: SensitivityRequest):
+def analyze_sensitivity(req: SensitivityRequest):
     dtype = req.data_type.lower().strip()
     if not 0 < req.alpha < 1:
         raise HTTPException(422, "alpha must be between 0 and 1.")
@@ -235,6 +245,9 @@ async def analyze_sensitivity(req: SensitivityRequest):
         bad = [v for v in dec[key] if v not in allowed]
         if bad or not dec[key]:
             raise HTTPException(422, f"{key} must be a non-empty subset of {allowed}.")
+        # Duplicated options would repeat specifications (and inflate the grid); keep each once.
+        # With the allowed options this bounds the grid at 3 x 4 x 3 = 36 specifications.
+        dec[key] = list(dict.fromkeys(dec[key]))
     combos = list(product(dec["outlier_method"], dec["transform"], dec["test_variant"]))
 
     if dtype == "group_comparison":

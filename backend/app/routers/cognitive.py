@@ -213,7 +213,7 @@ def score_gonogo(req: GoNoGoRequest):
     for trial in req.trials:
         trial_type = trial.get("trial_type", "go")
         if trial_type not in ("go", "nogo"):
-            raise HTTPException(422, f"trial_type must be 'go' or 'nogo', got {trial_type!r}")
+            raise HTTPException(422, "Each trial_type must be 'go' or 'nogo'.")
         responded = bool(trial.get("responded", False))
         rt = trial.get("rt")
         if trial_type == "go":

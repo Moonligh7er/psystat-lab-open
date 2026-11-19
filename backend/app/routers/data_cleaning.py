@@ -85,15 +85,16 @@ def detect_outliers(req: OutlierRequest):
         details = {"G_statistic": float(G), "G_critical": float(G_crit), "alpha": threshold, "suspect_index": max_idx, "suspect_value": float(data[max_idx])}
 
     else:
-        raise HTTPException(400, f"Unknown method: {method}. Options: iqr, zscore, modified_zscore, grubbs")
+        raise HTTPException(400, "Unknown method. Options: iqr, zscore, modified_zscore, grubbs")
 
+    outlier_set = set(outlier_indices)  # set lookup: a list here made this O(n^2)
     return {
         "outlier_indices": outlier_indices,
         "outlier_values": [float(data[i]) for i in outlier_indices],
         "n_outliers": len(outlier_indices),
         "n_total": n,
         "percent_outliers": float(len(outlier_indices) / n * 100),
-        "clean_data": [float(data[i]) for i in range(n) if i not in outlier_indices],
+        "clean_data": [float(data[i]) for i in range(n) if i not in outlier_set],
         "clean_n": n - len(outlier_indices),
         "method": method,
         "details": details,
@@ -166,7 +167,7 @@ def handle_missing_data(req: MissingDataRequest):
             arr[nan_idx] = np.interp(nan_idx, valid_idx, arr[valid_idx])
             imputed_columns.append([float(v) for v in arr])
     else:
-        raise HTTPException(400, f"Unknown method: {method}. Options: listwise, mean, median, mode, linear")
+        raise HTTPException(400, "Unknown method. Options: listwise, mean, median, mode, linear")
 
     return {
         "missing_report": missing_report,
@@ -231,7 +232,7 @@ def transform_data(req: TransformRequest):
         transformed = sp_stats.rankdata(data).astype(float)
         note = "Rank-ordered"
     else:
-        raise HTTPException(400, f"Unknown transform: {transform}. Options: log, sqrt, reciprocal, zscore, minmax, boxcox, rank")
+        raise HTTPException(400, "Unknown transform. Options: log, sqrt, reciprocal, zscore, minmax, boxcox, rank")
 
     # Test normality before and after
     _, orig_p = sp_stats.shapiro(data) if n <= 5000 else (None, None)

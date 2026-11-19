@@ -455,13 +455,12 @@ def _generate_markdown(req: PreRegistrationRequest) -> List[SectionOut]:
 # ── Endpoints ───────────────────────────────────────────────────────────────
 
 @router.post("/generate", response_model=PreRegistrationResponse)
-async def generate_preregistration(req: PreRegistrationRequest):
+def generate_preregistration(req: PreRegistrationRequest):
     """Generate a structured pre-registration document."""
     fmt = req.format.lower()
     if fmt not in ("osf", "aspredicted", "markdown"):
         raise HTTPException(status_code=400,
-                            detail=f"Unsupported format '{req.format}'. "
-                                   "Use 'osf', 'aspredicted', or 'markdown'.")
+                            detail="Unsupported format. Use 'osf', 'aspredicted', or 'markdown'.")
 
     generators = {
         "osf": _generate_osf,
@@ -496,6 +495,6 @@ async def generate_preregistration(req: PreRegistrationRequest):
 
 
 @router.post("/checklist", response_model=List[ChecklistItem])
-async def preregistration_checklist(req: PreRegistrationRequest):
+def preregistration_checklist(req: PreRegistrationRequest):
     """Validate completeness of a pre-registration and return a checklist."""
     return _build_checklist(req)

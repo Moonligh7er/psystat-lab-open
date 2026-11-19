@@ -209,74 +209,7 @@
      or backend/validation-results.json is missing. -->
 <script id="validation-data" type="application/json">%%VALIDATION_JSON%%</script>
 
-<script>
-  (function() {
-    var raw = document.getElementById('validation-data').textContent.trim();
-    var report;
-    try {
-      // Guard against the un-substituted placeholder still being present
-      // (happens on `open validation.html` before any build ran).
-      if (raw.indexOf('%%') === 0) throw new Error('placeholder not substituted');
-      report = JSON.parse(raw);
-    } catch (e) {
-      document.getElementById('stats').innerHTML =
-        '<div class="stat-card" style="grid-column:1/-1"><div class="stat-label" style="color:#F87171">Validation report not available</div>' +
-        '<div class="stat-note">Run <code>pytest -m validation</code> in the backend to generate <code>backend/validation-results.json</code>, then rebuild the site.</div></div>';
-      return;
-    }
-
-    // ── Stat cards ──
-    var d = new Date(report.generated_at);
-    var dateStr = isNaN(d.getTime()) ? report.generated_at : d.toISOString().slice(0,10);
-    var stats = [
-      { value: report.n_methods_validated, label: 'Methods validated', accent: true },
-      { value: report.n_total_checks, label: 'Independent checks' },
-      { value: dateStr, label: 'Last verified' },
-    ];
-    document.getElementById('stats').innerHTML = stats.map(function(s){
-      return '<div class="stat-card' + (s.accent ? ' accent' : '') + '">' +
-             '<div class="stat-value">' + s.value + '</div>' +
-             '<div class="stat-label">' + s.label + '</div>' +
-             '</div>';
-    }).join('');
-
-    // ── Coverage note ──
-    var covEl = document.getElementById('coverage-summary');
-    if (covEl) covEl.textContent = report.n_methods_validated + ' of those';
-
-    // ── Table rows ──
-    var kindClass = function(k) {
-      return String(k).toLowerCase().replace(/[^a-z]+/g, '-');
-    };
-    var rows = report.methods.map(function(m) {
-      var kinds = (m.reference_kinds || []).map(function(k) {
-        var cls = kindClass(k);
-        var label = k === 'nist' ? 'NIST' : k === 'r' ? 'R' : k === 'scipy-ref' ? 'scipy-ref' : 'analytical';
-        return '<span class="chip ' + cls + '">' + label + '</span>';
-      }).join('');
-      var datasets = (m.datasets || []).map(function(x){
-        return '<div style="font-size:.82rem;color:var(--text3)">' + x + '</div>';
-      }).join('');
-      var references = (m.references || []).map(function(x){
-        return '<div style="font-size:.75rem;color:var(--text3);margin-top:4px;">' + x + '</div>';
-      }).join('');
-      return '<tr>' +
-        '<td><strong>' + m.method + '</strong>' +
-        '<code>' + m.endpoint + '</code>' +
-        references +
-        '</td>' +
-        '<td>' + kinds + '</td>' +
-        '<td>' + datasets + '</td>' +
-        '<td class="n-checks">' + m.n_checks + '</td>' +
-      '</tr>';
-    }).join('');
-    document.getElementById('method-rows').innerHTML = rows;
-
-    // ── Footer gen-time ──
-    document.getElementById('gen-time').textContent =
-      isNaN(d.getTime()) ? report.generated_at : d.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
-  })();
-</script>
+<script src="/js/validation.js"></script>
 
 <footer>
   <p>&copy; 2026 Moonlit Social Labs. Built for the researchers the software industry forgot.</p>

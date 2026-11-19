@@ -87,7 +87,7 @@ def _level(ppv: float) -> str:
 # ── Endpoint ──────────────────────────────────────────────────────────────
 
 @router.post("/analyze", response_model=PPVResponse)
-async def compute_ppv(req: PPVRequest):
+def compute_ppv(req: PPVRequest):
     alpha, prior = req.alpha, req.prior_probability
     assumed = req.assumed_effect_size if req.assumed_effect_size is not None else req.effect_size
 

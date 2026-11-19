@@ -20,7 +20,9 @@ from app.routers import sensitivity_decisions as S
 from app.routers import triangulation as T
 from app.routers import what_would_it_take as W
 
-run = asyncio.run
+def run(result):
+    """Handlers are plain functions now (FastAPI runs them in its threadpool); still accept coroutines."""
+    return asyncio.run(result) if asyncio.iscoroutine(result) else result
 
 
 # ── TOST ─────────────────────────────────────────────────────────────────

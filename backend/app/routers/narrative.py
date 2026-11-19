@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 router = APIRouter()
 
@@ -19,7 +19,7 @@ class AnalysisEntry(BaseModel):
     section: str  # hypothesis_test, assumption_check, effect_size, sensitivity, exploratory
 
 class NarrativeRequest(BaseModel):
-    analyses: List[AnalysisEntry]
+    analyses: List[AnalysisEntry] = Field(..., max_length=500)
 
 class NarrativeResponse(BaseModel):
     method_section: str
@@ -278,9 +278,16 @@ def _build_apa_table(entries: List[AnalysisEntry]) -> List[str]:
 # ── Endpoint ─────────────────────────────────────────────────────────────
 
 @router.post("/generate", response_model=NarrativeResponse)
-async def generate_narrative(req: NarrativeRequest):
+def generate_narrative(req: NarrativeRequest):
     if not req.analyses:
         raise HTTPException(status_code=400, detail="At least one analysis entry is required.")
+    try:
+        return _generate_narrative(req)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="An analysis result contains a value that is not a number where one is expected.")
+
+
+def _generate_narrative(req: NarrativeRequest) -> NarrativeResponse:
 
     sorted_entries = sorted(req.analyses, key=lambda e: e.order)
 

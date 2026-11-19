@@ -15,7 +15,9 @@ from app.routers import contradiction as C
 from app.routers import extended_stats as X
 from app.routers import narrative as N
 
-run = asyncio.run
+def run(result):
+    """Handlers are plain functions now (FastAPI runs them in its threadpool); still accept coroutines."""
+    return asyncio.run(result) if asyncio.iscoroutine(result) else result
 
 
 @pytest.mark.smoke

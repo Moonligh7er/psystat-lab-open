@@ -22,6 +22,10 @@ from scipy.optimize import brentq
 
 router = APIRouter()
 
+# Leave-one-out, cumulative and subgroup analyses refit the model up to k times (O(k^2)).
+MAX_STUDIES = 5_000
+MAX_MODERATORS = 50
+
 
 # ── Request Models ────────────────────────────────────────────────────
 
@@ -109,6 +113,8 @@ def _labels(labels, k):
 
 
 def _arrays(effect_sizes, standard_errors, min_k=2, what="studies"):
+    if len(effect_sizes) > MAX_STUDIES:
+        raise HTTPException(422, f"Meta-analyses are limited to {MAX_STUDIES:,} studies.")
     es = np.asarray(effect_sizes, dtype=float)
     se = np.asarray(standard_errors, dtype=float)
     k = len(es)
@@ -132,6 +138,8 @@ def _resolve_ses(effect_sizes, standard_errors, confidence_intervals) -> np.ndar
             raise HTTPException(422, "effect_sizes and standard_errors must have the same length.")
         return ses
     if confidence_intervals is not None:
+        if any(len(ci) != 2 for ci in confidence_intervals):
+            raise HTTPException(422, "confidence_intervals must be a list of [lo, hi] pairs matching effect_sizes length.")
         cis = np.array(confidence_intervals, dtype=float)
         if cis.shape != (k, 2):
             raise HTTPException(422, "confidence_intervals must be a list of [lo, hi] pairs matching effect_sizes length.")
@@ -300,7 +308,7 @@ def _interpret_pooled(pooled: float, p: float) -> str:
 # ── Endpoint 1: Effect Size Conversion ────────────────────────────────
 
 @router.post("/effect-sizes")
-async def convert_effect_sizes(req: EffectSizeRequest):
+def convert_effect_sizes(req: EffectSizeRequest):
     """Convert summary statistics to d, g, r and (log) odds ratio with SEs and 95% CIs.
 
     Formulas follow Borenstein, Hedges, Higgins & Rothstein (2009), ch. 4–7.
@@ -431,7 +439,7 @@ async def convert_effect_sizes(req: EffectSizeRequest):
 # ── Endpoint 2: Fixed-Effect Meta-Analysis ────────────────────────────
 
 @router.post("/fixed-effects")
-async def fixed_effects_meta(req: FixedEffectsRequest):
+def fixed_effects_meta(req: FixedEffectsRequest):
     """Inverse-variance fixed-effect (common-effect) meta-analysis with heterogeneity statistics."""
     se = _resolve_ses(req.effect_sizes, req.standard_errors, req.confidence_intervals)
     es, se, k = _arrays(req.effect_sizes, se)
@@ -469,7 +477,7 @@ async def fixed_effects_meta(req: FixedEffectsRequest):
 # ── Endpoint 3: Random-Effects Meta-Analysis ──────────────────────────
 
 @router.post("/random-effects")
-async def random_effects_meta(req: RandomEffectsRequest):
+def random_effects_meta(req: RandomEffectsRequest):
     """Random-effects meta-analysis (DerSimonian–Laird or REML tau²), optional Knapp–Hartung."""
     se = _resolve_ses(req.effect_sizes, req.standard_errors, req.confidence_intervals)
     es, se, k = _arrays(req.effect_sizes, se)
@@ -556,7 +564,7 @@ def _trim_and_fill(es, se, side):
 
 
 @router.post("/publication-bias")
-async def publication_bias(req: PublicationBiasRequest):
+def publication_bias(req: PublicationBiasRequest):
     """Small-study effects / publication bias: Egger, Begg & Mazumdar, trim-and-fill, fail-safe N.
 
     These detect funnel-plot asymmetry, which can arise from causes other than
@@ -664,7 +672,7 @@ def _wls(X, y, w):
 
 
 @router.post("/moderator-analysis")
-async def moderator_analysis(req: ModeratorRequest):
+def moderator_analysis(req: ModeratorRequest):
     """Subgroup analysis (categorical moderator) and meta-regression (continuous moderators)."""
     es, se, k = _arrays(req.effect_sizes, req.standard_errors, min_k=3)
     vi = se ** 2
@@ -719,7 +727,11 @@ async def moderator_analysis(req: ModeratorRequest):
         }
 
     if req.moderators is not None:
+        if req.moderators and any(len(row) != len(req.moderators[0]) for row in req.moderators):
+            raise HTTPException(422, "moderators must have the same number of values in every row.")
         mods = np.array(req.moderators, dtype=float)
+        if mods.ndim == 2 and mods.shape[1] > MAX_MODERATORS:
+            raise HTTPException(422, f"At most {MAX_MODERATORS} moderators are supported.")
         if mods.ndim == 1:
             mods = mods.reshape(-1, 1)
         if mods.ndim != 2 or mods.shape[0] != k:
@@ -785,7 +797,7 @@ async def moderator_analysis(req: ModeratorRequest):
 # ── Endpoint 6: Cumulative Meta-Analysis ──────────────────────────────
 
 @router.post("/cumulative")
-async def cumulative_meta(req: CumulativeRequest):
+def cumulative_meta(req: CumulativeRequest):
     """Cumulative meta-analysis: pool studies one at a time in sort order."""
     es, se, k = _arrays(req.effect_sizes, req.standard_errors)
     sv = np.asarray(req.sort_values, dtype=float)

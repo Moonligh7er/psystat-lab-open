@@ -5,11 +5,14 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 
 router = APIRouter()
+
+MAX_COLUMNS = 100        # the diagnostics test every column against every other column
+MAX_CELLS = 2_000_000    # rows x columns of the padded data matrix
 
 # ---------------------------------------------------------------------------
 # Pydantic models
@@ -22,7 +25,7 @@ class DiagnoseRequest(BaseModel):
 
 class ImputationComparisonRequest(BaseModel):
     data: list  # list of float | None
-    methods: Optional[list[str]] = None
+    methods: Optional[list[str]] = Field(None, max_length=10)
 
 
 # ---------------------------------------------------------------------------
@@ -62,6 +65,10 @@ def diagnose_missingness(req: DiagnoseRequest):
     n_rows = max(len(v) for v in req.data.values()) if req.data else 0
     if n_rows == 0:
         raise HTTPException(400, "All columns are empty.")
+    if n_cols > MAX_COLUMNS:
+        raise HTTPException(422, f"Too many columns ({n_cols}); at most {MAX_COLUMNS} are supported.")
+    if n_rows * n_cols > MAX_CELLS:
+        raise HTTPException(422, f"Too much data ({n_rows:,} rows x {n_cols} columns); at most {MAX_CELLS:,} cells are supported.")
 
     # Pad shorter columns with None
     matrix = np.full((n_rows, n_cols), np.nan)

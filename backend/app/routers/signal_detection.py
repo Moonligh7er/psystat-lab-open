@@ -7,11 +7,14 @@ for unequal variance SDT, and multi-condition comparison tables.
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 
 router = APIRouter()
+
+MAX_RATING_LEVELS = 1_000   # the ROC walks every rating value between the lowest and highest
+MAX_CONDITIONS = 200        # conditions are compared pairwise
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -33,7 +36,7 @@ class ROCRequest(BaseModel):
 
 class MultiConditionRequest(BaseModel):
     """SDT analysis across multiple conditions."""
-    conditions: list[dict]  # each: {"name": str, "hits": int, "misses": int, "false_alarms": int, "correct_rejections": int}
+    conditions: list[dict] = Field(..., max_length=MAX_CONDITIONS)  # each: {"name": str, "hits": int, "misses": int, "false_alarms": int, "correct_rejections": int}
 
 
 # ── Helper Functions ──────────────────────────────────────────────────
@@ -212,6 +215,8 @@ def roc_analysis(req: ROCRequest):
     all_ratings = np.concatenate([signal, noise])
     min_rating = int(np.min(all_ratings))
     max_rating = int(np.max(all_ratings))
+    if max_rating - min_rating + 1 > MAX_RATING_LEVELS:
+        raise HTTPException(status_code=422, detail=f"Ratings span too many levels; at most {MAX_RATING_LEVELS:,} confidence levels are supported.")
     n_levels = req.n_levels or (max_rating - min_rating + 1)
 
     if n_levels < 2:
@@ -349,7 +354,7 @@ def multi_condition_sdt(req: MultiConditionRequest):
         if not required_keys.issubset(cond.keys()):
             raise HTTPException(
                 status_code=422,
-                detail=f"Condition {i} missing required keys: {required_keys - cond.keys()}",
+                detail=f"Condition {i} missing required keys: {sorted(required_keys - cond.keys())}",
             )
         _validate_counts(cond["hits"], cond["misses"], cond["false_alarms"], cond["correct_rejections"])
 

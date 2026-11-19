@@ -1,34 +1,40 @@
 """Advanced Bayesian — MCMC sampling, posterior analysis, model comparison."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 
+from app.errors import safe_detail
+from app.routers._limits import MAX_CHAINS, MAX_DRAWS, MAX_RESAMPLE_WORK, MAX_RESAMPLES, check_work
+
 router = APIRouter()
+
+MAX_MCMC_ITERATIONS = 200_000   # chains x (samples + burn-in): the sampler is a Python loop
+MAX_PPC_SAMPLES = 100_000       # replicated data points per posterior predictive draw
 
 
 class MCMCRequest(BaseModel):
     data: list[float]
     model: str = "normal"  # normal, poisson, binomial
     prior_mean: float = 0.0
-    prior_std: float = 10.0
-    n_samples: int = 5000
-    n_chains: int = 4
-    burn_in: int = 1000
+    prior_std: float = Field(10.0, gt=0)
+    n_samples: int = Field(5000, ge=10, le=MAX_DRAWS)
+    n_chains: int = Field(4, ge=1, le=MAX_CHAINS)
+    burn_in: int = Field(1000, ge=0, le=MAX_DRAWS)
     seed: int | None = None
 
 
 class BayesModelCompareRequest(BaseModel):
     data: list[float]
-    models: list[str] = ["normal", "t", "lognormal"]
+    models: list[str] = Field(["normal", "t", "lognormal"], max_length=10)
 
 
 class PosteriorPredictiveRequest(BaseModel):
     data: list[float]
     model: str = "normal"
-    n_samples: int = 1000
-    n_simulations: int = 500
+    n_samples: int = Field(1000, ge=1, le=MAX_PPC_SAMPLES)
+    n_simulations: int = Field(500, ge=1, le=MAX_RESAMPLES)
     seed: int | None = None
 
 
@@ -155,6 +161,13 @@ def run_mcmc(req: MCMCRequest):
     data = np.array(req.data)
     if len(data) < 2:
         raise HTTPException(400, "Need at least 2 observations.")
+    if req.model not in ("normal", "poisson"):
+        raise HTTPException(400, "Unsupported model; use 'normal' or 'poisson'.")
+    iterations = req.n_chains * (req.n_samples + req.burn_in)
+    check_work(iterations, MAX_MCMC_ITERATIONS,
+               f"Too many MCMC iterations: chains x (samples + burn-in) must not exceed {MAX_MCMC_ITERATIONS:,}.")
+    check_work(iterations * len(data), MAX_RESAMPLE_WORK,
+               f"This MCMC run is too large: iterations x observations must not exceed {MAX_RESAMPLE_WORK:,}.")
 
     rng = np.random.RandomState(req.seed)
 
@@ -170,7 +183,7 @@ def run_mcmc(req: MCMCRequest):
             result = _mcmc_poisson(data, req.prior_mean, req.prior_std, req.n_samples, req.burn_in, chain_rng)
             all_chains.append(result)
         else:
-            raise HTTPException(400, f"Unsupported model: {req.model}")
+            raise HTTPException(400, "Unsupported model; use 'normal' or 'poisson'.")
 
     # Combine chains for primary parameter
     if req.model == "normal":
@@ -289,7 +302,7 @@ def compare_models(req: BayesModelCompareRequest):
                 ll = sp_stats.gamma.logpdf(data, a, loc, scale).sum()
                 k = 2
             else:
-                results.append({"model": model_name, "error": f"Unknown model: {model_name}"})
+                results.append({"model": model_name[:60], "error": "Unknown model; use normal, t, lognormal, exponential or gamma."})
                 continue
 
             aic = 2 * k - 2 * ll
@@ -303,7 +316,7 @@ def compare_models(req: BayesModelCompareRequest):
                 "bic": float(bic),
             })
         except Exception as e:
-            results.append({"model": model_name, "error": str(e)})
+            results.append({"model": model_name, "error": safe_detail(f"The {model_name} fit", e)})
 
     # Rank by BIC (lower = better)
     valid = [r for r in results if "error" not in r]
@@ -335,6 +348,8 @@ def posterior_predictive_check(req: PosteriorPredictiveRequest):
     data = np.array(req.data)
     if len(data) < 2:
         raise HTTPException(400, "Need at least 2 observations.")
+    check_work(req.n_simulations * req.n_samples, MAX_RESAMPLE_WORK,
+               f"Too many simulated values: n_simulations x n_samples must not exceed {MAX_RESAMPLE_WORK:,}.")
 
     rng = np.random.RandomState(req.seed)
 
@@ -393,4 +408,4 @@ def posterior_predictive_check(req: PosteriorPredictiveRequest):
                 else "Model may not adequately capture some features of the data.",
         }
     else:
-        raise HTTPException(400, f"Posterior predictive check not yet implemented for model: {req.model}")
+        raise HTTPException(400, "The posterior predictive check is only implemented for the 'normal' model.")

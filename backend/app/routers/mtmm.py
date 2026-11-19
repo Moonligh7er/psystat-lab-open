@@ -6,12 +6,17 @@ variance into trait, method, and error components.
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 from scipy.optimize import minimize
 
 router = APIRouter()
+
+MAX_MTMM_VARIABLES = 200     # Campbell & Fiske criteria compare every validity value with every variable
+MAX_MTMM_LABELS = 50
+MAX_CFA_VARIABLES = 30       # the CFA runs 5 Nelder-Mead starts of up to 10,000 iterations each
+MAX_CFA_LABELS = 15
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -19,9 +24,9 @@ router = APIRouter()
 class MTMMAnalyzeRequest(BaseModel):
     """Traditional MTMM matrix analysis with Campbell & Fiske criteria."""
     correlation_matrix: list[list[float]]
-    variable_names: list[str]
-    trait_labels: list[str]   # e.g. ["anxiety", "depression", "stress"]
-    method_labels: list[str]  # e.g. ["self_report", "observer", "physiological"]
+    variable_names: list[str] = Field(..., max_length=MAX_MTMM_VARIABLES)
+    trait_labels: list[str] = Field(..., max_length=MAX_MTMM_LABELS)   # e.g. ["anxiety", "depression", "stress"]
+    method_labels: list[str] = Field(..., max_length=MAX_MTMM_LABELS)  # e.g. ["self_report", "observer", "physiological"]
     variable_trait_map: dict[str, str]   # variable_name -> trait_label
     variable_method_map: dict[str, str]  # variable_name -> method_label
 
@@ -29,9 +34,9 @@ class MTMMAnalyzeRequest(BaseModel):
 class MTMMCFARequest(BaseModel):
     """CFA-based MTMM analysis — correlated traits, correlated methods model."""
     correlation_matrix: list[list[float]]
-    variable_names: list[str]
-    trait_labels: list[str]
-    method_labels: list[str]
+    variable_names: list[str] = Field(..., max_length=MAX_CFA_VARIABLES)
+    trait_labels: list[str] = Field(..., max_length=MAX_CFA_LABELS)
+    method_labels: list[str] = Field(..., max_length=MAX_CFA_LABELS)
     variable_trait_map: dict[str, str]
     variable_method_map: dict[str, str]
     sample_size: int
@@ -90,13 +95,13 @@ def mtmm_analyze(req: MTMMAnalyzeRequest):
     # Validate mappings
     for v in var_names:
         if v not in trait_map:
-            raise HTTPException(status_code=422, detail=f"Variable '{v}' missing from trait map")
+            raise HTTPException(status_code=422, detail=f"Variable '{str(v)[:60]}' missing from trait map")
         if v not in method_map:
-            raise HTTPException(status_code=422, detail=f"Variable '{v}' missing from method map")
+            raise HTTPException(status_code=422, detail=f"Variable '{str(v)[:60]}' missing from method map")
         if trait_map[v] not in req.trait_labels:
-            raise HTTPException(status_code=422, detail=f"Trait '{trait_map[v]}' not in trait_labels")
+            raise HTTPException(status_code=422, detail=f"Trait '{str(trait_map[v])[:60]}' not in trait_labels")
         if method_map[v] not in req.method_labels:
-            raise HTTPException(status_code=422, detail=f"Method '{method_map[v]}' not in method_labels")
+            raise HTTPException(status_code=422, detail=f"Method '{str(method_map[v])[:60]}' not in method_labels")
 
     # Build correlation pair classifications
     var_idx = {v: i for i, v in enumerate(var_names)}
@@ -308,7 +313,7 @@ def mtmm_cfa(req: MTMMCFARequest):
     # Validate
     for v in var_names:
         if v not in trait_map or v not in method_map:
-            raise HTTPException(status_code=422, detail=f"Variable '{v}' missing from trait/method maps")
+            raise HTTPException(status_code=422, detail=f"Variable '{str(v)[:60]}' missing from trait/method maps")
 
     # Build indicator matrices
     trait_idx = {t: i for i, t in enumerate(traits)}
@@ -424,7 +429,7 @@ def mtmm_cfa(req: MTMMCFARequest):
             best_result = result
 
     if best_result is None or best_fval > 1e5:
-        raise HTTPException(status_code=500, detail="CFA optimization failed to converge")
+        raise HTTPException(status_code=422, detail="CFA optimization failed to converge for this matrix.")
 
     # Extract final solution
     Sigma, Lt, Lm, Phi_t, Phi_m, Theta = _build_sigma(best_result.x)

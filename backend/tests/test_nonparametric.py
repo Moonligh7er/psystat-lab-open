@@ -55,5 +55,5 @@ def test_bootstrap_is_reproducible_and_bca_close_to_scipy():
 
 
 def test_resample_limits(client):
-    assert client.post("/api/nonparametric/bootstrap-ci", json={"data": D, "n_bootstrap": 10_000_000}).status_code == 400
+    assert client.post("/api/nonparametric/bootstrap-ci", json={"data": D, "n_bootstrap": 10_000_000}).status_code == 422
     assert client.post("/api/nonparametric/permutation-test", json={"group1": G1, "group2": G2, "statistic": "ks", "alternative": "greater"}).status_code == 400

@@ -16,7 +16,16 @@ import numpy as np
 from scipy import stats as sp_stats
 from scipy.optimize import brentq
 
+from app.errors import safe_detail
+
 router = APIRouter()
+
+
+def _unsolvable(solve_for: str, exc: Exception) -> str:
+    """Client message for a root-finding failure; scipy's own text is logged, not returned."""
+    safe_detail(f"Solving for {solve_for}", exc)
+    return (f"Could not solve for {solve_for}: no value in the search range gives the requested power. "
+            "Check that the other inputs are plausible.")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────
@@ -224,7 +233,7 @@ def power_ttest(req: TTestPowerRequest):
             result_value = round(float(brentq(f, 0.0001, 0.5)), 6)
     except ValueError as exc:
         raise HTTPException(
-            422, f"Could not solve for {solve_for}: {exc}"
+            422, _unsolvable(solve_for, exc)
         ) from exc
 
     # Build power curves
@@ -335,7 +344,7 @@ def power_anova(req: AnovaPowerRequest):
             result_value = round(float(brentq(f, 0.0001, 0.5)), 6)
     except ValueError as exc:
         raise HTTPException(
-            422, f"Could not solve for {solve_for}: {exc}"
+            422, _unsolvable(solve_for, exc)
         ) from exc
 
     final_f = result_value if solve_for == "effect_size_f" else req.effect_size_f
@@ -445,7 +454,7 @@ def power_correlation(req: CorrelationPowerRequest):
             result_value = round(float(brentq(f, 0.0001, 0.5)), 6)
     except ValueError as exc:
         raise HTTPException(
-            422, f"Could not solve for {solve_for}: {exc}"
+            422, _unsolvable(solve_for, exc)
         ) from exc
 
     final_r = result_value if solve_for == "r" else req.r
@@ -571,7 +580,7 @@ def power_regression(req: RegressionPowerRequest):
             result_value = round(float(brentq(f, 0.0001, 0.5)), 6)
     except ValueError as exc:
         raise HTTPException(
-            422, f"Could not solve for {solve_for}: {exc}"
+            422, _unsolvable(solve_for, exc)
         ) from exc
 
     final_f2 = result_value if solve_for == "f_squared" else req.f_squared
@@ -669,7 +678,7 @@ def power_chisquare(req: ChiSquarePowerRequest):
             result_value = round(float(brentq(f, 0.0001, 0.5)), 6)
     except ValueError as exc:
         raise HTTPException(
-            422, f"Could not solve for {solve_for}: {exc}"
+            422, _unsolvable(solve_for, exc)
         ) from exc
 
     final_w = result_value if solve_for == "w" else req.w
@@ -894,7 +903,7 @@ def power_logistic_regression(req: LogisticRegressionPowerRequest):
             solve_for = "n"
     except ValueError as exc:
         raise HTTPException(
-            422, f"Could not solve for {solve_for}: {exc}"
+            422, _unsolvable(solve_for, exc)
         ) from exc
 
     final_n = result_value if solve_for == "n" else req.n
@@ -1051,7 +1060,7 @@ def power_equivalence(req: EquivalencePowerRequest):
             solve_for = "n"
     except ValueError as exc:
         raise HTTPException(
-            422, f"Could not solve for {solve_for}: {exc}"
+            422, _unsolvable(solve_for, exc)
         ) from exc
 
     final_n = result_value if solve_for == "n" else req.n

@@ -25,7 +25,7 @@ from typing import Callable, Optional
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from scipy import integrate, special
 from scipy import stats as sp_stats
 from scipy.optimize import brentq
@@ -41,13 +41,13 @@ class SensitivityRequest(BaseModel):
     test_type: str
     # Effect size: Cohen's d (t-tests), r (correlation), Cohen's f (ANOVA), R² (regression)
     observed_es: float
-    n: int  # total sample size
+    n: int = Field(..., le=10_000_000)  # total sample size (the N searches stop at 10 million)
     observed_p: Optional[float] = None
     observed_stat: Optional[float] = None
     target_es: Optional[float] = None  # effect size to plan for; defaults to the observed one
     alpha: float = 0.05
-    groups: int = 2  # ANOVA
-    predictors: int = 1  # regression
+    groups: int = Field(2, le=1_000)  # ANOVA
+    predictors: int = Field(1, le=1_000)  # regression
 
 
 class SensitivityResponse(BaseModel):
@@ -151,7 +151,7 @@ def _min_detectable(power: Callable[[float, float], float], n: int, es_max: floa
 # ── Endpoint ──────────────────────────────────────────────────────────────
 
 @router.post("/analyze", response_model=SensitivityResponse)
-async def what_would_it_take(req: SensitivityRequest):
+def what_would_it_take(req: SensitivityRequest):
     tt = req.test_type.lower().replace("-", "_").replace(" ", "_")
     alias = {"t_test": "ttest", "t": "ttest", "independent": "ttest", "paired_t": "paired",
              "pearson": "correlation", "one_way_anova": "anova", "f_test": "anova"}

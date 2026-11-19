@@ -7,12 +7,23 @@ Uses only numpy, scipy, and standard library.
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy.optimize import minimize
 from scipy import stats as sp_stats
 
 router = APIRouter()
+
+# Size limits (the change statistics and simulations are pure Python, O(n^2)-O(n^3) per pass).
+MAX_FIT_NODES = 200          # pseudolikelihood: one row per dyad
+MAX_GOF_NODES = 100
+MAX_GOF_STEPS = 2_000_000    # n_simulations x MCMC steps per simulated network
+MAX_SIM_NODES = 500
+MAX_SIM_ITERATIONS = 200_000
+MAX_SIENA_NODES = 100
+MAX_SIENA_ITERATIONS = 1_000
+MAX_SIENA_WORK = 20_000      # Robbins-Monro iterations x max(observed tie changes, n)
+MAX_TERMS = 20
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -20,7 +31,7 @@ router = APIRouter()
 class ERGMFitRequest(BaseModel):
     """Fit an ERGM via pseudolikelihood estimation."""
     adjacency: list[list[int]]  # n×n binary adjacency matrix (0/1)
-    terms: list[str]  # network statistics: edges, mutual, triangles, kstar2, kstar3, nodecov, nodematch
+    terms: list[str] = Field(..., max_length=MAX_TERMS)  # edges, mutual, triangles, kstar2, kstar3, nodecov, nodematch
     node_attributes: list[float] | None = None  # attribute per node (for nodecov/nodematch)
     directed: bool = False
 
@@ -28,17 +39,17 @@ class ERGMFitRequest(BaseModel):
 class ERGMGofRequest(BaseModel):
     """Goodness-of-fit assessment for a fitted ERGM."""
     adjacency: list[list[int]]
-    parameters: dict[str, float]  # term -> coefficient from /fit
+    parameters: dict[str, float] = Field(..., max_length=MAX_TERMS)  # term -> coefficient from /fit
     directed: bool = False
-    n_simulations: int = 100
+    n_simulations: int = Field(100, ge=1, le=1_000)
 
 
 class ERGMSimulateRequest(BaseModel):
     """Simulate networks from ERGM parameters."""
-    n_nodes: int
-    parameters: dict[str, float]  # term -> coefficient
+    n_nodes: int = Field(..., le=MAX_SIM_NODES)
+    parameters: dict[str, float] = Field(..., max_length=MAX_TERMS)  # term -> coefficient
     directed: bool = False
-    n_iterations: int = 5000
+    n_iterations: int = Field(5000, ge=0, le=MAX_SIM_ITERATIONS)
     seed: int | None = None
 
 
@@ -48,7 +59,16 @@ class SIENARequest(BaseModel):
     adjacency_t2: list[list[int]]  # adjacency at time 2
     node_attributes: list[float] | None = None  # optional covariate per node
     directed: bool = True
-    n_iterations: int = 200
+    n_iterations: int = Field(200, ge=0, le=MAX_SIENA_ITERATIONS)
+
+
+def _adjacency(rows: list[list[int]], max_nodes: int, what: str = "Adjacency matrix") -> np.ndarray:
+    """A square integer adjacency matrix of at most `max_nodes` nodes, or a 422."""
+    if len(rows) > max_nodes:
+        raise HTTPException(422, f"Networks are limited to {max_nodes} nodes for this analysis.")
+    if any(len(r) != len(rows) for r in rows):
+        raise HTTPException(422, f"{what} must be square.")
+    return np.array(rows, dtype=int).reshape(len(rows), len(rows))
 
 
 # ── Change Statistic Helpers ──────────────────────────────────────────
@@ -120,15 +140,14 @@ def _change_statistic(A: np.ndarray, i: int, j: int, term: str,
     elif term == "triangles":
         # number of shared partners
         toggle = 1.0 if current == 0 else -1.0
-        shared = 0
-        for k in range(n):
-            if k == i or k == j:
-                continue
-            if not directed:
-                shared += int(A[i, k] and A[j, k])
-            else:
-                shared += int(A[i, k] and A[k, j])
-                shared += int(A[k, i] and A[j, k])
+        # `int(a and b)` is b where a != 0, else 0; summed over k != i, j (vectorised).
+        others = np.ones(n, dtype=bool)
+        others[[i, j]] = False
+        if not directed:
+            shared = int(np.sum(np.where(A[i] != 0, A[j], 0)[others]))
+        else:
+            shared = int(np.sum(np.where(A[i] != 0, A[:, j], 0)[others]))
+            shared += int(np.sum(np.where(A[:, i] != 0, A[j], 0)[others]))
         return toggle * shared
 
     elif term == "kstar2":
@@ -220,12 +239,12 @@ def fit_ergm(req: ERGMFitRequest):
     approximation to MCMC-MLE.  Returns parameter estimates, standard
     errors, z-values, p-values, AIC/BIC, and a goodness-of-fit summary.
     """
-    A = np.array(req.adjacency, dtype=int)
+    A = _adjacency(req.adjacency, MAX_FIT_NODES)
     n = A.shape[0]
-    if A.shape[0] != A.shape[1]:
-        raise HTTPException(422, "Adjacency matrix must be square.")
     if n < 3:
         raise HTTPException(422, "Network must have at least 3 nodes.")
+    if req.node_attributes is not None and len(req.node_attributes) != n:
+        raise HTTPException(422, "node_attributes must have one value per node.")
 
     node_attrs = np.array(req.node_attributes) if req.node_attributes else None
     terms = req.terms
@@ -236,7 +255,7 @@ def fit_ergm(req: ERGMFitRequest):
                    "nodecov", "nodematch"}
     for t in terms:
         if t not in valid_terms:
-            raise HTTPException(422, f"Unknown term '{t}'. Valid: {sorted(valid_terms)}")
+            raise HTTPException(422, f"Unknown term. Valid terms: {sorted(valid_terms)}")
 
     if ("nodecov" in terms or "nodematch" in terms) and node_attrs is None:
         raise HTTPException(422, "node_attributes required for nodecov/nodematch terms.")
@@ -341,16 +360,22 @@ def ergm_gof(req: ERGMGofRequest):
     distribution, geodesic distance distribution, and edgewise shared
     partner distribution to the observed network.
     """
-    A_obs = np.array(req.adjacency, dtype=int)
+    A_obs = _adjacency(req.adjacency, MAX_GOF_NODES)
     n = A_obs.shape[0]
-    if A_obs.shape[0] != A_obs.shape[1]:
-        raise HTTPException(422, "Adjacency matrix must be square.")
+    if n < 2:
+        raise HTTPException(422, "Network must have at least 2 nodes.")
     if not req.parameters:
         raise HTTPException(422, "Must provide fitted parameters.")
 
     rng = np.random.default_rng(42)
     n_sim = req.n_simulations
     n_iter = max(n * n * 5, 5000)
+    if n_sim * n_iter > MAX_GOF_STEPS:
+        raise HTTPException(
+            422,
+            f"This goodness-of-fit run is too large: {n_sim} simulations x {n_iter:,} MCMC steps exceeds "
+            f"{MAX_GOF_STEPS:,}. Use at most {max(1, MAX_GOF_STEPS // n_iter)} simulations for this network.",
+        )
 
     # Observed statistics
     obs_degree = _degree_distribution(A_obs, req.directed)
@@ -438,16 +463,16 @@ def siena_model(req: SIENARequest):
     effects via method-of-moments approximation. Returns parameter
     estimates, standard errors, and convergence t-ratios.
     """
-    A1 = np.array(req.adjacency_t1, dtype=int)
-    A2 = np.array(req.adjacency_t2, dtype=int)
+    A1 = _adjacency(req.adjacency_t1, MAX_SIENA_NODES, "Adjacency matrices")
+    A2 = _adjacency(req.adjacency_t2, MAX_SIENA_NODES, "Adjacency matrices")
     n = A1.shape[0]
 
     if A1.shape != A2.shape:
         raise HTTPException(422, "Both adjacency matrices must have the same dimensions.")
-    if A1.shape[0] != A1.shape[1]:
-        raise HTTPException(422, "Adjacency matrices must be square.")
     if n < 3:
         raise HTTPException(422, "Network must have at least 3 nodes.")
+    if req.node_attributes is not None and len(req.node_attributes) != n:
+        raise HTTPException(422, "node_attributes must have one value per node.")
 
     node_attrs = np.array(req.node_attributes) if req.node_attributes else None
 
@@ -456,19 +481,22 @@ def siena_model(req: SIENARequest):
     if not req.directed:
         n_changes //= 2
 
+    # Each iteration simulates 20 network evolutions of about max(changes, n) micro-steps.
+    if req.n_iterations * max(n_changes, n) > MAX_SIENA_WORK:
+        raise HTTPException(
+            422,
+            f"This SIENA run is too large: {req.n_iterations} iterations x {max(n_changes, n)} tie changes "
+            f"exceeds {MAX_SIENA_WORK:,}. Use at most {max(1, MAX_SIENA_WORK // max(n_changes, n))} iterations "
+            f"for these networks.",
+        )
+
     # Rate parameter: average number of opportunities for change per actor
     rate = n_changes / n if n > 0 else 0.0
 
     # Compute target statistics at time 2
     n_edges_2 = int(np.sum(A2)) if req.directed else int(np.sum(A2) // 2)
     n_mutual_2 = int(np.sum(A2 * A2.T) // 2)
-    n_transitive_2 = 0
-    for i in range(n):
-        for j in range(n):
-            if i != j and A2[i, j]:
-                for h in range(n):
-                    if h != i and h != j:
-                        n_transitive_2 += int(A2[i, h] and A2[h, j])
+    n_transitive_2 = _transitive_count(A2)
 
     # Method-of-moments estimation via simulation
     # We approximate parameters using iterative updating
@@ -638,7 +666,8 @@ def _simulate_siena_step(A1: np.ndarray, theta: np.ndarray,
     n = A1.shape[0]
     A = A1.copy()
     rate = max(abs(theta[0]), 0.1)
-    n_steps = int(rate * n)
+    # More micro-steps than ordered pairs adds nothing but time; bounds a diverging rate estimate.
+    n_steps = min(int(rate * n), n * (n - 1))
 
     for _ in range(n_steps):
         actor = rng.integers(0, n)
@@ -669,19 +698,25 @@ def _simulate_siena_step(A1: np.ndarray, theta: np.ndarray,
         n_changes //= 2
     n_edges = int(np.sum(A)) if directed else int(np.sum(A) // 2)
     n_mutual = int(np.sum(A * A.T) // 2)
-    n_trans = 0
-    for i in range(n):
-        for j in range(n):
-            if i != j and A[i, j]:
-                for h in range(n):
-                    if h != i and h != j:
-                        n_trans += int(A[i, h] and A[h, j])
+    n_trans = _transitive_count(A)
 
     stats = np.array([n_changes, n_edges, n_mutual, n_trans], dtype=float)
     if node_attrs is not None:
         cov_stat = sum(node_attrs[j] for i in range(n) for j in range(n) if i != j and A[i, j])
         stats = np.append(stats, cov_stat)
     return stats
+
+
+def _transitive_count(A: np.ndarray) -> int:
+    """Sum over i != j with A[i,j] != 0 and h != i, j of int(A[i,h] and A[h,j]).
+
+    Same integer as the triple loop: int(a and b) is b where a != 0, else 0, and zeroing the
+    diagonals removes the h == i, h == j and i == j terms."""
+    M = (A != 0).astype(np.int64)
+    np.fill_diagonal(M, 0)
+    B = A.astype(np.int64)
+    np.fill_diagonal(B, 0)
+    return int(np.sum(M * (M @ B)))
 
 
 def _eval_objective(A: np.ndarray, actor: int, alter: int,
@@ -703,10 +738,9 @@ def _eval_objective(A: np.ndarray, actor: int, alter: int,
 
     # transitivity (index 3)
     if len(theta) > 3:
-        shared = 0
-        for k in range(n):
-            if k != actor and k != alter:
-                shared += int(A[actor, k] and A[k, alter])
+        others = np.ones(n, dtype=bool)
+        others[[actor, alter]] = False
+        shared = int(np.sum(np.where(A[actor] != 0, A[:, alter], 0)[others]))
         val += theta[3] * toggle * shared
 
     # covariate (index 4)

@@ -7,7 +7,27 @@ import pandas as pd
 from scipy import stats as sp_stats
 from scipy.linalg import eig, inv
 
+from app.errors import safe_detail
+
 router = APIRouter()
+
+MAX_SUBJECTS_MIXED = 10_000   # mixed ANOVA loops over subjects in Python
+MAX_CONDITIONS = 100          # within-subject conditions (pairwise tests grow as k^2)
+MAX_GROUPS = 100              # between-subject groups
+MAX_DVS = 100                 # MANOVA DVs / discriminant predictors
+MAX_LOO_N = 5_000             # leave-one-out classification refits once per case (cost ~ n^2)
+
+
+def _check_size(n_cases: int | None = None, max_cases: int | None = None, k: int | None = None,
+                n_groups: int | None = None, p: int | None = None):
+    if max_cases is not None and n_cases is not None and n_cases > max_cases:
+        raise HTTPException(422, f"Too many cases ({n_cases}); the maximum for this analysis is {max_cases:,}.")
+    if k is not None and k > MAX_CONDITIONS:
+        raise HTTPException(422, f"Too many conditions ({k}); the maximum is {MAX_CONDITIONS}.")
+    if n_groups is not None and n_groups > MAX_GROUPS:
+        raise HTTPException(422, f"Too many groups ({n_groups}); the maximum is {MAX_GROUPS}.")
+    if p is not None and p > MAX_DVS:
+        raise HTTPException(422, f"Too many variables ({p}); the maximum is {MAX_DVS}.")
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -143,8 +163,11 @@ def mixed_anova(req: MixedAnovaRequest):
     except (ValueError, TypeError):
         raise HTTPException(400, "Invalid data format.")
 
+    if data.ndim != 2:
+        raise HTTPException(400, "data must be a rectangular table (rows = subjects, columns = conditions).")
     groups = np.array(req.groups)
     n_subjects, k = data.shape
+    _check_size(n_subjects, MAX_SUBJECTS_MIXED, k=k)
 
     if len(groups) != n_subjects:
         raise HTTPException(400, "Length of groups must match number of rows in data.")
@@ -157,6 +180,7 @@ def mixed_anova(req: MixedAnovaRequest):
     n_groups = len(unique_groups)
     if n_groups < 2:
         raise HTTPException(400, "Need at least 2 between-subject groups.")
+    _check_size(n_groups=n_groups)
 
     cond_labels = req.condition_labels or [f"Cond_{i+1}" for i in range(k)]
     grp_labels = req.group_labels or [str(g) for g in unique_groups]
@@ -409,6 +433,7 @@ def manova(req: ManovaRequest):
 
     if p < 2:
         raise HTTPException(400, "MANOVA requires at least 2 dependent variables.")
+    _check_size(p=p)
     for i, dv in enumerate(dvs):
         if len(dv) != n_total:
             raise HTTPException(400, f"DV {i} length ({len(dv)}) doesn't match groups length ({n_total}).")
@@ -417,6 +442,7 @@ def manova(req: ManovaRequest):
     g = len(unique_groups)
     if g < 2:
         raise HTTPException(400, "Need at least 2 groups.")
+    _check_size(n_groups=g)
     if n_total <= p + g:
         raise HTTPException(400, "Not enough observations for MANOVA.")
 
@@ -635,7 +661,7 @@ def _box_m_test(Y, groups, unique_groups, group_idx, group_ns, p, g, n_total):
             "p": float(p_value),
         }
     except Exception as e:
-        return {"M": None, "F_approx": None, "p": None, "note": f"Box's M test failed: {str(e)}"}
+        return {"M": None, "F_approx": None, "p": None, "note": safe_detail("Box's M test", e)}
 
 
 # ── 3. Discriminant Analysis ─────────────────────────────────────────
@@ -652,6 +678,9 @@ def discriminant_analysis(req: DiscriminantRequest):
 
     if p < 1:
         raise HTTPException(400, "Need at least 1 predictor.")
+    _check_size(p=p)
+    if req.classification:
+        _check_size(n_total, MAX_LOO_N)
     for i, pred in enumerate(predictors):
         if len(pred) != n_total:
             raise HTTPException(400, f"Predictor {i} length ({len(pred)}) doesn't match groups length ({n_total}).")
@@ -660,6 +689,7 @@ def discriminant_analysis(req: DiscriminantRequest):
     g = len(unique_groups)
     if g < 2:
         raise HTTPException(400, "Need at least 2 groups.")
+    _check_size(n_groups=g)
     if n_total <= p + g:
         raise HTTPException(400, "Not enough observations.")
 
@@ -894,8 +924,11 @@ def repeated_measures_anova(req: RepeatedMeasuresRequest):
         data = np.array(req.data, dtype=float)
     except (ValueError, TypeError):
         raise HTTPException(400, "Invalid data format.")
+    if data.ndim != 2:
+        raise HTTPException(400, "data must be a rectangular table (rows = subjects, columns = conditions).")
 
     n, k = data.shape
+    _check_size(k=k)
 
     if n < 3:
         raise HTTPException(400, "Need at least 3 subjects.")

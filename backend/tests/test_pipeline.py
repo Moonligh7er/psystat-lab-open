@@ -18,7 +18,8 @@ from statsmodels.stats.weightstats import CompareMeans, DescrStatsW
 
 from app.routers import pipeline as P
 
-run = asyncio.run
+def run(result):  # handlers may be sync (threadpool) or async
+    return asyncio.run(result) if asyncio.iscoroutine(result) else result
 
 
 def _data(seed=0, n=40):

@@ -1,24 +1,31 @@
 """Report generation — produces structured HTML reports from analysis results."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import html
 from datetime import datetime
 
 router = APIRouter()
 
 
+# Every user value is HTML-escaped before it is placed in the report; only markup generated
+# here (headings, <em> around statistic symbols, tables) is emitted unescaped.
+MAX_TITLE = 500
+MAX_CONTENT = 100_000
+MAX_SECTIONS = 200
+
+
 class ReportSection(BaseModel):
-    title: str
-    content: str  # Can contain APA text
+    title: str = Field(..., max_length=MAX_TITLE)
+    content: str = Field(..., max_length=MAX_CONTENT)  # Can contain APA text (plain text, escaped)
     chart_data: dict | None = None  # Optional chart metadata
 
 
 class ReportRequest(BaseModel):
-    title: str
-    author: str | None = None
-    sections: list[ReportSection]
-    apa_results: list[dict] | None = None  # APA-formatted results to include
+    title: str = Field(..., max_length=MAX_TITLE)
+    author: str | None = Field(None, max_length=MAX_TITLE)
+    sections: list[ReportSection] = Field(..., max_length=MAX_SECTIONS)
+    apa_results: list[dict] | None = Field(None, max_length=MAX_SECTIONS)  # APA-formatted results to include
     include_methods: bool = True
     include_references: bool = True
 
@@ -101,7 +108,7 @@ def _results_to_table(results: dict) -> str:
             continue  # Skip nested dicts
         if isinstance(value, list):
             continue  # Skip arrays
-        label = key.replace("_", " ").title()
+        label = str(key).replace("_", " ").title()
         if isinstance(value, float):
             formatted = f"{value:.4f}" if abs(value) < 1 else f"{value:.2f}"
         else:
@@ -145,9 +152,9 @@ def generate_report(req: ReportRequest):
     if req.include_methods and req.apa_results:
         body += "<h2>Method</h2>\n"
         body += "<h3>Statistical Analysis</h3>\n"
-        test_types = set(r.get("test_type", "") for r in req.apa_results)
-        body += f'<p>Statistical analyses were performed using PsyStat Lab. '
-        body += f'The following tests were conducted: {", ".join(test_types)}. '
+        test_types = sorted({str(r.get("test_type", "")) for r in req.apa_results if isinstance(r, dict)})
+        body += '<p>Statistical analyses were performed using PsyStat Lab. '
+        body += f'The following tests were conducted: {html.escape(", ".join(test_types))}. '
         body += f'Significance was evaluated at α = .05 unless otherwise noted.</p>\n'
 
     # Results section
@@ -156,23 +163,26 @@ def generate_report(req: ReportRequest):
     for section in req.sections:
         body += f"<h3>{html.escape(section.title)}</h3>\n"
         # Convert APA-style formatting
-        content = section.content
-        # Italicize standard stat terms
+        content = html.escape(section.content, quote=True)
+        # Italicize standard stat terms (on the escaped text, so "<" is now "&lt;")
         for term in ['t', 'F', 'p', 'd', 'r', 'M', 'SD', 'N', 'n', 'df']:
             content = content.replace(f" {term} =", f" <em>{term}</em> =")
             content = content.replace(f" {term}(", f" <em>{term}</em>(")
-            content = content.replace(f" {term} <", f" <em>{term}</em> <")
+            content = content.replace(f" {term} &lt;", f" <em>{term}</em> &lt;")
         body += f'<p class="no-indent">{content}</p>\n'
 
         if section.chart_data:
-            body += f'<p class="note">[Figure: {html.escape(section.chart_data.get("title", "Chart"))}]</p>\n'
+            fig_title = str(section.chart_data.get("title", "Chart"))[:MAX_TITLE]
+            body += f'<p class="note">[Figure: {html.escape(fig_title)}]</p>\n'
 
     # APA results blocks
     if req.apa_results:
         for apa in req.apa_results:
+            if not isinstance(apa, dict):
+                continue
             apa_text = apa.get("apa_text", "")
             if apa_text:
-                body += f'<div class="apa-result">{html.escape(apa_text)}</div>\n'
+                body += f'<div class="apa-result">{html.escape(str(apa_text)[:MAX_CONTENT])}</div>\n'
 
             # Include result table if raw results provided
             raw = apa.get("raw_results")
@@ -201,11 +211,11 @@ def generate_report(req: ReportRequest):
 
 class QuickReportRequest(BaseModel):
     """Generate a quick report from a single analysis."""
-    module: str
-    test_type: str
+    module: str = Field(..., max_length=200)
+    test_type: str = Field(..., max_length=200)
     results: dict
-    apa_text: str | None = None
-    author: str | None = None
+    apa_text: str | None = Field(None, max_length=MAX_CONTENT)
+    author: str | None = Field(None, max_length=MAX_TITLE)
 
 
 @router.post("/quick")

@@ -403,42 +403,42 @@
     <h2>Instructor FAQ</h2>
     <p class="subhead">Concrete answers to the questions instructors have actually asked. If you have one that isn&rsquo;t here, email us and it&rsquo;ll appear on this page.</p>
     <div class="faq-item">
-      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+      <div class="faq-q">
         Do students need to install anything?
         <span class="arrow">&#9660;</span>
       </div>
       <div class="faq-a">No. PsyStat Lab runs in any modern browser and is also available as a native iOS/Android app. Everything a student needs to do a full research-methods sequence is web-accessible. The mobile app is optional, not required.</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+      <div class="faq-q">
         Are the numbers actually right? SPSS is the reference standard because it&rsquo;s trusted.
         <span class="arrow">&#9660;</span>
       </div>
       <div class="faq-a">See the <a href="validation.html">public validation report</a>. Every method PsyStat exposes is compared against a canonical reference (NIST StRD, R, or peer-reviewed textbook) on every commit. Currently 10 methods are validated with 25 independent checks; that number grows on a documented roadmap. Methods not yet validated are labeled &ldquo;unvalidated (beta)&rdquo; in the app and are not billed as citable.</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+      <div class="faq-q">
         Can students cite PsyStat in a lab report or thesis?
         <span class="arrow">&#9660;</span>
       </div>
       <div class="faq-a">Yes. The built-in Citation Generator stamps every citation with the exact PsyStat Lab version and the validation-snapshot version that was current when the analysis ran, in APA 7th, BibTeX, Chicago, and Vancouver formats. A cited analysis is bound to a specific commit and can be reproduced years later against that build.</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+      <div class="faq-q">
         What data privacy protections apply to student work?
         <span class="arrow">&#9660;</span>
       </div>
       <div class="faq-a">Raw CSV files students upload are parsed on the device and are not transmitted. Only the numeric columns being analyzed travel to our compute backend, which retains nothing after the request. Saved analyses live in the student&rsquo;s account under row-level security. There is no advertising on any tier. See the <a href="privacy.html#irb-statement">IRB-ready data-handling statement</a> for a paragraph designed to paste directly into a course-approval document.</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+      <div class="faq-q">
         What does &ldquo;institutional pricing&rdquo; actually mean?
         <span class="arrow">&#9660;</span>
       </div>
       <div class="faq-a">Priced per seat, scaling down sharply above 20 students, with a floor that&rsquo;s meaningfully cheaper than the SPSS/Stata/JMP alternatives. Exact numbers depend on cohort size and institution type &mdash; write to us with your enrollment and semester and you&rsquo;ll get a same-week quote. First 20 pilot courses run free for a semester.</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+      <div class="faq-q">
         Can students keep access after the semester ends?
         <span class="arrow">&#9660;</span>
       </div>
@@ -459,6 +459,7 @@
   </div>
 </footer>
 
+<script src="/js/educators.js"></script>
 <script src="/js/stat-backgrounds.js"></script>
 </body>
 </html>

@@ -22,9 +22,12 @@ from typing import List, Literal
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ValidationError
 
 router = APIRouter()
+
+MAX_SPECIFICATIONS = 20_000
+MAX_DECISIONS = 50  # distinct decision names across all specifications
 
 CAVEAT = (
     "Specifications reuse the same data, so these percentages describe the set of "
@@ -42,7 +45,7 @@ class Specification(BaseModel):
 
 
 class CCARequest(BaseModel):
-    specifications: List[Specification]
+    specifications: List[Specification] = Field(..., max_length=MAX_SPECIFICATIONS)
     alpha: float = 0.05
     core_threshold: float = 0.95  # share of specs that must share a sign
     # Which scale the effect sizes are on. Size words ("small", "medium") are
@@ -145,11 +148,13 @@ def _boundary_analysis(specs: List[Specification], dominant: int) -> list:
 # ── Endpoint ──────────────────────────────────────────────────────────
 
 @router.post("/analyze", response_model=CCAResponse)
-async def convergent_core_analysis(req: CCARequest):
+def convergent_core_analysis(req: CCARequest):
     specs = req.specifications
     n = len(specs)
     if n < 3:
         raise HTTPException(422, "Need at least 3 specifications.")
+    if len({k for s in specs if s.decisions for k in s.decisions}) > MAX_DECISIONS:
+        raise HTTPException(422, f"At most {MAX_DECISIONS} distinct decisions can be summarised.")
     if not 0 < req.alpha < 1:
         raise HTTPException(422, "alpha must be between 0 and 1.")
     if not 0.5 < req.core_threshold <= 1:
@@ -235,21 +240,30 @@ async def convergent_core_analysis(req: CCARequest):
 
 
 @router.post("/from-multiverse")
-async def cca_from_multiverse(req: dict):
+def cca_from_multiverse(req: dict):
     """Accepts raw multiverse output and converts it into the request format."""
     specs_raw = req.get("specifications", [])
-    specifications = [
-        Specification(
-            effect_size=s.get("effect_size", 0),
-            p_value=s.get("p_value", 1),
-            decisions=s.get("decisions"),
+    if not isinstance(specs_raw, list) or not all(isinstance(s, dict) for s in specs_raw):
+        raise HTTPException(422, "specifications must be a list of objects.")
+    if len(specs_raw) > MAX_SPECIFICATIONS:
+        raise HTTPException(422, f"At most {MAX_SPECIFICATIONS:,} specifications can be summarised.")
+    try:
+        specifications = [
+            Specification(
+                effect_size=s.get("effect_size", 0),
+                p_value=s.get("p_value", 1),
+                decisions=s.get("decisions"),
+            )
+            for s in specs_raw
+        ]
+        cca_req = CCARequest(
+            specifications=specifications,
+            alpha=req.get("alpha", 0.05),
+            core_threshold=req.get("core_threshold", 0.95),
+            effect_metric=req.get("effect_metric", "other"),
         )
-        for s in specs_raw
-    ]
-    cca_req = CCARequest(
-        specifications=specifications,
-        alpha=req.get("alpha", 0.05),
-        core_threshold=req.get("core_threshold", 0.95),
-        effect_metric=req.get("effect_metric", "other"),
-    )
-    return await convergent_core_analysis(cca_req)
+    except ValidationError:
+        raise HTTPException(
+            422, "Each specification needs a numeric effect_size and p_value (and optional decisions object); "
+                 "alpha and core_threshold must be numbers and effect_metric one of r, d, other.")
+    return convergent_core_analysis(cca_req)

@@ -25,8 +25,15 @@ from statsmodels.stats.diagnostic import het_breuschpagan
 from app.routers import advanced_anova as _anova
 from app.routers import meta_analysis as _meta
 from app.routers import time_series as _ts
+from app.errors import safe_detail
+from app.routers._limits import check_resampling, check_work
 
 router = APIRouter()
+
+MAX_CORR_VARS = 200            # variables in a correlation matrix
+MAX_CORR_WORK = 50_000_000     # variable pairs x observations
+MAX_PREDICTORS = 200           # regression predictors (VIF refits one model per predictor)
+MAX_CONDITIONS = 100           # repeated-measures conditions (pairwise tests grow as k^2)
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -164,7 +171,7 @@ def mixed_effects_model(req: MixedModelRequest):
             model = mixedlm(formula, df, groups=df["group"])
         result = fit_mixedlm(model, reml=True)
     except Exception as e:
-        raise HTTPException(400, f"Model fitting failed: {e}")
+        raise HTTPException(422, safe_detail("The mixed model", e))
 
     fixed_effects = {}
     for name in result.fe_params.index:
@@ -259,6 +266,10 @@ def time_series_analysis(req: TimeSeriesRequest):
     period, period_source = req.period, "user"
     if period is not None and period < 2:
         raise HTTPException(400, "period must be at least 2.")
+    if req.arima_order is not None and (
+        len(req.arima_order) != 3 or any(not 0 <= o <= 10 for o in req.arima_order) or req.arima_order[1] > 2
+    ):
+        raise HTTPException(422, "arima_order must be [p, d, q] with 0 ≤ p, q ≤ 10 and 0 ≤ d ≤ 2.")
     if period is None:
         period_source = "first ACF peak"
         if n > 20:
@@ -309,7 +320,10 @@ def time_series_analysis(req: TimeSeriesRequest):
             "ljung_box_p": arima["residual_diagnostics"]["ljung_box_p"],
         }
     except HTTPException as e:
+        # Our own HTTPExceptions carry fixed or safe_detail() messages, never raw exception text.
         result["arima"] = {"error": e.detail}
+    except Exception as e:
+        result["arima"] = {"error": safe_detail("The ARIMA model", e)}
 
     result["summary"] = {
         "n": n, "mean": float(values.mean()), "std": float(values.std(ddof=1)),
@@ -435,7 +449,7 @@ def non_parametric_tests(req: NonParametricRequest):
         return {"test": name, "statistic": float(res.statistic), "p_value": float(res.pvalue),
                 "n": len(g1), "significant": bool(res.pvalue < 0.05)}
 
-    raise HTTPException(400, f"Unknown test: {req.test}. Options: mann-whitney, wilcoxon, kruskal, friedman, spearman, kendall")
+    raise HTTPException(400, "Unknown test. Options: mann-whitney, wilcoxon, kruskal, friedman, spearman, kendall")
 
 
 @router.post("/correlation-matrix")
@@ -451,6 +465,10 @@ def correlation_matrix(req: CorrelationMatrixRequest):
         raise HTTPException(400, "All variables must have equal length.")
     if n_obs < 3:
         raise HTTPException(400, "Need at least 3 observations.")
+    if n_vars > MAX_CORR_VARS:
+        raise HTTPException(422, f"Too many variables ({n_vars}); the maximum is {MAX_CORR_VARS}.")
+    check_work(n_vars * (n_vars - 1) // 2 * n_obs, MAX_CORR_WORK,
+               f"Too much data for a correlation matrix: variable pairs x observations must not exceed {MAX_CORR_WORK:,}.")
     _finite(*req.variables)
     labels = _labels(req.labels, n_vars, "V")
     data = np.array(req.variables, dtype=float).T
@@ -483,6 +501,8 @@ def multiple_regression_diagnostics(req: MultipleRegressionRequest):
     """OLS multiple regression with VIF, Cook's distance and assumption checks."""
     if not req.predictors:
         raise HTTPException(400, "Provide at least one predictor.")
+    if len(req.predictors) > MAX_PREDICTORS:
+        raise HTTPException(422, f"Too many predictors ({len(req.predictors)}); the maximum is {MAX_PREDICTORS}.")
     n = len(req.outcome)
     if any(len(col) != n for col in req.predictors):
         raise HTTPException(400, "Every predictor must have one value per observation of the outcome.")
@@ -559,6 +579,7 @@ def mediation_analysis(req: MediationtRequest):
     _finite(x, m, y)
     if not 1000 <= req.n_bootstrap <= 20000:
         raise HTTPException(400, "n_bootstrap must be between 1000 and 20000.")
+    check_resampling(req.n_bootstrap, n, "bootstrap", max_resamples=20000)
 
     X = sm.add_constant(x)
     model_c = sm.OLS(y, X).fit()
@@ -577,17 +598,23 @@ def mediation_analysis(req: MediationtRequest):
     # Percentile bootstrap of a×b (vectorised OLS on resampled rows)
     rng = np.random.default_rng(req.seed)
     idx = rng.integers(0, n, size=(req.n_bootstrap, n))
-    xb, mb, yb = x[idx], m[idx], y[idx]
-    xc = xb - xb.mean(axis=1, keepdims=True)
-    mc = mb - mb.mean(axis=1, keepdims=True)
-    yc = yb - yb.mean(axis=1, keepdims=True)
-    sxx, sxm = (xc * xc).sum(1), (xc * mc).sum(1)
-    smm, sxy, smy = (mc * mc).sum(1), (xc * yc).sum(1), (mc * yc).sum(1)
-    a_b = sxm / sxx
-    det = sxx * smm - sxm ** 2
-    with np.errstate(divide="ignore", invalid="ignore"):
-        b_b = (sxx * smy - sxm * sxy) / det
-    ab = a_b * b_b
+    # Rows are processed in blocks so the resampled copies of x, m and y stay small in memory
+    ab_parts = []
+    block = max(1, 2_000_000 // n)
+    for start in range(0, req.n_bootstrap, block):
+        rows = idx[start:start + block]
+        xb, mb, yb = x[rows], m[rows], y[rows]
+        xc = xb - xb.mean(axis=1, keepdims=True)
+        mc = mb - mb.mean(axis=1, keepdims=True)
+        yc = yb - yb.mean(axis=1, keepdims=True)
+        sxx, sxm = (xc * xc).sum(1), (xc * mc).sum(1)
+        smm, sxy, smy = (mc * mc).sum(1), (xc * yc).sum(1), (mc * yc).sum(1)
+        a_b = sxm / sxx
+        det = sxx * smm - sxm ** 2
+        with np.errstate(divide="ignore", invalid="ignore"):
+            b_b = (sxx * smy - sxm * sxy) / det
+        ab_parts.append(a_b * b_b)
+    ab = np.concatenate(ab_parts)
     ab = ab[np.isfinite(ab)]
     ci_lo, ci_hi = (float(v) for v in np.percentile(ab, [2.5, 97.5]))
     boot_sig = not (ci_lo <= 0 <= ci_hi)
@@ -618,6 +645,8 @@ def repeated_measures_anova(req: RepeatedMeasuresRequest):
     k = len(req.measurements)
     if k < 2:
         raise HTTPException(400, "Need at least 2 conditions/timepoints.")
+    if k > MAX_CONDITIONS:
+        raise HTTPException(422, f"Too many conditions ({k}); the maximum is {MAX_CONDITIONS}.")
     n = len(req.measurements[0])
     if any(len(m) != n for m in req.measurements):
         raise HTTPException(400, "All conditions must have the same number of observations (one per subject).")

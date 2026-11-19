@@ -9,7 +9,17 @@ from pydantic import BaseModel
 import numpy as np
 from scipy import stats as sp_stats
 
+from app.errors import safe_detail
+
 router = APIRouter()
+
+MAX_GROUPS = 200       # groups (or predictor columns) per request
+MAX_PREDICTORS = 200   # regression predictors (VIF refits one model per predictor)
+
+
+def _check_groups(groups, what: str = "groups") -> None:
+    if groups is not None and len(groups) > MAX_GROUPS:
+        raise HTTPException(422, f"Too many {what} ({len(groups)}); the maximum is {MAX_GROUPS}.")
 
 
 class AssumptionCheckRequest(BaseModel):
@@ -70,6 +80,9 @@ def check_assumptions(req: AssumptionCheckRequest):
     checks = []
     warnings = []
     passed_all = True
+    _check_groups(req.groups)
+    if req.x and isinstance(req.x[0], list) and len(req.x[0]) > MAX_PREDICTORS:
+        raise HTTPException(422, f"Too many predictors ({len(req.x[0])}); the maximum is {MAX_PREDICTORS}.")
 
     if tt in ("ttest", "independentttest"):
         if not req.groups or len(req.groups) < 2:
@@ -196,7 +209,10 @@ def check_assumptions(req: AssumptionCheckRequest):
         # Fit simple OLS for residuals
         import statsmodels.api as sm
         X_c = sm.add_constant(X)
-        model = sm.OLS(y, X_c).fit()
+        try:
+            model = sm.OLS(y, X_c).fit()
+        except Exception as e:
+            raise HTTPException(422, safe_detail("The regression", e))
         residuals = model.resid
 
         # 1. Normality of residuals
@@ -368,6 +384,7 @@ def auto_check_and_route(req: AutoCheckRequest):
 
     arr1 = np.array(req.data1, dtype=float)
     arr2 = np.array(req.data2, dtype=float) if req.data2 else None
+    _check_groups(req.groups)
     group_arrays = [np.array(g, dtype=float) for g in req.groups] if req.groups else None
 
     # ---- t-test (independent) ----
@@ -510,7 +527,7 @@ def auto_check_and_route(req: AutoCheckRequest):
         try:
             model = sm.OLS(y, X_c).fit()
         except Exception as e:
-            raise HTTPException(400, f"Regression failed: {e}")
+            raise HTTPException(422, safe_detail("The regression", e))
         resid = model.resid
 
         # Normality of residuals

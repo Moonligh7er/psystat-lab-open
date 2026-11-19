@@ -15,7 +15,8 @@ from app.routers import novel_complexity as C
 from app.routers import novel_dialectical as D
 from app.routers import novel_spf as S
 
-run = asyncio.run
+def run(result):  # handlers may be sync (threadpool) or async
+    return asyncio.run(result) if asyncio.iscoroutine(result) else result
 
 
 @pytest.mark.validation

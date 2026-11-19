@@ -191,7 +191,7 @@ def _classify(tost_sig, nhst_sig, ci, bounds):
 # ── Endpoint ─────────────────────────────────────────────────────────────
 
 @router.post("/analyze", response_model=EquivalenceResponse)
-async def analyze_equivalence(req: EquivalenceRequest):
+def analyze_equivalence(req: EquivalenceRequest):
     test = req.test_type.lower().strip()
     if test not in DEFAULT_BOUNDS:
         raise HTTPException(422, "test_type must be ttest, paired, one_sample, correlation or proportion.")

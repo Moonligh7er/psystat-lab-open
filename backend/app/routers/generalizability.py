@@ -47,6 +47,26 @@ class UniverseScoreRequest(BaseModel):
 
 # ── Helper Functions ──────────────────────────────────────────────────
 
+MAX_PROPOSED_COUNTS = 1_000      # entries per proposed_counts list
+MAX_D_STUDY_CONFIGS = 10_000     # n_items x n_occasions combinations
+
+
+def _check_proposed_counts(pc: dict) -> None:
+    """D-study grids must be numeric and bounded (the p x i x o table is the product of the lists)."""
+    total = 1
+    for key in ("n_items", "n_occasions"):
+        vals = pc.get(key)
+        if vals is None:
+            continue
+        if not isinstance(vals, list) or not all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in vals):
+            raise HTTPException(status_code=422, detail=f"{key} must be a list of numbers.")
+        if len(vals) > MAX_PROPOSED_COUNTS:
+            raise HTTPException(status_code=422, detail=f"{key} may have at most {MAX_PROPOSED_COUNTS:,} entries.")
+        total *= max(len(vals), 1)
+    if total > MAX_D_STUDY_CONFIGS:
+        raise HTTPException(status_code=422, detail=f"Too many D-study configurations; at most {MAX_D_STUDY_CONFIGS:,} are supported.")
+
+
 def _validate_score_matrix(scores: list[list[float]], min_persons: int = 3,
                            min_conditions: int = 2):
     """Validate score matrix dimensions."""
@@ -63,7 +83,7 @@ def _validate_score_matrix(scores: list[list[float]], min_persons: int = 3,
     if len(set(lengths)) != 1:
         raise HTTPException(
             status_code=422,
-            detail=f"All persons must have the same number of scores. Got lengths: {set(lengths)}.",
+            detail=f"All persons must have the same number of scores. Got lengths: {sorted(set(lengths))[:10]}.",
         )
 
     n_conditions = lengths[0]
@@ -394,13 +414,14 @@ def d_study(req: DStudyRequest):
         raise HTTPException(status_code=422, detail="design must be 'p_x_i' or 'p_x_i_x_o'.")
 
     vc = req.variance_components
+    _check_proposed_counts(req.proposed_counts)
 
     if req.design == "p_x_i":
         required_keys = {"person", "item", "person_x_item"}
         if not required_keys.issubset(vc.keys()):
             raise HTTPException(
                 status_code=422,
-                detail=f"variance_components must include: {required_keys}. Got: {set(vc.keys())}.",
+                detail=f"variance_components must include: {sorted(required_keys)}.",
             )
 
         if "n_items" not in req.proposed_counts:

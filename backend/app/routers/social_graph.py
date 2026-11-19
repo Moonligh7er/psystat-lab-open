@@ -1,7 +1,7 @@
 """Social Graph — network analysis using NetworkX."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import networkx as nx
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
@@ -10,6 +10,16 @@ from collections import defaultdict
 from math import comb
 
 router = APIRouter()
+
+# Size limits: betweenness, closeness and shortest-path summaries are O(nodes x edges) in pure
+# Python (networkx), and the simulations repeat that work.
+MAX_NODES = 2_000
+MAX_EDGES = 20_000
+MAX_SIM_WORK = 50_000_000      # simulations x nodes x (nodes + edges) for the ERGM approximation
+MAX_DIFFUSION_WORK = 20_000_000  # simulations x (nodes + edges)
+MAX_KEY_PLAYER_WORK = 15_000_000   # (k + 1) x nodes x (nodes + edges)
+MAX_SNAPSHOTS = 100
+MAX_TEMPORAL_EDGES = 100_000    # edges summed over all snapshots
 
 
 class NetworkRequest(BaseModel):
@@ -25,7 +35,7 @@ class CommunityRequest(BaseModel):
 class ERGMRequest(BaseModel):
     edges: list[list[str | int]]
     directed: bool = False
-    n_simulations: int = 100
+    n_simulations: int = Field(100, le=1_000)
 
 
 class DiffusionRequest(BaseModel):
@@ -35,7 +45,7 @@ class DiffusionRequest(BaseModel):
     model: str = "independent_cascade"
     probability: float = 0.1
     threshold: float = 0.3
-    n_simulations: int = 100
+    n_simulations: int = Field(100, le=10_000)
 
 
 class StructuralEquivalenceRequest(BaseModel):
@@ -47,12 +57,12 @@ class StructuralEquivalenceRequest(BaseModel):
 class KeyPlayerRequest(BaseModel):
     edges: list[list[str | int]]
     directed: bool = False
-    k: int = 3
+    k: int = Field(3, le=100)
     mode: str = "removal"
 
 
 class TemporalNetworkRequest(BaseModel):
-    snapshots: list[list[list[str | int]]]
+    snapshots: list[list[list[str | int]]] = Field(..., max_length=MAX_SNAPSHOTS)
     directed: bool = False
     period_labels: list[str] | None = None
 
@@ -200,6 +210,12 @@ def ergm_approximate(req: ERGMRequest):
     n = G.number_of_nodes()
     m = G.number_of_edges()
     nodes = list(G.nodes())
+    if req.n_simulations * n * (n + m) > MAX_SIM_WORK:
+        raise HTTPException(
+            422,
+            f"Too many simulations for a network of this size; use at most "
+            f"{max(1, MAX_SIM_WORK // (n * (n + m)))} (limit: simulations x nodes x (nodes + edges) <= {MAX_SIM_WORK:,}).",
+        )
 
     # ── Observed statistics ──
     obs = _ergm_statistics(G, req.directed)
@@ -288,6 +304,16 @@ def influence_diffusion(req: DiffusionRequest):
     if req.n_simulations < 1:
         raise HTTPException(400, "n_simulations must be >= 1.")
 
+    size = G.number_of_nodes() + G.number_of_edges()
+    if req.n_simulations * size > MAX_DIFFUSION_WORK:
+        raise HTTPException(
+            422,
+            f"Too many simulations for a network of this size; use at most "
+            f"{max(1, MAX_DIFFUSION_WORK // size)} (limit: simulations x (nodes + edges) <= {MAX_DIFFUSION_WORK:,}).",
+        )
+    if len(req.seed_nodes) > MAX_NODES:
+        raise HTTPException(422, f"seed_nodes is limited to {MAX_NODES:,} entries.")
+
     all_nodes = set(G.nodes())
     seeds = set()
     for s in req.seed_nodes:
@@ -302,11 +328,14 @@ def influence_diffusion(req: DiffusionRequest):
     activation_counts: dict = defaultdict(int)
     adoption_times: dict = defaultdict(list)
 
+    # The linear threshold model has no random element, so every run gives the same cascade:
+    # compute it once rather than n_simulations times.
+    lt_run = _linear_threshold(G, seeds, req.threshold) if req.model == "linear_threshold" else None
     for _ in range(req.n_simulations):
         if req.model == "independent_cascade":
             activated, times = _independent_cascade(G, seeds, req.probability)
         else:
-            activated, times = _linear_threshold(G, seeds, req.threshold)
+            activated, times = lt_run
 
         spread_counts.append(len(activated))
         for node in activated:
@@ -478,6 +507,14 @@ def key_player(req: KeyPlayerRequest):
 
     nodes = list(G.nodes())
     k = min(req.k, len(nodes))
+    n_nodes, size = len(nodes), G.number_of_nodes() + G.number_of_edges()
+    if (k + 1) * n_nodes * size > MAX_KEY_PLAYER_WORK:
+        raise HTTPException(
+            422,
+            f"This key-player search is too large for a network of this size; use k <= "
+            f"{max(0, MAX_KEY_PLAYER_WORK // (n_nodes * size) - 1)} "
+            f"(limit: (k + 1) x nodes x (nodes + edges) <= {MAX_KEY_PLAYER_WORK:,}).",
+        )
 
     if req.mode == "removal":
         return _key_player_removal(G, nodes, k)
@@ -498,6 +535,8 @@ def temporal_network(req: TemporalNetworkRequest):
     if len(labels) != n_periods:
         raise HTTPException(400, "period_labels length must match number of snapshots.")
 
+    if sum(len(snap) for snap in req.snapshots) > MAX_TEMPORAL_EDGES:
+        raise HTTPException(422, f"Snapshots are limited to {MAX_TEMPORAL_EDGES:,} edges in total.")
     graphs = [_build_graph(snap, req.directed) for snap in req.snapshots]
 
     # ── Per-period metrics ──
@@ -609,6 +648,8 @@ def temporal_network(req: TemporalNetworkRequest):
 def _build_graph(edges: list, directed: bool):
     """Graph from [source, target] or [source, target, weight] rows. Node ids are compared as
     strings (so 1 and "1" are the same node); weights must be positive numbers."""
+    if len(edges) > MAX_EDGES:
+        raise HTTPException(422, f"Networks are limited to {MAX_EDGES:,} edges.")
     G = nx.DiGraph() if directed else nx.Graph()
     for i, edge in enumerate(edges):
         if len(edge) not in (2, 3):
@@ -620,12 +661,14 @@ def _build_graph(edges: list, directed: bool):
             try:
                 w = float(edge[2])
             except (TypeError, ValueError):
-                raise HTTPException(422, f"Edge {i + 1}: weight {edge[2]!r} is not a number.")
+                raise HTTPException(422, f"Edge {i + 1}: the weight is not a number.")
             if not w > 0:
                 raise HTTPException(422, f"Edge {i + 1}: weights must be positive.")
             G.add_edge(u, v, weight=w)
         else:
             G.add_edge(u, v)
+    if G.number_of_nodes() > MAX_NODES:
+        raise HTTPException(422, f"Networks are limited to {MAX_NODES:,} nodes.")
     return G
 
 

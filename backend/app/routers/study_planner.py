@@ -1,7 +1,7 @@
 """Study Planner — power analysis, sample size calculation, study design helpers."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from statsmodels.stats.power import (
     TTestIndPower, TTestPower, FTestAnovaPower,
@@ -16,16 +16,17 @@ class SampleSizeRequest(BaseModel):
     effect_size: float
     alpha: float = 0.05
     power: float = 0.80
-    n_groups: int = 2          # for ANOVA
-    n_levels: int = 2          # for chi-square (df)
+    n_groups: int = Field(2, le=1_000)          # for ANOVA
+    n_levels: int = Field(2, le=1_000)          # for chi-square (df)
     alternative: str = "two-sided"
 
 
 class PowerCurveRequest(BaseModel):
     test_type: str = "t-test-ind"
-    effect_sizes: list[float] = [0.2, 0.5, 0.8]
+    # The curve evaluates every effect size at every sample size: both lists are capped.
+    effect_sizes: list[float] = Field([0.2, 0.5, 0.8], max_length=100)
     alpha: float = 0.05
-    sample_sizes: list[int] = [10, 20, 30, 50, 80, 100, 150, 200]
+    sample_sizes: list[int] = Field([10, 20, 30, 50, 80, 100, 150, 200], max_length=100)
 
 
 class EffectSizeConverterRequest(BaseModel):
@@ -119,7 +120,7 @@ def calculate_sample_size(req: SampleSizeRequest):
         }
 
     else:
-        raise HTTPException(400, f"Unknown test_type: {req.test_type}")
+        raise HTTPException(400, "Unknown test_type. Use t-test-ind, t-test-paired, anova, chi-square or correlation.")
 
 
 @router.post("/power-curve")
@@ -167,7 +168,7 @@ def convert_effect_size(req: EffectSizeConverterRequest):
     elif req.from_type == "odds_ratio":
         d = np.log(req.value) * np.sqrt(3) / np.pi if req.value > 0 else None
     else:
-        raise HTTPException(400, f"Unknown from_type: {req.from_type}")
+        raise HTTPException(400, "Unknown from_type. Use d, r, eta_squared, f or odds_ratio.")
 
     if d is None:
         raise HTTPException(400, "Could not convert — check input value range.")
@@ -186,7 +187,7 @@ def convert_effect_size(req: EffectSizeConverterRequest):
     elif req.to_type == "odds_ratio":
         result["value"] = float(np.exp(d * np.pi / np.sqrt(3)))
     else:
-        raise HTTPException(400, f"Unknown to_type: {req.to_type}")
+        raise HTTPException(400, "Unknown to_type. Use d, r, eta_squared, f or odds_ratio.")
 
     result["from"] = req.from_type
     result["to"] = req.to_type

@@ -6,10 +6,12 @@ import statsmodels.api as sm
 from statsmodels.stats.diagnostic import het_breuschpagan
 from statsmodels.stats.stattools import durbin_watson
 from statsmodels.stats.outliers_influence import variance_inflation_factor
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 
 router = APIRouter(tags=["diagnostics"])
+
+MAX_PREDICTORS = 200  # VIF fits one regression per predictor, so cost grows with p^3
 
 
 # ── Request / Response Models ───────────────────────────────────────────────
@@ -27,7 +29,7 @@ class QQPlotResponse(BaseModel):
 
 class ResidualRequest(BaseModel):
     dv: str
-    ivs: List[str]
+    ivs: List[str] = Field(..., max_length=MAX_PREDICTORS)
     data: Dict[str, List[float]]
 
 class ResidualResponse(BaseModel):
@@ -61,7 +63,7 @@ class HomogeneityResponse(BaseModel):
     variance_ratio: float
 
 class MulticollinearityRequest(BaseModel):
-    predictors: List[str]
+    predictors: List[str] = Field(..., max_length=MAX_PREDICTORS)
     data: Dict[str, List[float]]
 
 class VIFEntry(BaseModel):
@@ -78,7 +80,7 @@ class MulticollinearityResponse(BaseModel):
 
 class OutlierRequest(BaseModel):
     data: Dict[str, List[float]]
-    columns: List[str]
+    columns: List[str] = Field(..., max_length=MAX_PREDICTORS)
 
 class ColumnOutlierResult(BaseModel):
     z_scores: List[float]
@@ -106,13 +108,13 @@ def _frame(data: Dict[str, List[Any]], columns: List[str], numeric: bool = True)
         raise HTTPException(422, "All data columns must have the same length.")
     missing = [c for c in columns if c not in data]
     if missing:
-        raise HTTPException(422, f"Column(s) not found in data: {', '.join(missing)}")
+        raise HTTPException(422, f"Column(s) not found in data: {', '.join(str(m)[:60] for m in missing[:10])}")
     df = pd.DataFrame(data)
     if numeric:
         for c in columns:
             conv = pd.to_numeric(df[c], errors="coerce")
             if conv.notna().sum() < df[c].notna().sum():
-                raise HTTPException(422, f"Column {c!r} must be numeric.")
+                raise HTTPException(422, f"Column {str(c)[:60]!r} must be numeric.")
             df[c] = conv
     return df
 
@@ -120,7 +122,7 @@ def _frame(data: Dict[str, List[Any]], columns: List[str], numeric: bool = True)
 # ── Endpoints ───────────────────────────────────────────────────────────────
 
 @router.post("/qq-plot", response_model=QQPlotResponse)
-async def qq_plot(req: QQPlotRequest):
+def qq_plot(req: QQPlotRequest):
     """Generate theoretical vs observed quantiles for QQ plot rendering."""
     arr = np.array(req.data, dtype=float)
     arr = arr[~np.isnan(arr)]
@@ -155,7 +157,7 @@ async def qq_plot(req: QQPlotRequest):
 
 
 @router.post("/residual-diagnostics", response_model=ResidualResponse)
-async def residual_diagnostics(req: ResidualRequest):
+def residual_diagnostics(req: ResidualRequest):
     """Compute full residual diagnostics for an OLS regression model."""
     if not req.ivs:
         raise HTTPException(422, "Provide at least one predictor (ivs).")
@@ -199,7 +201,7 @@ async def residual_diagnostics(req: ResidualRequest):
 
 
 @router.post("/homogeneity-plot", response_model=HomogeneityResponse)
-async def homogeneity_plot(req: HomogeneityRequest):
+def homogeneity_plot(req: HomogeneityRequest):
     """Assess homogeneity of variance across groups for ANOVA / t-test."""
     df = _frame(req.data, [req.group_col], numeric=False)
     df = _frame(req.data, [req.value_col]).assign(**{req.group_col: df[req.group_col]})
@@ -241,7 +243,7 @@ async def homogeneity_plot(req: HomogeneityRequest):
 
 
 @router.post("/multicollinearity", response_model=MulticollinearityResponse)
-async def multicollinearity(req: MulticollinearityRequest):
+def multicollinearity(req: MulticollinearityRequest):
     """Compute VIF, condition number, correlation matrix, and eigenvalues."""
     if len(req.predictors) < 2:
         raise HTTPException(422, "Need at least 2 predictors.")
@@ -304,7 +306,7 @@ def _grubbs_test(data: np.ndarray):
 
 
 @router.post("/outlier-diagnostics", response_model=OutlierResponse)
-async def outlier_diagnostics(req: OutlierRequest):
+def outlier_diagnostics(req: OutlierRequest):
     """Detect outliers via z-scores, IQR, Mahalanobis distance, and Grubbs test."""
     if not req.columns:
         raise HTTPException(422, "Provide at least one column.")

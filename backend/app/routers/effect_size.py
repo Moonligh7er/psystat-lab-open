@@ -12,6 +12,8 @@ from scipy import stats as sp_stats
 import math
 from typing import Optional
 
+from app.errors import safe_detail
+
 router = APIRouter()
 
 
@@ -101,6 +103,29 @@ class PowerFromEffectRequest(BaseModel):
 
 
 # ── Helpers ───────────────────────────────────────────────────────────
+
+
+def _first_n(lo: int, hi: int, power_at, target: float, linear: int = 2_000):
+    """Smallest n in [lo, hi) with power_at(n) >= target, or None.
+
+    Scans the first `linear` values one by one (as a plain loop would), then bisects the rest:
+    power rises monotonically with n, and bisection keeps a tiny effect size from costing
+    ~100,000 distribution evaluations per request.
+    """
+    for n_try in range(lo, min(hi, lo + linear)):
+        if power_at(n_try) >= target:
+            return n_try
+    a, b = lo + linear, hi - 1
+    if a > b or not power_at(b) >= target:
+        return None
+    while a < b:
+        m = (a + b) // 2
+        if power_at(m) >= target:
+            b = m
+        else:
+            a = m + 1
+    return a
+
 
 def _pooled_sd(sd1: float, sd2: float, n1: int, n2: int) -> float:
     """Compute pooled standard deviation (Cohen's formula)."""
@@ -555,7 +580,7 @@ FIELD_NORMS = {
 # ── Endpoint 1: /from-statistics ─────────────────────────────────────
 
 @router.post("/from-statistics")
-async def from_statistics(req: FromStatisticsRequest):
+def from_statistics(req: FromStatisticsRequest):
     """Calculate effect sizes from summary statistics."""
     try:
         st = req.stat_type.lower()
@@ -935,19 +960,19 @@ async def from_statistics(req: FromStatisticsRequest):
 
         else:
             raise HTTPException(status_code=422,
-                                detail=f"Unknown stat_type: '{req.stat_type}'. Supported: means, t, F, "
+                                detail="Unknown stat_type. Supported: means, t, F, "
                                        f"chi_square, r, correlation, odds_ratio, proportions, r_squared")
 
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Computation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=safe_detail("The effect size computation", e))
 
 
 # ── Endpoint 2: /convert ─────────────────────────────────────────────
 
 @router.post("/convert")
-async def convert(req: ConvertRequest):
+def convert(req: ConvertRequest):
     """Convert between any two effect size types."""
     try:
         result = _convert_direct(req.from_type, req.from_value, req.to_type,
@@ -955,7 +980,7 @@ async def convert(req: ConvertRequest):
         if result is None:
             raise HTTPException(
                 status_code=422,
-                detail=f"Cannot convert from '{req.from_type}' to '{req.to_type}'. "
+                detail="Cannot convert between these effect size types. "
                        f"Supported types: d, g, r, r_squared, fisher_z, OR, log_OR, "
                        f"eta_sq, omega_sq, f, f_sq, w, h, CLES")
 
@@ -1005,13 +1030,13 @@ async def convert(req: ConvertRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Conversion error: {str(e)}")
+        raise HTTPException(status_code=422, detail=safe_detail("The conversion", e))
 
 
 # ── Endpoint 3: /interpret ───────────────────────────────────────────
 
 @router.post("/interpret")
-async def interpret(req: InterpretRequest):
+def interpret(req: InterpretRequest):
     """Interpret effect size magnitude with benchmarks."""
     try:
         es_type = req.effect_size_type.lower()
@@ -1118,13 +1143,13 @@ async def interpret(req: InterpretRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Interpretation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=safe_detail("The interpretation", e))
 
 
 # ── Endpoint 4: /confidence-interval ─────────────────────────────────
 
 @router.post("/confidence-interval")
-async def confidence_interval(req: ConfidenceIntervalRequest):
+def confidence_interval(req: ConfidenceIntervalRequest):
     """Compute CI for any effect size using appropriate method."""
     try:
         es = req.effect_size_type.lower()
@@ -1244,7 +1269,7 @@ async def confidence_interval(req: ConfidenceIntervalRequest):
         # ── Cohen's f ──
         elif es == "f":
             eta = _f_to_eta_sq(val)
-            eta_ci = await confidence_interval(ConfidenceIntervalRequest(
+            eta_ci = confidence_interval(ConfidenceIntervalRequest(
                 effect_size_type="eta_sq", value=eta, n=n, n1=n1, n2=n2, alpha=alpha
             ))
             f_lower = _eta_sq_to_f(max(0, eta_ci["lower"]))
@@ -1287,19 +1312,19 @@ async def confidence_interval(req: ConfidenceIntervalRequest):
         else:
             raise HTTPException(
                 status_code=422,
-                detail=f"Unsupported effect size type '{es}' for CI. "
+                detail="Unsupported effect size type for CI. "
                        f"Supported: d, g, r, eta_sq, OR, log_OR, f, w, h")
 
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"CI computation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=safe_detail("The confidence interval", e))
 
 
 # ── Endpoint 5: /nnt ─────────────────────────────────────────────────
 
 @router.post("/nnt")
-async def nnt(req: NNTRequest):
+def nnt(req: NNTRequest):
     """Number needed to treat and related clinical metrics from effect size."""
     try:
         es = req.effect_size_type.lower()
@@ -1321,7 +1346,7 @@ async def nnt(req: NNTRequest):
             d = _or_to_d(val)
         else:
             raise HTTPException(status_code=422,
-                                detail=f"Unsupported type '{es}'. Use d, r, or OR.")
+                                detail="Unsupported type. Use d, r, or OR.")
 
         # ── NNT via Kraemer & Kupfer (2006) ──
         # Treatment event rate: Phi(Phi_inv(CER) + d)
@@ -1408,13 +1433,13 @@ async def nnt(req: NNTRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"NNT computation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=safe_detail("The NNT computation", e))
 
 
 # ── Endpoint 6: /power-from-effect ───────────────────────────────────
 
 @router.post("/power-from-effect")
-async def power_from_effect(req: PowerFromEffectRequest):
+def power_from_effect(req: PowerFromEffectRequest):
     """Quick power lookup from effect size."""
     try:
         es = req.effect_size_type.lower()
@@ -1460,7 +1485,7 @@ async def power_from_effect(req: PowerFromEffectRequest):
             d = _f_to_d(f_val)
         else:
             raise HTTPException(status_code=422,
-                                detail=f"Unsupported effect size type '{es}'. "
+                                detail="Unsupported effect size type. "
                                        f"Use d, g, r, f, f_sq, w, or eta_sq.")
 
         power = None
@@ -1480,20 +1505,17 @@ async def power_from_effect(req: PowerFromEffectRequest):
             method_desc = "Non-central t distribution"
 
             # Find n for 80% and 95% power (equal groups)
-            for target_power, label in [(0.80, "n_for_80"), (0.95, "n_for_95")]:
-                for n_try in range(4, 100000):
-                    n_half = n_try
-                    df_try = 2 * n_half - 2
-                    ncp_try = d * math.sqrt(n_half / 2)
-                    t_crit_try = sp_stats.t.ppf(1 - alpha / 2, df_try)
-                    pwr = 1 - sp_stats.nct.cdf(t_crit_try, df_try, ncp_try) + \
-                          sp_stats.nct.cdf(-t_crit_try, df_try, ncp_try)
-                    if pwr >= target_power:
-                        if label == "n_for_80":
-                            n_for_80 = n_half * 2
-                        else:
-                            n_for_95 = n_half * 2
-                        break
+            def _pwr_two(n_half):
+                df_try = 2 * n_half - 2
+                ncp_try = d * math.sqrt(n_half / 2)
+                t_crit_try = sp_stats.t.ppf(1 - alpha / 2, df_try)
+                return 1 - sp_stats.nct.cdf(t_crit_try, df_try, ncp_try) + \
+                    sp_stats.nct.cdf(-t_crit_try, df_try, ncp_try)
+
+            n_half_80 = _first_n(4, 100000, _pwr_two, 0.80)
+            n_half_95 = _first_n(4, 100000, _pwr_two, 0.95)
+            n_for_80 = n_half_80 * 2 if n_half_80 is not None else None
+            n_for_95 = n_half_95 * 2 if n_half_95 is not None else None
 
         # ── One-sample t-test ──
         elif test in ("one_sample_t",):
@@ -1505,19 +1527,15 @@ async def power_from_effect(req: PowerFromEffectRequest):
             power = 1 - sp_stats.nct.cdf(t_crit, df_val, ncp) + sp_stats.nct.cdf(-t_crit, df_val, ncp)
             method_desc = "Non-central t distribution (one-sample)"
 
-            for target_power, label in [(0.80, "n_for_80"), (0.95, "n_for_95")]:
-                for n_try in range(4, 100000):
-                    df_try = n_try - 1
-                    ncp_try = d * math.sqrt(n_try)
-                    t_crit_try = sp_stats.t.ppf(1 - alpha / 2, df_try)
-                    pwr = 1 - sp_stats.nct.cdf(t_crit_try, df_try, ncp_try) + \
-                          sp_stats.nct.cdf(-t_crit_try, df_try, ncp_try)
-                    if pwr >= target_power:
-                        if label == "n_for_80":
-                            n_for_80 = n_try
-                        else:
-                            n_for_95 = n_try
-                        break
+            def _pwr_one(n_try):
+                df_try = n_try - 1
+                ncp_try = d * math.sqrt(n_try)
+                t_crit_try = sp_stats.t.ppf(1 - alpha / 2, df_try)
+                return 1 - sp_stats.nct.cdf(t_crit_try, df_try, ncp_try) + \
+                    sp_stats.nct.cdf(-t_crit_try, df_try, ncp_try)
+
+            n_for_80 = _first_n(4, 100000, _pwr_one, 0.80)
+            n_for_95 = _first_n(4, 100000, _pwr_one, 0.95)
 
         # ── Paired t-test ──
         elif test in ("paired_t", "paired"):
@@ -1529,19 +1547,15 @@ async def power_from_effect(req: PowerFromEffectRequest):
             power = 1 - sp_stats.nct.cdf(t_crit, df_val, ncp) + sp_stats.nct.cdf(-t_crit, df_val, ncp)
             method_desc = "Non-central t distribution (paired)"
 
-            for target_power, label in [(0.80, "n_for_80"), (0.95, "n_for_95")]:
-                for n_try in range(4, 100000):
-                    df_try = n_try - 1
-                    ncp_try = d * math.sqrt(n_try)
-                    t_crit_try = sp_stats.t.ppf(1 - alpha / 2, df_try)
-                    pwr = 1 - sp_stats.nct.cdf(t_crit_try, df_try, ncp_try) + \
-                          sp_stats.nct.cdf(-t_crit_try, df_try, ncp_try)
-                    if pwr >= target_power:
-                        if label == "n_for_80":
-                            n_for_80 = n_try
-                        else:
-                            n_for_95 = n_try
-                        break
+            def _pwr_one(n_try):
+                df_try = n_try - 1
+                ncp_try = d * math.sqrt(n_try)
+                t_crit_try = sp_stats.t.ppf(1 - alpha / 2, df_try)
+                return 1 - sp_stats.nct.cdf(t_crit_try, df_try, ncp_try) + \
+                    sp_stats.nct.cdf(-t_crit_try, df_try, ncp_try)
+
+            n_for_80 = _first_n(4, 100000, _pwr_one, 0.80)
+            n_for_95 = _first_n(4, 100000, _pwr_one, 0.95)
 
         # ── Correlation ──
         elif test in ("correlation", "pearson", "r"):
@@ -1555,17 +1569,13 @@ async def power_from_effect(req: PowerFromEffectRequest):
             power = sp_stats.norm.sf(z_crit - z_r / se_z) + sp_stats.norm.cdf(-z_crit - z_r / se_z)
             method_desc = "Fisher z-transform"
 
-            for target_power, label in [(0.80, "n_for_80"), (0.95, "n_for_95")]:
-                for n_try in range(5, 100000):
-                    se_try = 1 / math.sqrt(n_try - 3)
-                    pwr = sp_stats.norm.sf(z_crit - z_r / se_try) + \
-                          sp_stats.norm.cdf(-z_crit - z_r / se_try)
-                    if pwr >= target_power:
-                        if label == "n_for_80":
-                            n_for_80 = n_try
-                        else:
-                            n_for_95 = n_try
-                        break
+            def _pwr_r(n_try):
+                se_try = 1 / math.sqrt(n_try - 3)
+                return sp_stats.norm.sf(z_crit - z_r / se_try) + \
+                    sp_stats.norm.cdf(-z_crit - z_r / se_try)
+
+            n_for_80 = _first_n(5, 100000, _pwr_r, 0.80)
+            n_for_95 = _first_n(5, 100000, _pwr_r, 0.95)
 
         # ── ANOVA (one-way) ──
         elif test in ("anova", "one_way_anova", "f_test"):
@@ -1582,18 +1592,14 @@ async def power_from_effect(req: PowerFromEffectRequest):
             power = 1 - sp_stats.ncf.cdf(f_crit, df1, df2, ncp)
             method_desc = "Non-central F distribution"
 
-            for target_power, label in [(0.80, "n_for_80"), (0.95, "n_for_95")]:
-                for n_try in range(2 * k + 1, 100000):
-                    df2_try = n_try - k
-                    ncp_try = f_val**2 * n_try
-                    f_crit_try = sp_stats.f.ppf(1 - alpha, df1, df2_try)
-                    pwr = 1 - sp_stats.ncf.cdf(f_crit_try, df1, df2_try, ncp_try)
-                    if pwr >= target_power:
-                        if label == "n_for_80":
-                            n_for_80 = n_try
-                        else:
-                            n_for_95 = n_try
-                        break
+            def _pwr_anova(n_try):
+                df2_try = n_try - k
+                ncp_try = f_val**2 * n_try
+                f_crit_try = sp_stats.f.ppf(1 - alpha, df1, df2_try)
+                return 1 - sp_stats.ncf.cdf(f_crit_try, df1, df2_try, ncp_try)
+
+            n_for_80 = _first_n(2 * k + 1, 100000, _pwr_anova, 0.80)
+            n_for_95 = _first_n(2 * k + 1, 100000, _pwr_anova, 0.95)
 
         # ── Chi-square ──
         elif test in ("chi_square", "chi2", "chi_squared"):
@@ -1606,16 +1612,11 @@ async def power_from_effect(req: PowerFromEffectRequest):
             power = 1 - sp_stats.ncx2.cdf(chi_crit, df_chi, ncp)
             method_desc = "Non-central chi-square distribution"
 
-            for target_power, label in [(0.80, "n_for_80"), (0.95, "n_for_95")]:
-                for n_try in range(5, 100000):
-                    ncp_try = w**2 * n_try
-                    pwr = 1 - sp_stats.ncx2.cdf(chi_crit, df_chi, ncp_try)
-                    if pwr >= target_power:
-                        if label == "n_for_80":
-                            n_for_80 = n_try
-                        else:
-                            n_for_95 = n_try
-                        break
+            def _pwr_chi(n_try):
+                return 1 - sp_stats.ncx2.cdf(chi_crit, df_chi, w**2 * n_try)
+
+            n_for_80 = _first_n(5, 100000, _pwr_chi, 0.80)
+            n_for_95 = _first_n(5, 100000, _pwr_chi, 0.95)
 
         # ── Regression ──
         elif test in ("regression", "multiple_regression", "linear_regression"):
@@ -1630,23 +1631,18 @@ async def power_from_effect(req: PowerFromEffectRequest):
             power = 1 - sp_stats.ncf.cdf(f_crit, df1, df2, ncp)
             method_desc = "Non-central F distribution (regression)"
 
-            for target_power, label in [(0.80, "n_for_80"), (0.95, "n_for_95")]:
-                for n_try in range(k_pred + 3, 100000):
-                    df2_try = n_try - k_pred - 1
-                    ncp_try = f_sq * n_try
-                    f_crit_try = sp_stats.f.ppf(1 - alpha, df1, df2_try)
-                    pwr = 1 - sp_stats.ncf.cdf(f_crit_try, df1, df2_try, ncp_try)
-                    if pwr >= target_power:
-                        if label == "n_for_80":
-                            n_for_80 = n_try
-                        else:
-                            n_for_95 = n_try
-                        break
+            def _pwr_reg(n_try):
+                df2_try = n_try - k_pred - 1
+                f_crit_try = sp_stats.f.ppf(1 - alpha, df1, df2_try)
+                return 1 - sp_stats.ncf.cdf(f_crit_try, df1, df2_try, f_sq * n_try)
+
+            n_for_80 = _first_n(k_pred + 3, 100000, _pwr_reg, 0.80)
+            n_for_95 = _first_n(k_pred + 3, 100000, _pwr_reg, 0.95)
 
         else:
             raise HTTPException(
                 status_code=422,
-                detail=f"Unknown test_type '{req.test_type}'. Supported: two_sample_t, "
+                detail="Unknown test_type. Supported: two_sample_t, "
                        f"one_sample_t, paired_t, correlation, anova, chi_square, regression")
 
         return {
@@ -1672,4 +1668,4 @@ async def power_from_effect(req: PowerFromEffectRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Power computation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=safe_detail("The power computation", e))

@@ -1,6 +1,6 @@
 """APA 7th Edition formatter — generates publication-ready text from statistical results."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import math
@@ -57,6 +57,13 @@ class APARequest(BaseModel):
 
 @router.post("/format")
 def format_apa(req: APARequest):
+    try:
+        return _format_apa(req)
+    except (TypeError, ValueError, KeyError, AttributeError):
+        raise HTTPException(422, "The results contain a missing or non-numeric value where a number is expected.")
+
+
+def _format_apa(req: APARequest) -> dict:
     r = req.results
     tt = req.test_type.lower().replace("-", "").replace("_", "").replace(" ", "")
     lines = []
@@ -228,12 +235,12 @@ def format_apa(req: APARequest):
         interpretation = "mediation supported" if sobel_p < req.alpha else "mediation not supported"
 
     else:
-        lines.append(f"APA formatting for '{req.test_type}' is not yet supported. Raw results returned.")
+        lines.append(f"APA formatting for '{req.test_type[:60]}' is not yet supported. Raw results returned.")
         interpretation = "unknown"
 
     return {
         "apa_text": " ".join(lines),
         "apa_lines": lines,
         "interpretation": interpretation,
-        "test_type": req.test_type,
+        "test_type": req.test_type[:60],
     }

@@ -4,9 +4,13 @@ from scipy import optimize, stats
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 
+from app.errors import safe_detail
 from app.routers import novel_dialectical as D
+from app.routers._limits import too_large
 
 router = APIRouter(tags=["dual-report"])
+
+MAX_VARIABLES = 200  # groups (ANOVA) or variables (regression) in `data`
 
 # ── Models ──────────────────────────────────────────────────────────────────
 
@@ -193,17 +197,24 @@ _RUNNERS = {"t-test": _run_ttest, "paired-t": _run_paired_t, "anova": _run_anova
 # ── Endpoints ───────────────────────────────────────────────────────────────
 
 @router.post("/dual-test", response_model=DualTestResponse)
-async def dual_test(req: DualTestRequest):
+def dual_test(req: DualTestRequest):
     """Run both frequentist and Bayesian analyses on the same test."""
     runner = _RUNNERS.get(req.test_type)
     if runner is None:
-        raise HTTPException(422, f"Unsupported test_type: {req.test_type}. Choose from {list(_RUNNERS.keys())}")
+        raise HTTPException(422, f"Unsupported test_type. Choose from {list(_RUNNERS.keys())}")
+    if len(req.data) > MAX_VARIABLES:
+        raise too_large(f"Too many variables or groups ({len(req.data)}); the maximum is {MAX_VARIABLES}.")
     need = {"t-test": 2, "paired-t": 2, "correlation": 2, "anova": 2, "regression": 2}[req.test_type]
     if len(req.data) < need or any(len(v) < 3 for v in req.data.values()):
         raise HTTPException(422, f"{req.test_type} needs at least {need} variables/groups with 3 or more values each.")
     if req.test_type in ("paired-t", "correlation", "regression") and len({len(v) for v in req.data.values()}) > 1:
         raise HTTPException(422, "All variables must have the same number of values for this test.")
-    freq, b = runner(req.data, req.params, req.prior_scale)
+    try:
+        freq, b = runner(req.data, req.params, req.prior_scale)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(422, safe_detail(f"The {req.test_type} analysis", exc))
     bf10 = b["bf10"]
     bf01 = 1.0/bf10 if bf10 > 0 else 1e300
     log_bf10 = float(np.log(bf10)) if bf10 > 0 else -700
@@ -243,7 +254,7 @@ async def dual_test(req: DualTestRequest):
                             bayesian=bayes, comparison=comparison)
 
 @router.post("/dual-report-apa", response_model=APAReportResponse)
-async def dual_report_apa(req: APAReportRequest):
+def dual_report_apa(req: APAReportRequest):
     """Generate formatted APA paragraph per Keysers et al. (2020) recommendations."""
     f, b, c = req.dual_result.frequentist, req.dual_result.bayesian, req.dual_result.comparison
     bayes_line = (f"A complementary Bayesian analysis ({b.prior_description}) following "

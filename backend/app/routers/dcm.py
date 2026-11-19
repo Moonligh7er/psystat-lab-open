@@ -12,11 +12,20 @@ Checked against GDINA 2.13.2 in tests/test_dcm.py.
 from itertools import combinations
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 
+from app.routers._limits import MAX_ITER, MIN_TOL
+
 router = APIRouter()
+
+# Size limits (public API, single process). EM cost per iteration ~ classes x subjects x items
+# (BLAS) plus a Python loop over items.
+MAX_SUBJECTS = 20_000
+MAX_ITEMS = 200
+MAX_RANDOM_STARTS = 20
+MAX_EM_WORK = 100_000_000_000   # (starts + 1) x max_iter x (2^K x N x J + 1000 x J) per model
 
 P_BOUNDS = (1e-4, 1 - 1e-4)
 MODELS = {"dina": "DINA", "dino": "DINO", "gdina": "G-DINA"}
@@ -27,9 +36,9 @@ MODELS = {"dina": "DINA", "dino": "DINO", "gdina": "G-DINA"}
 class DinaRequest(BaseModel):
     responses: list[list[int]]  # N × J binary response matrix
     q_matrix: list[list[int]]   # J × K binary Q-matrix (items × attributes)
-    max_iter: int = 5000
-    tol: float = 1e-8
-    random_starts: int = 5
+    max_iter: int = Field(5000, ge=1, le=MAX_ITER)
+    tol: float = Field(1e-8, ge=MIN_TOL)
+    random_starts: int = Field(5, ge=0, le=MAX_RANDOM_STARTS)
     seed: int = 1
 
 class DinoRequest(DinaRequest):
@@ -221,6 +230,10 @@ def _validate_inputs(responses, q_matrix):
     if Q.ndim != 2:
         raise HTTPException(400, "Q-matrix must be a 2D binary matrix (items x attributes).")
     N, J = R.shape
+    if N > MAX_SUBJECTS:
+        raise HTTPException(422, f"Too many subjects ({N}); the maximum is {MAX_SUBJECTS:,}.")
+    if J > MAX_ITEMS:
+        raise HTTPException(422, f"Too many items ({J}); the maximum is {MAX_ITEMS}.")
     if Q.shape[0] != J:
         raise HTTPException(400, f"Q-matrix rows ({Q.shape[0]}) must equal number of items ({J}).")
     K = Q.shape[1]
@@ -241,8 +254,16 @@ def _validate_inputs(responses, q_matrix):
     return R, Q, N, J, K
 
 
+def _check_work(req, N: int, J: int, K: int, n_models: int = 1) -> None:
+    work = n_models * (req.random_starts + 1) * req.max_iter * (2 ** K * N * J + 1000 * J)
+    if work > MAX_EM_WORK:
+        raise HTTPException(422, f"This model is too large to fit here (starts x iterations x classes x subjects x "
+                                 f"items exceeds {MAX_EM_WORK:,}). Use fewer random starts or iterations.")
+
+
 def _run(req, model: str) -> dict:
     X, Q, N, J, K = _validate_inputs(req.responses, req.q_matrix)
+    _check_work(req, N, J, K)
     names = [f"A{k + 1}" for k in range(K)]
     fit = _fit(X, Q, model, req.max_iter, req.tol, req.random_starts, req.seed)
     return _summarize(fit, X, Q, model, names)
@@ -288,6 +309,7 @@ def compare_models(req: CompareRequest):
     compared with a chi-square on the difference in parameter counts, as GDINA::anova does.
     """
     X, Q, N, J, K = _validate_inputs(req.responses, req.q_matrix)
+    _check_work(req, N, J, K, n_models=3)
     names = [f"A{k + 1}" for k in range(K)]
     res = {m: _summarize(_fit(X, Q, m, req.max_iter, req.tol, req.random_starts, req.seed), X, Q, m, names)
            for m in ("dina", "dino", "gdina")}
@@ -334,6 +356,7 @@ def qmatrix_validate(req: QMatrixValidateRequest):
     X, Q, N, J, K = _validate_inputs(req.responses, req.q_matrix)
     if not 0 < req.eps < 1:
         raise HTTPException(400, "eps must be between 0 and 1.")
+    _check_work(req, N, J, K)
     fit = _fit(X, Q, "gdina", req.max_iter, req.tol, req.random_starts, req.seed)
     patterns, post, pi = fit["patterns"], fit["post"], fit["pi"]
     Nc = post.sum(axis=0)

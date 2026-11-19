@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 import math
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 from typing import List, Dict, Any, Optional, Union
 import uuid
 from datetime import datetime
@@ -13,10 +13,25 @@ from scipy.stats.mstats import winsorize as scipy_winsorize
 import statsmodels.api as sm
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
+from app.errors import safe_detail
+
 router = APIRouter(tags=["pipeline"])
 
 Cell = Union[float, str, None]
 MAX_CELLS = 1_000_000
+MAX_STEPS = 50
+MAX_CORRELATION_COLUMNS = 100   # pairwise tests grow with columns^2
+MAX_MODEL_COLUMNS = 100         # regression predictors / VIF columns (one regression per column)
+
+
+class StepError(ValueError):
+    """A step failed for a reason we describe ourselves; its message is safe to return."""
+
+
+def _nm(x: Any) -> str:
+    """A user-supplied name for an error message: quoted and cut to 60 characters."""
+    t = str(x)
+    return repr(t if len(t) <= 60 else t[:57] + "...")
 
 
 class PipelineStep(BaseModel):
@@ -32,7 +47,7 @@ class PipelineRequest(BaseModel):
     # Column name -> values. Numeric columns hold numbers, categorical columns
     # hold strings; missing cells are null.
     data: Dict[str, List[Cell]]
-    steps: List[PipelineStep]
+    steps: List[PipelineStep] = Field(..., max_length=MAX_STEPS)
 
     @model_validator(mode="after")
     def _check_shape(self):
@@ -143,9 +158,9 @@ def _to_frame(data: Dict[str, List[Cell]]) -> pd.DataFrame:
 
 def _col(df: pd.DataFrame, name: Any, numeric: bool = False) -> str:
     if not isinstance(name, str) or name not in df.columns:
-        raise ValueError(f"Column not found: {name!r}")
+        raise StepError(f"Column not found: {_nm(name)}")
     if numeric and not pd.api.types.is_numeric_dtype(df[name]):
-        raise ValueError(f"Column {name!r} is not numeric")
+        raise StepError(f"Column {_nm(name)} is not numeric")
     return name
 
 
@@ -159,7 +174,7 @@ def _cols(df: pd.DataFrame, params: Dict[str, Any], key: str = "columns", min_n:
             raw = [c.strip() for c in raw.split(",") if c.strip()]
         cols = [_col(df, c, numeric=True) for c in raw]
     if len(cols) < min_n:
-        raise ValueError(f"Need at least {min_n} numeric column{'s' if min_n > 1 else ''}")
+        raise StepError(f"Need at least {min_n} numeric column{'s' if min_n > 1 else ''}")
     return cols
 
 
@@ -168,7 +183,7 @@ def _num(params: Dict[str, Any], key: str, default: float) -> float:
     try:
         return float(v)
     except (TypeError, ValueError):
-        raise ValueError(f"Parameter {key!r} must be a number")
+        raise StepError(f"Parameter {key!r} must be a number")
 
 
 def _groups(df: pd.DataFrame, params: Dict[str, Any]):
@@ -176,7 +191,7 @@ def _groups(df: pd.DataFrame, params: Dict[str, Any]):
     g = _col(df, params.get("group_col"))
     v = _col(df, params.get("value_col"), numeric=True)
     if g == v:
-        raise ValueError("group_col and value_col must be different columns")
+        raise StepError("group_col and value_col must be different columns")
     sub = df[[g, v]].dropna()
     levels = sorted(sub[g].unique(), key=lambda x: (isinstance(x, str), x))
     arrays = [sub.loc[sub[g] == lv, v].to_numpy(dtype=float) for lv in levels]
@@ -197,7 +212,7 @@ def _pooled_d(a: np.ndarray, b: np.ndarray):
 def _exec_remove_outliers(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any]:
     threshold = _num(params, "threshold", 3)
     if threshold <= 0:
-        raise ValueError("threshold must be positive")
+        raise StepError("threshold must be positive")
     cols = _cols(df, params)
     sub = df[cols]
     z = ((sub - sub.mean()) / sub.std(ddof=1)).abs()
@@ -213,11 +228,11 @@ def _exec_log_transform(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, A
     offset = _num(params, "offset", 0)
     logf = {"e": np.log, "ln": np.log, "10": np.log10, "2": np.log2}.get(base)
     if logf is None:
-        raise ValueError("base must be 'e', '10' or '2'")
+        raise StepError("base must be 'e', '10' or '2'")
     for c in cols:
         shifted = df[c] + offset
         if (shifted.dropna() <= 0).any():
-            raise ValueError(f"Column {c!r} has values ≤ 0 after adding offset {offset:g}; the log is undefined. Increase 'offset'.")
+            raise StepError(f"Column {_nm(c)} has values ≤ 0 after adding offset {offset:g}; the log is undefined. Increase 'offset'.")
     df = df.copy()
     for c in cols:
         df[c] = logf(df[c] + offset)
@@ -236,14 +251,14 @@ def _exec_z_score(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any]:
             continue
         df[c] = (df[c] - df[c].mean()) / sd
     if constant:
-        raise ValueError(f"Cannot standardise constant column(s): {', '.join(constant)}")
+        raise StepError(f"Cannot standardise constant column(s): {', '.join(_nm(c) for c in constant[:10])}")
     return {"results": {"normalized_columns": cols}, "df": df}
 
 
 def _exec_winsorize(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any]:
     pct = _num(params, "percentile", 5)
     if not 0 < pct < 50:
-        raise ValueError("percentile must be between 0 and 50 (per tail)")
+        raise StepError("percentile must be between 0 and 50 (per tail)")
     cols = _cols(df, params)
     df = df.copy()
     changed = {}
@@ -291,10 +306,10 @@ def _exec_normality(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any]:
 def _exec_homogeneity(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any]:
     center = str(params.get("center", "median"))
     if center not in ("median", "mean"):
-        raise ValueError("center must be 'median' (Brown–Forsythe) or 'mean' (original Levene)")
+        raise StepError("center must be 'median' (Brown–Forsythe) or 'mean' (original Levene)")
     levels, groups = _groups(df, params)
     if len(groups) < 2 or any(len(g) < 2 for g in groups):
-        raise ValueError("Need at least 2 groups with 2+ observations each")
+        raise StepError("Need at least 2 groups with 2+ observations each")
     stat, p = scipy_stats.levene(*groups, center=center)
     N, k = sum(len(g) for g in groups), len(groups)
     return {"results": {
@@ -305,9 +320,11 @@ def _exec_homogeneity(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any
 
 def _exec_multicollinearity(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any]:
     cols = _cols(df, params, min_n=2)
+    if len(cols) > MAX_MODEL_COLUMNS:
+        raise StepError(f"VIFs are limited to {MAX_MODEL_COLUMNS} columns")
     sub = df[cols].dropna()
     if len(sub) <= len(cols) + 1:
-        raise ValueError("Not enough complete rows to compute VIFs")
+        raise StepError("Not enough complete rows to compute VIFs")
     X = sm.add_constant(sub, has_constant="add").to_numpy(dtype=float)
     vifs = {c: _f(variance_inflation_factor(X, i + 1), 4) for i, c in enumerate(cols)}
     return {"results": {"vif": vifs, "n": len(sub),
@@ -336,10 +353,10 @@ def _exec_t_test(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any]:
     equal_var = str(params.get("equal_var", False)).lower() in ("true", "1", "yes")
     levels, groups = _groups(df, params)
     if len(groups) != 2:
-        raise ValueError(f"Independent t-test needs exactly 2 groups in {params.get('group_col')!r}; found {len(groups)}")
+        raise StepError(f"Independent t-test needs exactly 2 groups in {_nm(params.get('group_col'))}; found {len(groups)}")
     a, b = groups
     if len(a) < 2 or len(b) < 2:
-        raise ValueError("Each group needs at least 2 observations")
+        raise StepError("Each group needs at least 2 observations")
     res = scipy_stats.ttest_ind(a, b, equal_var=equal_var)
     d, g = _pooled_d(a, b)
     return {"results": {
@@ -355,10 +372,10 @@ def _exec_paired_t_test(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, A
     c1 = _col(df, params.get("col_1"), numeric=True)
     c2 = _col(df, params.get("col_2"), numeric=True)
     if c1 == c2:
-        raise ValueError("col_1 and col_2 must be different columns")
+        raise StepError("col_1 and col_2 must be different columns")
     sub = df[[c1, c2]].dropna()
     if len(sub) < 2:
-        raise ValueError("Need at least 2 rows with both columns present")
+        raise StepError("Need at least 2 rows with both columns present")
     diff = (sub[c1] - sub[c2]).to_numpy(dtype=float)
     res = scipy_stats.ttest_rel(sub[c1], sub[c2])
     sd = diff.std(ddof=1)
@@ -374,7 +391,7 @@ def _exec_anova(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any]:
     levels, groups = _groups(df, params)
     k, N = len(groups), sum(len(g) for g in groups)
     if k < 2 or N - k < 1:
-        raise ValueError("Need at least 2 groups and more observations than groups")
+        raise StepError("Need at least 2 groups and more observations than groups")
     f_stat, p = scipy_stats.f_oneway(*groups)
     allv = np.concatenate(groups)
     ss_b = sum(len(g) * (g.mean() - allv.mean()) ** 2 for g in groups)
@@ -392,8 +409,10 @@ def _exec_correlation(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any
     method = str(params.get("method", "pearson")).lower()
     fn = {"pearson": scipy_stats.pearsonr, "spearman": scipy_stats.spearmanr, "kendall": scipy_stats.kendalltau}.get(method)
     if fn is None:
-        raise ValueError("method must be pearson, spearman or kendall")
+        raise StepError("method must be pearson, spearman or kendall")
     cols = _cols(df, params, min_n=2)
+    if len(cols) > MAX_CORRELATION_COLUMNS:
+        raise StepError(f"Correlations are limited to {MAX_CORRELATION_COLUMNS} columns")
     pairs = []
     for i, x in enumerate(cols):
         for y in cols[i + 1:]:
@@ -409,11 +428,13 @@ def _exec_correlation(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any
 def _exec_regression(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any]:
     dv = _col(df, params.get("dv"), numeric=True)
     ivs = _cols(df, params, key="ivs")
+    if len(ivs) > MAX_MODEL_COLUMNS:
+        raise StepError(f"Regression is limited to {MAX_MODEL_COLUMNS} predictors")
     if dv in ivs:
-        raise ValueError("The outcome (dv) cannot also be a predictor")
+        raise StepError("The outcome (dv) cannot also be a predictor")
     sub = df[[dv] + ivs].dropna()
     if len(sub) <= len(ivs) + 1:
-        raise ValueError("Not enough complete rows for this many predictors")
+        raise StepError("Not enough complete rows for this many predictors")
     model = sm.OLS(sub[dv], sm.add_constant(sub[ivs], has_constant="add")).fit()
     coefficients = {
         name: {"b": _f(b, 4), "se": _f(se, 4), "t": _f(t, 4), "p": _f(p)}
@@ -432,7 +453,7 @@ def _exec_effect_size(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any
     if len(groups) == 2:
         a, b = groups
         if len(a) < 2 or len(b) < 2:
-            raise ValueError("Each group needs at least 2 observations")
+            raise StepError("Each group needs at least 2 observations")
         d, g = _pooled_d(a, b)
         return {"results": {"groups": levels, "cohens_d": _f(d, 4), "hedges_g": _f(g, 4),
                             "note": "d uses the pooled SD; sign is group 1 minus group 2."}, "df": df}
@@ -441,7 +462,7 @@ def _exec_effect_size(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any
         ss_b = sum(len(g) * (g.mean() - allv.mean()) ** 2 for g in groups)
         ss_t = float(((allv - allv.mean()) ** 2).sum())
         return {"results": {"groups": levels, "eta_squared": _f(ss_b / ss_t, 4) if ss_t else None}, "df": df}
-    raise ValueError("Need at least 2 groups")
+    raise StepError("Need at least 2 groups")
 
 
 def _coerce_like(series: pd.Series, v: Any):
@@ -449,7 +470,7 @@ def _coerce_like(series: pd.Series, v: Any):
         try:
             return float(v)
         except (TypeError, ValueError):
-            raise ValueError(f"{v!r} is not a number, but column {series.name!r} is numeric")
+            raise StepError(f"{_nm(v)} is not a number, but column {_nm(series.name)} is numeric")
     return str(v)
 
 
@@ -460,7 +481,7 @@ def _exec_recode(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any]:
         pairs = [p.split("=", 1) for p in mapping.split(",") if "=" in p]
         mapping = {k.strip(): v.strip() for k, v in pairs}
     if not isinstance(mapping, dict) or not mapping:
-        raise ValueError("mapping must be like '1=low, 2=high'")
+        raise StepError("mapping must be like '1=low, 2=high'")
     keyed = {_coerce_like(df[col], k): v for k, v in mapping.items()}
     new_vals = list(keyed.values())
     numeric_out = all(_is_number(v) for v in new_vals)
@@ -489,13 +510,13 @@ def _exec_filter(df: pd.DataFrame, params: Dict[str, Any]) -> Dict[str, Any]:
         "<": lambda s: s < val, "<=": lambda s: s <= val,
     }
     if op not in ops:
-        raise ValueError(f"Unsupported operator {op!r}; use ==, !=, >, >=, <, <=")
+        raise StepError("Unsupported operator; use ==, !=, >, >=, <, <=")
     if isinstance(val, str) and op not in ("==", "!="):
-        raise ValueError(f"Column {col!r} is categorical; only == and != are allowed")
+        raise StepError(f"Column {_nm(col)} is categorical; only == and != are allowed")
     keep = ops[op](df[col]) & df[col].notna()
     before = len(df)
     df = df.loc[keep].reset_index(drop=True)
-    return {"results": {"rows_before": before, "rows_after": len(df), "filter": f"{col} {op} {params.get('value')}"}, "df": df}
+    return {"results": {"rows_before": before, "rows_after": len(df), "filter": f"{str(col)[:60]} {op} {str(params.get('value'))[:60]}"}, "df": df}
 
 
 EXECUTORS = {
@@ -520,7 +541,7 @@ EXECUTORS = {
 
 
 @router.post("/run", response_model=PipelineResponse)
-async def run_pipeline(req: PipelineRequest):
+def run_pipeline(req: PipelineRequest):
     start = time.time()
     if not req.data:
         raise HTTPException(status_code=422, detail="No data supplied")
@@ -543,16 +564,19 @@ async def run_pipeline(req: PipelineRequest):
         executor = EXECUTORS.get((step.module, step.action))
         try:
             if executor is None:
-                raise ValueError(f"Unknown action: {step.module}/{step.action}")
+                raise StepError(f"Unknown action: {_nm(step.module)}/{_nm(step.action)}")
             if input_df is None:
-                raise ValueError(f"input_from references a step that has not run: {step.input_from}")
+                raise StepError(f"input_from references a step that has not run: {_nm(step.input_from)}")
             out = executor(input_df.copy(), step.params)
             out_df = out.get("df", input_df)
             status, results = "success", out.get("results", {})
             completed += 1
-        except (ValueError, KeyError, TypeError, np.linalg.LinAlgError) as exc:
+        except StepError as exc:
             out_df = input_df if input_df is not None else current_df
             status, results = "error", {"error": str(exc)}
+        except Exception as exc:  # library failure: log it, return a generic description
+            out_df = input_df if input_df is not None else current_df
+            status, results = "error", {"error": safe_detail(f"Step {_nm(step.id)}", exc)}
 
         outputs[step.id] = out_df
         current_df = out_df
@@ -574,7 +598,7 @@ async def run_pipeline(req: PipelineRequest):
 
 
 @router.post("/validate", response_model=ValidationResponse)
-async def validate_pipeline(req: PipelineRequest):
+def validate_pipeline(req: PipelineRequest):
     issues: List[ValidationIssue] = []
     seen_ids: set = set()
 
@@ -586,11 +610,11 @@ async def validate_pipeline(req: PipelineRequest):
 
         # Unknown module/action
         if step.module not in SUPPORTED_ACTIONS:
-            issues.append(ValidationIssue(step_id=step.id, issue=f"Unknown module: {step.module}", severity="error"))
+            issues.append(ValidationIssue(step_id=step.id, issue=f"Unknown module: {_nm(step.module)}", severity="error"))
         elif step.action not in SUPPORTED_ACTIONS[step.module]:
             issues.append(ValidationIssue(
                 step_id=step.id,
-                issue=f"Unknown action: {step.action} for module {step.module}",
+                issue=f"Unknown action: {_nm(step.action)} for module {_nm(step.module)}",
                 severity="error",
             ))
 
@@ -598,7 +622,7 @@ async def validate_pipeline(req: PipelineRequest):
         if step.input_from and step.input_from not in seen_ids:
             issues.append(ValidationIssue(
                 step_id=step.id,
-                issue=f"input_from references unknown step: {step.input_from}",
+                issue=f"input_from references unknown step: {_nm(step.input_from)}",
                 severity="error",
             ))
 
@@ -615,7 +639,7 @@ async def validate_pipeline(req: PipelineRequest):
     return ValidationResponse(valid=len([i for i in issues if i.severity == "error"]) == 0, issues=issues)
 
 @router.post("/templates")
-async def get_templates():
+def get_templates():
     _s = lambda **kw: kw  # shorthand step builder
     gp = {"group_col": "group", "value_col": "score"}
     templates = [

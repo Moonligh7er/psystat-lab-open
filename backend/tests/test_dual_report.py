@@ -13,7 +13,9 @@ from scipy import stats
 
 from app.routers import dual_report as R
 
-run = asyncio.run
+def run(result):
+    """Handlers are plain functions now (FastAPI runs them in its threadpool); still accept coroutines."""
+    return asyncio.run(result) if asyncio.iscoroutine(result) else result
 
 
 def _dual(test_type, data, **kw):

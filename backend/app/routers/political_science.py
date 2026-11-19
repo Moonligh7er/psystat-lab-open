@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 from scipy.integrate import quad
 import statsmodels.api as sm
+
+from app.errors import safe_detail
 
 router = APIRouter()
 
@@ -16,6 +18,16 @@ router = APIRouter()
 # Request Models
 # ══════════════════════════════════════════════════════════════════════
 
+# ── Limits (public API, single process) ───────────────────────────────
+MAX_COVARIATES = 50
+MAX_LEGISLATORS = 2_000        # the agreement matrix is legislators x legislators
+MAX_VOTES = 2_000              # one logistic fit per vote
+MAX_VOTE_CELLS = 1_000_000
+MAX_SCALING_ITEMS = 200        # tetrachoric correlations are computed pair by pair
+MAX_PANEL_N = 50_000
+MAX_PANEL_UNITS = 2_000        # per-unit passes cost observations x units
+
+
 class RDDRequest(BaseModel):
     running_variable: list[float]
     outcome: list[float]
@@ -23,11 +35,11 @@ class RDDRequest(BaseModel):
     bandwidth: float | None = None
     kernel: str = "triangular"
     polynomial_order: int = 1
-    covariates: list[list[float]] | None = None
+    covariates: list[list[float]] | None = Field(None, max_length=MAX_COVARIATES)
 
 
 class IdealPointRequest(BaseModel):
-    vote_matrix: list[list[int]]
+    vote_matrix: list[list[int]] = Field(..., max_length=MAX_LEGISLATORS)
     legislator_labels: list[str] | None = None
     vote_labels: list[str] | None = None
     dimensions: int = 1
@@ -37,7 +49,7 @@ class DiffInDiffRequest(BaseModel):
     outcome: list[float]
     treated: list[int]
     post: list[int]
-    covariates: list[list[float]] | None = None
+    covariates: list[list[float]] | None = None  # size checked after orientation is resolved
     covariate_names: list[str] | None = None
     cluster: list[int | str] | None = None
 
@@ -363,8 +375,17 @@ def _rdd_viz_data(
 @router.post("/ideal-point")
 def ideal_point(req: IdealPointRequest):
     """Ideal point estimation from roll-call / survey vote matrix using IRT-like decomposition."""
-    V = np.array(req.vote_matrix, dtype=float)
+    try:
+        V = np.array(req.vote_matrix, dtype=float)
+    except ValueError:
+        raise HTTPException(400, "vote_matrix must be a rectangular table (one row per legislator).")
+    if V.ndim != 2:
+        raise HTTPException(400, "vote_matrix must be a rectangular table (one row per legislator).")
     n_legs, n_votes = V.shape
+    if n_votes > MAX_VOTES:
+        raise HTTPException(422, f"vote_matrix can have at most {MAX_VOTES:,} votes (columns).")
+    if n_legs * n_votes > MAX_VOTE_CELLS:
+        raise HTTPException(422, f"vote_matrix is too large; legislators x votes must be at most {MAX_VOTE_CELLS:,}.")
 
     if n_legs < 3:
         raise HTTPException(400, "Need at least 3 legislators (rows).")
@@ -388,16 +409,18 @@ def ideal_point(req: IdealPointRequest):
 
     # ── Agreement matrix & double-centering ───────────────────────
     # Compute pairwise agreement (proportion of shared votes where both valid)
-    agree = np.zeros((n_legs, n_legs))
-    for i in range(n_legs):
-        for j in range(i, n_legs):
-            both = mask_valid[i] & mask_valid[j]
-            if np.sum(both) > 0:
-                a = np.sum(V_work[i, both] == V_work[j, both]) / np.sum(both)
-            else:
-                a = 0.5
-            agree[i, j] = a
-            agree[j, i] = a
+    # Counts via matrix products (exact integers in float64), instead of a loop over all pairs.
+    valid_f = mask_valid.astype(float)
+    n_both = valid_f @ valid_f.T
+    n_same = np.zeros((n_legs, n_legs))
+    vote_codes = np.unique(V[mask_valid])
+    if len(vote_codes) > 20:
+        raise HTTPException(422, "Votes must use at most 20 distinct codes (e.g. 1 = yea, 0 = nay, -1 = missing).")
+    for v in vote_codes:
+        ind = (mask_valid & (V == v)).astype(float)
+        n_same += ind @ ind.T
+    with np.errstate(divide="ignore", invalid="ignore"):
+        agree = np.where(n_both > 0, n_same / np.where(n_both > 0, n_both, 1), 0.5)
 
     # Double-center the agreement matrix
     row_means = np.nanmean(agree, axis=1, keepdims=True)
@@ -546,6 +569,8 @@ def diff_in_diff(req: DiffInDiffRequest):
                 covs = covs.T
             else:
                 raise HTTPException(400, "Covariates dimensions don't match outcome length.")
+        if covs.shape[1] > MAX_COVARIATES:
+            raise HTTPException(422, f"At most {MAX_COVARIATES} covariates are supported.")
         cov_names = req.covariate_names or [f"cov_{i}" for i in range(covs.shape[1])]
         if len(cov_names) != covs.shape[1]:
             raise HTTPException(400, "covariate_names length must match number of covariates.")
@@ -568,8 +593,10 @@ def diff_in_diff(req: DiffInDiffRequest):
         else:
             result = model.fit(cov_type="HC1", disp=False)
             se_type = "HC1-robust"
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(400, f"Estimation failed: {str(e)}")
+        raise HTTPException(422, safe_detail("The estimation", e))
 
     # DiD coefficient is the interaction term (index 3)
     did_idx = 3
@@ -645,7 +672,12 @@ def tscs(req: TSCSRequest):
     """Time-Series Cross-Sectional panel data models (Fixed / Random effects + Hausman)."""
     Y = np.array(req.dependent, dtype=float)
     n = len(Y)
-    X_raw = np.array(req.predictors, dtype=float)
+    if n > MAX_PANEL_N:
+        raise HTTPException(422, f"Panel models accept at most {MAX_PANEL_N:,} observations.")
+    try:
+        X_raw = np.array(req.predictors, dtype=float)
+    except ValueError:
+        raise HTTPException(400, "predictors must be a rectangular table of numbers.")
 
     if X_raw.ndim == 1:
         X_raw = X_raw.reshape(-1, 1)
@@ -664,6 +696,8 @@ def tscs(req: TSCSRequest):
         raise HTTPException(400, "model must be 'fixed', 'random', or 'both'.")
 
     k = X_raw.shape[1]
+    if k > MAX_COVARIATES:
+        raise HTTPException(422, f"At most {MAX_COVARIATES} predictors are supported.")
     pred_names = req.predictor_names or [f"x{i}" for i in range(k)]
     if len(pred_names) != k:
         raise HTTPException(400, "predictor_names length must match number of predictors.")
@@ -675,6 +709,8 @@ def tscs(req: TSCSRequest):
 
     if n_units < 2:
         raise HTTPException(400, "Need at least 2 panel units.")
+    if n_units > MAX_PANEL_UNITS:
+        raise HTTPException(422, f"Panel models accept at most {MAX_PANEL_UNITS:,} units.")
     if n_times < 2:
         raise HTTPException(400, "Need at least 2 time periods.")
 
@@ -1039,8 +1075,15 @@ def _panel_hetero_test(
 @router.post("/vote-scaling")
 def vote_scaling(req: VoteScalingRequest):
     """Vote/survey scaling via tetrachoric correlation + PCA/factor analysis."""
-    R = np.array(req.responses, dtype=float)
+    try:
+        R = np.array(req.responses, dtype=float)
+    except ValueError:
+        raise HTTPException(400, "responses must be a rectangular table (one row per respondent).")
+    if R.ndim != 2:
+        raise HTTPException(400, "responses must be a rectangular table (one row per respondent).")
     n_resp, n_items = R.shape
+    if n_items > MAX_SCALING_ITEMS:
+        raise HTTPException(422, f"Vote scaling accepts at most {MAX_SCALING_ITEMS} items.")
 
     if n_resp < 5:
         raise HTTPException(400, "Need at least 5 respondents.")

@@ -13,7 +13,12 @@ import numpy as np
 from scipy import stats as sp_stats
 from scipy.optimize import minimize
 
+from app.routers._limits import MAX_RESAMPLES, check_resampling
+
 router = APIRouter()
+
+MAX_COVARIATES = 100
+MAX_MATCH_N = 5_000   # greedy matching compares every treated unit with every control in Python
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -91,6 +96,10 @@ def _validate_inputs(treatment, covariates, outcome=None, min_n=20):
             status_code=422,
             detail=f"Need at least {min_n} observations, got {n}.",
         )
+    if not covariates:
+        raise HTTPException(status_code=422, detail="Provide at least one covariate.")
+    if len(covariates) > MAX_COVARIATES:
+        raise HTTPException(status_code=422, detail=f"At most {MAX_COVARIATES} covariates are supported.")
     for i, cov in enumerate(covariates):
         if len(cov) != n:
             raise HTTPException(
@@ -137,7 +146,8 @@ def _logistic_regression(X: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.n
     if not result.success:
         raise HTTPException(
             status_code=422,
-            detail=f"Logistic regression did not converge: {result.message}",
+            detail="The propensity score model (logistic regression) did not converge. Check for covariates "
+                   "that perfectly predict treatment, constant covariates, or very different scales.",
         )
 
     beta = result.x
@@ -342,6 +352,10 @@ def propensity_score_match(req: MatchRequest):
     """
     _validate_binary_treatment(req.treatment)
     _validate_inputs(req.treatment, req.covariates, req.outcome)
+    if len(req.treatment) > MAX_MATCH_N:
+        raise HTTPException(status_code=422, detail=f"Matching is limited to {MAX_MATCH_N:,} units; use IPTW for larger samples.")
+    if not 1 <= req.n_bootstrap <= MAX_RESAMPLES:
+        raise HTTPException(status_code=422, detail=f"n_bootstrap must be between 1 and {MAX_RESAMPLES:,}.")
 
     treatment = np.array(req.treatment)
     outcome = np.array(req.outcome)
@@ -453,6 +467,9 @@ def iptw_estimation(req: IPTWRequest):
 
     if req.estimand not in ("ATE", "ATT"):
         raise HTTPException(status_code=422, detail="estimand must be 'ATE' or 'ATT'.")
+    if not 1 <= req.n_bootstrap <= MAX_RESAMPLES:
+        raise HTTPException(status_code=422, detail=f"n_bootstrap must be between 1 and {MAX_RESAMPLES:,}.")
+    check_resampling(req.n_bootstrap, len(req.treatment), "bootstrap")
 
     treatment = np.array(req.treatment)
     outcome = np.array(req.outcome)
@@ -698,8 +715,10 @@ def balance_diagnostics(req: BalanceRequest):
 
     # Post-matching balance if indices provided
     if req.matched_indices_treated is not None and req.matched_indices_control is not None:
-        mt = np.array(req.matched_indices_treated)
-        mc = np.array(req.matched_indices_control)
+        mt = np.array(req.matched_indices_treated, dtype=int)
+        mc = np.array(req.matched_indices_control, dtype=int)
+        if np.any(mt < 0) or np.any(mt >= n) or np.any(mc < 0) or np.any(mc >= n):
+            raise HTTPException(status_code=422, detail=f"Matched indices must be between 0 and {n - 1}.")
 
         if len(mt) != len(mc):
             raise HTTPException(

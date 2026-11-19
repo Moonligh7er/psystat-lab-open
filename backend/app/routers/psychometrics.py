@@ -11,7 +11,7 @@ Reference implementations used for validation:
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import optimize
 from scipy import stats as sp_stats
@@ -19,6 +19,9 @@ from scipy import stats as sp_stats
 from app.routers.irt_advanced import irt_dichotomous_response
 
 router = APIRouter()
+
+MAX_RELIABILITY_ITEMS = 300   # item statistics recompute alpha without each item: n x k^2 work
+MAX_FA_VARIABLES = 200        # each ML iteration takes an eigendecomposition of the p x p matrix
 
 
 class ReliabilityRequest(BaseModel):
@@ -28,7 +31,7 @@ class ReliabilityRequest(BaseModel):
 
 class FactorAnalysisRequest(BaseModel):
     data: list[list[float]]  # rows = participants, cols = variables
-    n_factors: int = 2
+    n_factors: int = Field(2, le=50)
     rotation: str = "varimax"  # "varimax", "promax" or "none"
 
 
@@ -75,6 +78,8 @@ def cronbachs_alpha(req: ReliabilityRequest):
     n, k = data.shape
     if k < 2:
         raise HTTPException(422, "Need at least 2 items.")
+    if k > MAX_RELIABILITY_ITEMS:
+        raise HTTPException(422, f"Too many items ({k}); at most {MAX_RELIABILITY_ITEMS} are supported.")
     if n < 3:
         raise HTTPException(422, "Need at least 3 participants.")
     if not 0 < req.confidence_level < 1:
@@ -82,7 +87,7 @@ def cronbachs_alpha(req: ReliabilityRequest):
     sds = data.std(axis=0, ddof=1)
     if np.any(sds == 0):
         flat = [int(j) + 1 for j in np.where(sds == 0)[0]]
-        raise HTTPException(422, f"Item(s) {flat} have zero variance; alpha is undefined with constant items.")
+        raise HTTPException(422, f"Item(s) {flat[:20]} have zero variance; alpha is undefined with constant items.")
     total = data.sum(axis=1)
     alpha = _alpha(data)
     R = np.corrcoef(data, rowvar=False)
@@ -204,6 +209,8 @@ def factor_analysis(req: FactorAnalysisRequest):
         raise HTTPException(422, "rotation must be 'varimax', 'promax' or 'none'.")
     if p < 3:
         raise HTTPException(422, "Need at least 3 variables.")
+    if p > MAX_FA_VARIABLES:
+        raise HTTPException(422, f"Too many variables ({p}); at most {MAX_FA_VARIABLES} are supported.")
     if q < 1:
         raise HTTPException(422, "n_factors must be at least 1.")
     dof = ((p - q) ** 2 - p - q) / 2

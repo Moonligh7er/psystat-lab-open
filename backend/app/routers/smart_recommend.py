@@ -415,7 +415,7 @@ def validate_data(req: ValidateRequest):
     if n_total < min_required:
         warnings_list.append({
             "level": "error",
-            "message": f"Insufficient sample size: n = {n_total}, minimum required for {req.test_type} is {min_required}."
+            "message": f"Insufficient sample size: n = {n_total}, minimum required for {req.test_type[:60]} is {min_required}."
         })
         valid = False
 

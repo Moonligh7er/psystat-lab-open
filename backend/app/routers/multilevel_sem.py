@@ -27,6 +27,26 @@ router = APIRouter()
 
 LEVELS = ("within", "between")
 
+# Size limits: the two-level likelihood works per cluster and the parameter count grows with
+# the square of the number of variables.
+MAX_ROWS = 20_000
+MAX_SEM_VARIABLES = 30
+MAX_FORMULAS = 50
+MAX_PREDICTORS = 20
+MAX_RANDOM_SLOPES = 5
+MAX_DECOMP_VARIABLES = 50
+
+
+def _nm(x) -> str:
+    """A user-supplied name for an error message, quoted and cut to 60 characters."""
+    t = str(x)
+    return "'" + (t if len(t) <= 60 else t[:57] + "...") + "'"
+
+
+def _names(xs) -> str:
+    xs = list(xs)
+    return ", ".join(_nm(x) for x in xs[:10]) + (f" and {len(xs) - 10} more" if len(xs) > 10 else "")
+
 
 # ══════════════════════════════════════════════════════════════════════
 # Request Models
@@ -88,18 +108,20 @@ def _parse_formula(formula: str) -> tuple[str, list[str]]:
     """Parse 'Y ~ X1 + X2' into (outcome, [predictors])."""
     parts = formula.replace(" ", "").split("~")
     if len(parts) != 2 or not parts[0]:
-        raise HTTPException(400, f"Invalid model formula: '{formula}'. Use 'Y ~ X1 + X2'.")
+        raise HTTPException(400, f"Invalid model formula: {_nm(formula)}. Use 'Y ~ X1 + X2'.")
     preds = [p for p in parts[1].split("+") if p]
     if not preds:
-        raise HTTPException(400, f"No predictors found in formula: '{formula}'.")
+        raise HTTPException(400, f"No predictors found in formula: {_nm(formula)}.")
     return parts[0], preds
 
 
 def _frame(data: list[dict], cols: list[str], cluster: str) -> tuple[pd.DataFrame, int]:
+    if len(data) > MAX_ROWS:
+        raise HTTPException(422, f"Multilevel SEM is limited to {MAX_ROWS:,} rows.")
     df = pd.DataFrame(data)
     missing = [c for c in cols + [cluster] if c not in df.columns]
     if missing:
-        raise HTTPException(400, f"Missing columns in data: {missing}")
+        raise HTTPException(400, f"Missing columns in data: {_names(missing)}")
     df = df[cols + [cluster]]
     for c in cols:
         df[c] = pd.to_numeric(df[c], errors="coerce")
@@ -155,8 +177,13 @@ def _fit_two_level(df, cluster, observed, within_vars, build):
     SW, SB, mu = probe.moment_starts()
     params, latent, exo_w, exo_b = build(SW, SB, mu)
     sem = TwoLevelSEM(Model(observed, latent, params, 2, True), df[observed].values, df[cluster].values, within_vars)
-    fitted = sem.fit()
-    fm = two_level_fit_measures(sem, fitted, exo_w, exo_b)
+    try:
+        fitted = sem.fit()
+        fm = two_level_fit_measures(sem, fitted, exo_w, exo_b)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(422, model_error("The two-level model", exc))
     return sem, fitted, fm
 
 
@@ -221,6 +248,8 @@ def _mc_ci(sem, fitted, fn, n_draws: int, confidence: float, seed: int) -> tuple
 @router.post("/msem-two-level")
 def msem_two_level(req: TwoLevelSEMRequest):
     """Two-level path model (lavaan sem(..., cluster = )) with indirect effects per level."""
+    if len(req.within_model) + len(req.between_model) > MAX_FORMULAS:
+        raise HTTPException(422, f"At most {MAX_FORMULAS} regression formulas are supported.")
     regs = {lvl: [] for lvl in LEVELS}
     for lvl, formulas in (("within", req.within_model), ("between", req.between_model)):
         for f in formulas:
@@ -234,6 +263,8 @@ def msem_two_level(req: TwoLevelSEMRequest):
             for v in (y, x):
                 if v not in var_set:
                     var_set.append(v)
+    if len(var_set) > MAX_SEM_VARIABLES:
+        raise HTTPException(422, f"Two-level path models are limited to {MAX_SEM_VARIABLES} variables.")
     df, dropped = _frame(req.data, var_set, req.group_ids)
     J = _check_clusters(df, req.group_ids, len(var_set))
 
@@ -241,7 +272,7 @@ def msem_two_level(req: TwoLevelSEMRequest):
     between_only = [v for v in var_set if v not in within_vars]
     bad = sorted({v for y, x in regs["within"] for v in (y, x) if v in between_only})
     if bad:
-        raise HTTPException(400, f"{', '.join(bad)} do not vary within clusters, so they can only appear in the between-level model.")
+        raise HTTPException(400, f"{_names(bad)} do not vary within clusters, so they can only appear in the between-level model.")
     observed = within_vars + between_only
     notes = []
     in_w = {v for y, x in regs["within"] for v in (y, x)}
@@ -311,6 +342,10 @@ def random_slopes_sem(req: RandomSlopesSEMRequest):
     effects of each predictor from a random-intercept model with the predictor split into
     its cluster mean and the deviation from it."""
     l2 = req.level2_predictors or []
+    if len(req.predictors) + len(l2) > MAX_PREDICTORS:
+        raise HTTPException(422, f"At most {MAX_PREDICTORS} predictors are supported.")
+    if len(req.random_slopes) > MAX_RANDOM_SLOPES:
+        raise HTTPException(422, f"At most {MAX_RANDOM_SLOPES} random slopes are supported.")
     cols = list(dict.fromkeys([req.outcome] + req.predictors + l2))
     df, dropped = _frame(req.data, cols, req.group_ids)
     J = df[req.group_ids].nunique()
@@ -319,7 +354,7 @@ def random_slopes_sem(req: RandomSlopesSEMRequest):
         raise HTTPException(400, "Need at least 20 complete observations in at least 5 clusters.")
     for rs in req.random_slopes:
         if rs not in req.predictors:
-            raise HTTPException(400, f"Random slope '{rs}' must be in predictors list.")
+            raise HTTPException(400, f"Random slope {_nm(rs)} must be in predictors list.")
     zc = sp_stats.norm.ppf(0.5 + req.confidence / 2)
 
     # Column names come from the request; formulas only ever see internal names
@@ -424,6 +459,8 @@ def random_slopes_sem(req: RandomSlopesSEMRequest):
 @router.post("/within-between-decomposition")
 def within_between_decomposition(req: WithinBetweenDecompRequest):
     """Pooled-within and between covariance matrices, ICCs and design effects."""
+    if len(req.variables) > MAX_DECOMP_VARIABLES:
+        raise HTTPException(422, f"At most {MAX_DECOMP_VARIABLES} variables are supported.")
     df, dropped = _frame(req.data, req.variables, req.group_ids)
     J = df[req.group_ids].nunique()
     N = len(df)
@@ -441,9 +478,12 @@ def within_between_decomposition(req: WithinBetweenDecompRequest):
     SB_mom = (MSB.sum(axis=0) / (J - 1) - SW) / n_tilde
 
     # ML ICCs from the unrestricted two-level model
-    sat, _ = two_level_reference_models(sem, [], [])
-    fs = sat.fit()
-    SWml, SBml, _ = sat._levels(fs.theta)
+    try:
+        sat, _ = two_level_reference_models(sem, [], [])
+        fs = sat.fit()
+        SWml, SBml, _ = sat._levels(fs.theta)
+    except Exception as exc:
+        raise HTTPException(422, model_error("The unrestricted two-level model", exc))
 
     def corr(M):
         d = np.sqrt(np.clip(np.diag(M), 1e-12, None))
@@ -498,7 +538,7 @@ def cross_level_mediation(req: CrossLevelMediationRequest):
         raise HTTPException(400, "x, m, y and group_ids must have the same length.")
     mt = req.model_type.replace(" ", "")
     if mt not in ("1-1-1", "2-1-1", "1-1-2"):
-        raise HTTPException(400, f"model_type must be '1-1-1', '2-1-1', or '1-1-2'. Got '{req.model_type}'.")
+        raise HTTPException(400, "model_type must be '1-1-1', '2-1-1', or '1-1-2'.")
     groups = pd.Series(req.group_ids, dtype=str)
     if mt == "2-1-1" and req.level2_x is not None:
         order = list(dict.fromkeys(groups))
@@ -598,18 +638,20 @@ def measurement_model_multilevel(req: MultilevelCFARequest):
     items, factors = [], list(req.factor_model)
     for f, its in req.factor_model.items():
         if len(its) < 2:
-            raise HTTPException(400, f"Factor '{f}' needs at least 2 items.")
+            raise HTTPException(400, f"Factor {_nm(f)} needs at least 2 items.")
         for it in its:
             if it in items:
-                raise HTTPException(400, f"Item '{it}' assigned to multiple factors.")
+                raise HTTPException(400, f"Item {_nm(it)} assigned to multiple factors.")
             items.append(it)
     if len(items) < 3:
         raise HTTPException(400, "Need at least 3 items for CFA.")
+    if len(items) > MAX_SEM_VARIABLES:
+        raise HTTPException(422, f"Multilevel CFA is limited to {MAX_SEM_VARIABLES} items.")
     df, dropped = _frame(req.data, items, req.group_ids)
     J = _check_clusters(df, req.group_ids, len(items))
     flat = [it for it in items if not _varies_within(df, it, req.group_ids)]
     if flat:
-        raise HTTPException(400, f"Items {flat} do not vary within clusters.")
+        raise HTTPException(400, f"Items {_names(flat)} do not vary within clusters.")
 
     def build(SW, SB, mu):
         P = cfa_params(req.factor_model, groups=2, meanstructure=True, equal=("loadings",) if req.equal_loadings else (),

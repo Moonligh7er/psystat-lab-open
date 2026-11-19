@@ -27,6 +27,20 @@ router = APIRouter()
 
 METHODS = ("ebicglasso", "partial", "correlation")
 
+# Size limits (public API, single process). Every EBICglasso estimate runs 100 graphical-lasso
+# fits, each ~p^3; centrality and bridge statistics run Python shortest-path loops (~p^3).
+MAX_VARIABLES = 100
+MAX_NODES = 200
+MAX_NETWORK_WORK = 2_000_000_000   # network estimates x (100 for EBICglasso) x p^3
+
+
+def _check_network_work(n_networks: int, p: int, method: str) -> None:
+    work = n_networks * (100 if method == "ebicglasso" else 1) * p ** 3
+    if work > MAX_NETWORK_WORK:
+        raise HTTPException(422, f"This request is too large: network estimates ({n_networks}) x "
+                                 f"{'100 x ' if method == 'ebicglasso' else ''}variables^3 must not exceed "
+                                 f"{MAX_NETWORK_WORK:,}. Use fewer variables, subsamples or permutations.")
+
 
 # ── Request Models ────────────────────────────────────────────────────
 
@@ -83,6 +97,8 @@ def _data_matrix(rows: list[list[float]], label: str = "Data") -> np.ndarray:
         raise HTTPException(400, f"{label} must be a 2D array (subjects × variables).")
     if not np.all(np.isfinite(data)):
         raise HTTPException(400, f"{label} must contain only finite numbers (no missing values).")
+    if data.shape[1] > MAX_VARIABLES:
+        raise HTTPException(422, f"{label} has too many variables ({data.shape[1]}); the maximum is {MAX_VARIABLES}.")
     if data.shape[1] < 2:
         raise HTTPException(400, f"{label} needs at least 2 variables.")
     if np.any(np.std(data, axis=0) == 0):
@@ -247,6 +263,8 @@ def _square(adj_rows: list[list[float]]) -> np.ndarray:
         raise HTTPException(400, "Adjacency must be a square 2D matrix.")
     if adj.ndim != 2 or adj.shape[0] != adj.shape[1]:
         raise HTTPException(400, "Adjacency must be a square 2D matrix.")
+    if adj.shape[0] > MAX_NODES:
+        raise HTTPException(422, f"Too many nodes ({adj.shape[0]}); the maximum is {MAX_NODES}.")
     if not np.all(np.isfinite(adj)):
         raise HTTPException(400, "Adjacency must contain only finite numbers.")
     if adj.shape[0] < 2:
@@ -422,6 +440,7 @@ def stability_analysis(req: StabilityRequest):
     n_boots = max(10, min(req.n_boots, 200))
     if n_boots * len(levels) > 1000:
         raise HTTPException(400, "At most 1000 subsamples per request (n_boots × number of drop proportions).")
+    _check_network_work(1 + n_boots * len(levels), p, req.method)
     rng = np.random.default_rng(req.seed)
 
     orig_adj, _ = _estimate_network(data, req.method, req.gamma)
@@ -585,6 +604,7 @@ def compare_networks(req: CompareRequest):
 
     names = _variable_names(req.variable_names, p)
     n_perm = max(20, min(req.n_permutations, 1000))
+    _check_network_work(2 + 2 * n_perm, p, req.method)
     rng = np.random.default_rng(req.seed)
     iu = np.triu_indices(p, 1)
 

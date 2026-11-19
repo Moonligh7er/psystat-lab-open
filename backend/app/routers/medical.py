@@ -11,7 +11,12 @@ from lifelines.statistics import logrank_test, multivariate_logrank_test
 from lifelines.utils import restricted_mean_survival_time
 import pandas as pd
 
+from app.errors import safe_detail
+
 router = APIRouter()
+
+MAX_KM_GROUPS = 50       # one Kaplan-Meier fit (and curve in the response) per group
+MAX_COX_COVARIATES = 50
 
 Z95 = float(sp_stats.norm.ppf(0.975))
 
@@ -150,6 +155,8 @@ def kaplan_meier(req: KaplanMeierRequest):
         groups = sorted(set(req.group_labels))
         if len(groups) < 2:
             raise HTTPException(400, "Group labels contain only one group; omit them for a single curve.")
+        if len(groups) > MAX_KM_GROUPS:
+            raise HTTPException(422, f"Too many groups ({len(groups)}); the maximum is {MAX_KM_GROUPS}.")
         group_results = {}
         for group in groups:
             mask = labels == group
@@ -199,6 +206,8 @@ def cox_regression(req: CoxRegressionRequest):
     if covariates.ndim != 2 or covariates.shape[0] != n:
         raise HTTPException(400, "covariates must have one row per subject.")
     n_covs = covariates.shape[1]
+    if n_covs > MAX_COX_COVARIATES:
+        raise HTTPException(422, f"Too many covariates ({n_covs}); the maximum is {MAX_COX_COVARIATES}.")
     cov_names = req.covariate_names or [f"x{i + 1}" for i in range(n_covs)]
     if len(cov_names) != n_covs or len(set(cov_names)) != n_covs:
         raise HTTPException(400, f"Need {n_covs} distinct covariate names.")
@@ -213,7 +222,7 @@ def cox_regression(req: CoxRegressionRequest):
     try:
         cph.fit(df, duration_col="duration", event_col="event")
     except Exception as e:  # lifelines raises on separation / singular designs
-        raise HTTPException(400, f"Cox model could not be fitted: {e}")
+        raise HTTPException(422, safe_detail("The Cox model", e))
 
     summary = cph.summary
     covariate_results = []

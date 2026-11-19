@@ -1201,14 +1201,6 @@
         <span id="compare-last-reviewed"></span>
         We aim to be fair &mdash; <a href="mailto:moonlit-social-labs@proton.me?subject=Comparison%20table%20correction" style="color:var(--text3);text-decoration:underline;">corrections welcome</a>.
       </p>
-      <script>
-        // Auto-updates whenever the page is edited & deployed.
-        (function(){
-          var d = new Date(document.lastModified || Date.now());
-          var el = document.getElementById('compare-last-reviewed');
-          if (el) el.textContent = 'Last reviewed ' + d.toISOString().slice(0,10) + '. ';
-        })();
-      </script>
     </div>
   </div>
 </section>
@@ -1627,30 +1619,6 @@
     <p class="kofi-line">Want to support the project? <a href="https://ko-fi.com/moonlitsociallabs" target="_blank" rel="noopener">Buy us a coffee on Ko-fi</a>.</p>
   </div>
 </section>
-<script>
-  (function () {
-    var form = document.getElementById('betaForm');
-    if (!form || !window.fetch) return;
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var btn = form.querySelector('button[type=submit]');
-      var msg = document.getElementById('betaFormMsg');
-      btn.disabled = true; msg.textContent = '';
-      fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } })
-        .then(function (r) {
-          if (!r.ok) throw new Error();
-          form.reset();
-          msg.style.color = '#10B981';
-          msg.textContent = "Thanks! We'll email you a beta code when a spot opens.";
-        })
-        .catch(function () {
-          msg.style.color = '#EF4444';
-          msg.textContent = 'Something went wrong. Please try again.';
-        })
-        .finally(function () { btn.disabled = false; });
-    });
-  })();
-</script>
 
 <!-- FAQ -->
 <section id="faq">
@@ -1661,42 +1629,42 @@
     </div>
     <div class="faq-list reveal-on-scroll">
       <div class="faq-item">
-        <button class="faq-q" aria-expanded="false" onclick="toggleFaq(this)">
+        <button class="faq-q" aria-expanded="false">
           Is this accurate enough for publication?
           <span class="arrow">&#9660;</span>
         </button>
         <div class="faq-a">All computations use scipy, statsmodels, lifelines, and networkx &mdash; the same libraries behind published research in Nature, PNAS, and Psychological Methods. Every test returns the same numbers as R, SPSS, or Stata. Effect sizes include confidence intervals. APA formatting follows the 7th edition manual exactly.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q" aria-expanded="false" onclick="toggleFaq(this)">
+        <button class="faq-q" aria-expanded="false">
           Do I need to know how to code?
           <span class="arrow">&#9660;</span>
         </button>
         <div class="faq-a">No. Every analysis is point-and-click (or tap). The AI assistant can guide you through any workflow in plain English. However, if you do use R, the SEM builder exports lavaan syntax, and all results are available as JSON/CSV for further processing.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q" aria-expanded="false" onclick="toggleFaq(this)">
+        <button class="faq-q" aria-expanded="false">
           What about my data privacy?
           <span class="arrow">&#9660;</span>
         </button>
         <div class="faq-a">Straight talk: raw CSVs and spreadsheets you upload are parsed on your device and are not sent to us. When you run an analysis, the numeric columns you&rsquo;re testing are transmitted over TLS to our compute backend (Railway), the statistics run, and results come back &mdash; the compute service retains nothing after the request completes. Saved analyses are stored in your account (Supabase, row-level security, encrypted at rest by the provider) as inputs, results, and notes &mdash; never raw participant rows. The AI assistant is a separate channel: it receives truncated analysis summaries (test type, variable names, result numbers, capped at ~8&#8239;KB) plus messages you type &mdash; never raw rows &mdash; and is served by Anthropic. Subprocessors in use: Supabase (auth + storage), Railway (compute), Anthropic (AI), Vercel (web hosting), Stripe and RevenueCat (billing), Google Analytics (web page views only). We never sell your data and never use it to train models. See the <a href="privacy.html">Privacy Policy</a> for the full data-handling paragraph you can paste into an IRB protocol.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q" aria-expanded="false" onclick="toggleFaq(this)">
+        <button class="faq-q" aria-expanded="false">
           Can I use this for grant applications and IRB proposals?
           <span class="arrow">&#9660;</span>
         </button>
         <div class="faq-a">Absolutely. The power analysis module covers 8+ designs, the pre-registration builder exports OSF and AsPredicted formats, and the study planner provides field-specific effect size benchmarks. Everything you need for a methods section is generated automatically.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q" aria-expanded="false" onclick="toggleFaq(this)">
+        <button class="faq-q" aria-expanded="false">
           What statistical methods are included?
           <span class="arrow">&#9660;</span>
         </button>
         <div class="faq-a">240+ methods spanning: t-tests, ANOVA (one-way, factorial, mixed, repeated measures, MANOVA), regression (linear, logistic, multiple, HLM), SEM/CFA/path analysis, IRT (1PL through GRM), Bayesian analysis (Bayes factors, MCMC, model comparison), meta-analysis, causal inference (DAGs, IV, g-computation, doubly robust), time series (ARIMA, VAR, interrupted), machine learning, text analysis, network analysis, survival analysis, and more. If it's in a graduate stats textbook, it's probably here.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q" aria-expanded="false" onclick="toggleFaq(this)">
+        <button class="faq-q" aria-expanded="false">
           How does this compare to JASP?
           <span class="arrow">&#9660;</span>
         </button>
@@ -1743,128 +1711,8 @@
   </div>
 </footer>
 
-<script>
-// ── Module grid ─────────────────────────────────────────────────
-const MODULES = [
-  { cat: 'Core Statistics', items: [
-    { name: 'Stats Studio', sub: 'T-tests, ANOVA, regression, power', icon: '\u{1F4CA}', color: '#3B82F6' },
-    { name: 'Psychometrics', sub: 'Cronbach\'s \u03B1, factor analysis, IRT', icon: '\u{1F4CF}', color: '#8B5CF6' },
-    { name: 'Bayesian Lab', sub: 'Bayes factors, MCMC, posteriors', icon: '\u{1F52C}', color: '#06B6D4' },
-    { name: 'Meta-Analysis', sub: 'Effect pooling, forest plots, bias', icon: '\u{1F4DA}', color: '#D946EF' },
-    { name: 'Causal Inference', sub: 'DAGs, IV, g-computation', icon: '\u{1F517}', color: '#FB923C' },
-    { name: 'Multiverse', sub: 'Specification curves, robustness', icon: '\u{1F30D}', color: '#E11D48' },
-    { name: 'Dual Report', sub: 'Frequentist + Bayesian side-by-side', icon: '\u2194\uFE0F', color: '#0D9488' },
-    { name: 'Effect Sizes', sub: 'Calculator, converter, interpreter', icon: '\u{1F4D0}', color: '#2DD4BF' },
-  ]},
-  { cat: 'Specialized Domains', items: [
-    { name: 'Genomics', sub: 'SNP, HWE, polygenic risk', icon: '\u{1F9EC}', color: '#10B981' },
-    { name: 'Criminology', sub: 'Geographic profiling, recidivism', icon: '\u{1F5FA}\uFE0F', color: '#EF4444' },
-    { name: 'Social Graph', sub: 'Network metrics, diffusion', icon: '\u{1F465}', color: '#EC4899' },
-    { name: 'Medical Stats', sub: 'NNT, ROC, survival, Bland-Altman', icon: '\u{1FA7A}', color: '#14B8A6' },
-    { name: 'Time Series', sub: 'ARIMA, VAR, changepoints', icon: '\u{1F4C8}', color: '#F43F5E' },
-    { name: 'Text Analysis', sub: 'Sentiment, topics, LIWC, readability', icon: '\u{1F4DD}', color: '#A3E635' },
-    { name: 'Machine Learning', sub: 'Classification, clustering, PCA', icon: '\u{1F916}', color: '#38BDF8' },
-  ]},
-  { cat: 'Data Collection', items: [
-    { name: 'BioMetrics', sub: 'HRV, EDA, accelerometer', icon: '\u{1F493}', color: '#F59E0B' },
-    { name: 'Cognitive Lab', sub: 'Score Stroop, N-Back, Flanker, Go/No-Go data', icon: '\u{1F4A1}', color: '#F97316' },
-    { name: 'Ethnography', sub: 'Field notes, codebook, consensus', icon: '\u{1F4D3}', color: '#84CC16' },
-  ]},
-  { cat: 'Tools & Learning', items: [
-    { name: 'Data Prep', sub: 'Outliers, normality, MICE', icon: '\u{1F9F9}', color: '#0EA5E9' },
-    { name: 'Study Planner', sub: 'Power analysis, sample size', icon: '\u{1F4CB}', color: '#6366F1' },
-    { name: 'Curriculum', sub: '6 interactive courses', icon: '\u{1F393}', color: '#8B5CF6' },
-    { name: 'Pipeline Builder', sub: 'Reproducible workflows', icon: '\u{1F504}', color: '#7C3AED' },
-    { name: 'Data Simulator', sub: 'Synthetic data, Monte Carlo', icon: '\u{1F3B2}', color: '#EA580C' },
-    { name: 'Pre-Registration', sub: 'OSF / AsPredicted templates', icon: '\u{1F6E1}\uFE0F', color: '#4F46E5' },
-  ]},
-  { cat: 'Research Intelligence', items: [
-    { name: 'Adversarial Reviewer', sub: 'AI rigor grading A\u2013F', icon: '\u{1F3AF}', color: '#E11D48' },
-    { name: 'Method Triangulation', sub: '3 methods, check convergence', icon: '\u{1F52C}', color: '#7C3AED' },
-    { name: 'Assumption Auto-Gate', sub: 'Pre-analysis checks', icon: '\u{1F6A7}', color: '#F59E0B' },
-    { name: 'Contradiction Detector', sub: 'Cross-analysis consistency', icon: '\u26A0\uFE0F', color: '#EF4444' },
-    { name: 'Equivalence Testing', sub: 'TOST, equivalence bounds', icon: '\u2194\uFE0F', color: '#0D9488' },
-  ]},
-  { cat: 'Research Lifecycle', items: [
-    { name: 'Question Refiner', sub: '5-step hypothesis wizard', icon: '\u{1F4A1}', color: '#8B5CF6' },
-    { name: 'Measurement Guide', sub: '150+ validated instruments', icon: '\u{1F4CF}', color: '#06B6D4' },
-    { name: 'IRB/Ethics Generator', sub: 'AI-powered ethics drafts', icon: '\u{1F4DC}', color: '#10B981' },
-    { name: 'Narrative Builder', sub: 'Auto APA method/results', icon: '\u{1F4DD}', color: '#3B82F6' },
-    { name: 'Code Export', sub: 'R & Python for 17 tests', icon: '\u{1F4BB}', color: '#FB923C' },
-  ]},
-];
-
-const grid = document.getElementById('module-grid');
-MODULES.forEach(cat => {
-  const row = document.createElement('div');
-  row.className = 'cat-row';
-  row.innerHTML = `<div class="cat-label">${cat.cat}</div><div class="cat-grid">${
-    cat.items.map(m => `
-      <div class="mod-card" style="--icon-color:${m.color}">
-        <div class="mod-icon" style="background:${m.color}20">${m.icon}</div>
-        <div>
-          <div class="mod-name">${m.name}</div>
-          <div class="mod-sub">${m.sub}</div>
-        </div>
-      </div>
-    `).join('')
-  }</div>`;
-  grid.appendChild(row);
-});
-
-// ── Ticker ───────────────────────────────────────────────────────
-const TICKS = [
-  'T-Tests', 'ANOVA', 'Regression', 'SEM', 'CFA', 'IRT', 'MCMC', 'Bayes Factors',
-  'Meta-Analysis', 'Forest Plots', 'Funnel Plots', 'Power Analysis', 'Effect Sizes',
-  'Multiverse', 'Propensity Score', 'Kaplan-Meier', 'Cox Regression', 'HLM',
-  'ARIMA', 'DAG Analysis', 'ROC Curves', 'Bland-Altman', 'Geographic Profiling',
-  'Network Centrality', 'Sentiment Analysis', 'Topic Modeling', 'Machine Learning',
-  'Bootstrap CI', 'Permutation Tests', 'MICE Imputation', 'Cronbach\'s Alpha',
-  'Measurement Invariance', 'Latent Growth Curves',
-  'Adversarial Reviewer', 'Method Triangulation', 'Equivalence Testing',
-  'IRB Generator', 'Narrative Builder', 'Code Export (R/Python)',
-  'ELI5 Mode', 'CLT Simulation', 'Effect Size Benchmarks',
-  'Variable Tracker', 'Journal Formatting', 'Replication Package',
-];
-const tickerEl = document.getElementById('ticker');
-const tickerHTML = TICKS.map(t => `<div class="tick-item"><span class="dot"></span>${t}</div>`).join('');
-tickerEl.innerHTML = tickerHTML + tickerHTML; // duplicate for seamless loop
-
-// ── FAQ toggle ──────────────────────────────────────────────────
-function toggleFaq(btn) {
-  const answer = btn.nextElementSibling;
-  const open = answer.classList.contains('open');
-  // close all
-  document.querySelectorAll('.faq-a').forEach(a => a.classList.remove('open'));
-  document.querySelectorAll('.faq-q').forEach(q => q.setAttribute('aria-expanded', 'false'));
-  if (!open) {
-    answer.classList.add('open');
-    btn.setAttribute('aria-expanded', 'true');
-  }
-}
-
-// ── Scroll reveal ───────────────────────────────────────────────
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('revealed');
-      observer.unobserve(e.target);
-    }
-  });
-}, { threshold: 0.1 });
-document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
-
-// Cookie consent
-(function(){
-  if(localStorage.getItem('psystat_cookie_consent'))return;
-  var s=document.createElement('style');
-  s.textContent='#cookie-consent{position:fixed;bottom:0;left:0;right:0;background:#1E293B;color:#CBD5E1;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:99999;font-family:system-ui,sans-serif;font-size:14px;border-top:1px solid #334155;flex-wrap:wrap}#cookie-consent a{color:#818CF8;text-decoration:underline}#cookie-consent button{padding:8px 20px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:14px}#cookie-accept{background:#6366F1;color:#fff}#cookie-reject{background:transparent;color:#94A3B8;border:1px solid #475569}';
-  document.head.appendChild(s);
-  var d=document.createElement('div');d.id='cookie-consent';
-  d.innerHTML='<span>We use cookies for analytics. See our <a href="privacy.html">Privacy Policy</a>.</span><div style="display:flex;gap:8px"><button id="cookie-reject" onclick="this.closest(\'#cookie-consent\').remove();localStorage.setItem(\'psystat_cookie_consent\',\'rejected\')">Reject</button><button id="cookie-accept" onclick="this.closest(\'#cookie-consent\').remove();localStorage.setItem(\'psystat_cookie_consent\',\'accepted\')">Accept</button></div>';
-  document.body.appendChild(d);
-})();
-</script>
+<script src="/js/landing.js"></script>
+<script src="/js/consent.js"></script>
 <script src="/js/stat-backgrounds.js"></script>
 </body>
 </html>

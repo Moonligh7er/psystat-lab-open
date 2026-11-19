@@ -1,7 +1,7 @@
 """Stats Studio — real statistical tests using scipy and statsmodels."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 from scipy.stats import t as t_dist
@@ -9,6 +9,9 @@ import statsmodels.api as sm
 from statsmodels.stats.power import TTestIndPower, FTestAnovaPower
 
 router = APIRouter()
+
+MAX_ANOVA_GROUPS = 100      # Tukey HSD compares every pair of groups
+MAX_PREDICTORS = 200
 
 
 # ── Request / Response Models ──────────────────────────────────────────
@@ -26,7 +29,7 @@ class PairedTTestRequest(BaseModel):
 
 
 class AnovaRequest(BaseModel):
-    groups: list[list[float]]
+    groups: list[list[float]] = Field(..., max_length=MAX_ANOVA_GROUPS)
 
 
 class ChiSquareRequest(BaseModel):
@@ -43,7 +46,7 @@ class PowerAnalysisRequest(BaseModel):
     alpha: float = 0.05
     power: float = 0.80
     test_type: str = "t-test"  # "t-test" or "anova"
-    n_groups: int = 2  # for ANOVA
+    n_groups: int = Field(2, le=1_000)  # for ANOVA
 
 
 class DescriptiveRequest(BaseModel):
@@ -291,6 +294,8 @@ def linear_regression(req: RegressionRequest):
         raise HTTPException(400, "X and y must have the same number of observations.")
     if len(y) < 3:
         raise HTTPException(400, "Need at least 3 observations.")
+    if X.ndim == 2 and X.shape[1] > MAX_PREDICTORS:
+        raise HTTPException(422, f"Too many predictors ({X.shape[1]}); at most {MAX_PREDICTORS} are supported.")
 
     X_with_const = sm.add_constant(X)
     model = sm.OLS(y, X_with_const).fit()
@@ -351,7 +356,7 @@ def power_analysis(req: PowerAnalysisRequest):
             "test_type": f"one-way ANOVA ({req.n_groups} groups)",
         }
     else:
-        raise HTTPException(400, f"Unknown test_type: {req.test_type}")
+        raise HTTPException(400, "Unknown test_type. Use 't-test' or 'anova'.")
 
 
 @router.post("/descriptive")

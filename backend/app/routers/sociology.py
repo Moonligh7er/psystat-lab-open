@@ -1,12 +1,29 @@
 """Sociology — weighted surveys, event history, social mobility, inequality, segregation."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 import pandas as pd
 
+from app.errors import safe_detail
+from app.routers._limits import check_resampling
+
 router = APIRouter()
+
+MAX_LEVELS = 1_000             # distinct groups / strata (one pass over the data per level)
+MAX_EVENT_HISTORY_N = 20_000   # the log-rank loop is O(n x event times)
+MAX_INTERVALS = 200
+MAX_DESIGN_CELLS = 20_000_000  # person-periods x (covariates + period dummies)
+MAX_COVARIATES = 50
+MAX_MOBILITY_CATEGORIES = 100
+MAX_SEGREGATION_UNITS = 1_000  # the Gini segregation index compares every pair of units
+INEQUALITY_BOOT = 1000         # fixed bootstrap size for the Gini CI
+
+
+def _check_levels(arr: np.ndarray, what: str):
+    if len(np.unique(arr)) > MAX_LEVELS:
+        raise HTTPException(422, f"{what} is limited to {MAX_LEVELS:,} distinct values.")
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -23,7 +40,7 @@ class EventHistoryRequest(BaseModel):
     events: list[int]  # 1=event, 0=censored
     covariates: list[list[float]] | None = None
     covariate_names: list[str] | None = None
-    time_intervals: list[float] | None = None
+    time_intervals: list[float] | None = Field(None, max_length=MAX_INTERVALS)
 
 
 class SocialMobilityRequest(BaseModel):
@@ -127,6 +144,7 @@ def survey_weighted(req: SurveyWeightedRequest):
         groups = np.array(req.groups)
         if len(groups) != len(values):
             raise HTTPException(400, "groups must have the same length as values.")
+        _check_levels(groups, "groups")
         unique_groups = np.unique(groups)
         group_stats = {}
         for g in unique_groups:
@@ -171,6 +189,7 @@ def survey_weighted(req: SurveyWeightedRequest):
         strata = np.array(req.strata)
         if len(strata) != len(values):
             raise HTTPException(400, "strata must have the same length as values.")
+        _check_levels(strata, "strata")
         unique_strata = np.unique(strata)
         strat_estimates = {}
         combined_wm = 0.0
@@ -212,6 +231,8 @@ def event_history(req: EventHistoryRequest):
         raise HTTPException(400, "events must contain only 0 (censored) or 1 (event).")
     if np.any(durations < 0):
         raise HTTPException(400, "durations must be non-negative.")
+    if len(durations) > MAX_EVENT_HISTORY_N:
+        raise HTTPException(422, f"Event history analysis is limited to {MAX_EVENT_HISTORY_N:,} observations.")
 
     # ── Build life table ──────────────────────────────────────────────
     if req.time_intervals is not None:
@@ -283,10 +304,22 @@ def event_history(req: EventHistoryRequest):
 
     # ── Covariates: discrete-time logistic regression ─────────────────
     if req.covariates is not None:
+        if req.covariates and any(len(row) != len(req.covariates[0]) for row in req.covariates):
+            raise HTTPException(400, "Every covariate row must have the same number of values.")
         cov = np.array(req.covariates, dtype=float)
-        if cov.shape[0] != len(durations):
+        if cov.ndim != 2 or cov.shape[0] != len(durations):
             raise HTTPException(400, "covariates rows must match the number of observations.")
         n_covariates = cov.shape[1]
+        if n_covariates > MAX_COVARIATES:
+            raise HTTPException(422, f"At most {MAX_COVARIATES} covariates are supported.")
+        n_int = len(breaks) - 1
+        person_periods = int(np.sum(np.minimum(np.searchsorted(np.asarray(breaks[:-1]), durations, side="right"), n_int)))
+        if person_periods * (n_covariates + n_int) > MAX_DESIGN_CELLS:
+            raise HTTPException(
+                422,
+                f"The person-period design is too large (limit {MAX_DESIGN_CELLS:,} cells); "
+                f"use fewer time intervals or covariates.",
+            )
         cov_names = req.covariate_names or [f"X{i+1}" for i in range(n_covariates)]
         if len(cov_names) != n_covariates:
             raise HTTPException(400, "covariate_names length must match number of covariates.")
@@ -360,7 +393,7 @@ def event_history(req: EventHistoryRequest):
                 "n_person_periods": len(y_pp),
             }
         except Exception as e:
-            result["discrete_time_logistic"] = {"error": f"Model fitting failed: {str(e)}"}
+            result["discrete_time_logistic"] = {"error": safe_detail("The discrete-time logistic model", e)}
 
         # ── Log-rank test (using first covariate as binary group) ─────
         first_cov = cov[:, 0]
@@ -417,6 +450,8 @@ def social_mobility(req: SocialMobilityRequest):
 
     # Build categories (sorted union)
     all_cats = sorted(set(origin.tolist()) | set(destination.tolist()), key=str)
+    if len(all_cats) > MAX_MOBILITY_CATEGORIES:
+        raise HTTPException(422, f"Mobility tables are limited to {MAX_MOBILITY_CATEGORIES} categories.")
     cat_to_idx = {c: i for i, c in enumerate(all_cats)}
     k = len(all_cats)
 
@@ -543,11 +578,15 @@ def inequality_indices(req: InequalityRequest):
     if w_mean == 0:
         raise HTTPException(400, "Mean of values is zero — cannot compute inequality indices.")
 
+    if req.groups is not None and len(req.groups) == len(values):
+        _check_levels(np.array(req.groups), "groups")
+    check_resampling(INEQUALITY_BOOT, len(values), "Gini bootstrap")
+
     # ── Gini coefficient with bootstrap CI ────────────────────────────
     gini_point = _gini(values, weights)
     rng = np.random.default_rng(42)
     n = len(values)
-    n_boot = 1000
+    n_boot = INEQUALITY_BOOT
     gini_boot = np.empty(n_boot)
     for b in range(n_boot):
         idx = rng.choice(n, size=n, replace=True)
@@ -701,6 +740,8 @@ def segregation_indices(req: SegregationRequest):
         raise HTTPException(400, "group_a_counts and group_b_counts must have the same length.")
     if len(a) < 2:
         raise HTTPException(400, "Need at least 2 spatial units.")
+    if len(a) > MAX_SEGREGATION_UNITS:
+        raise HTTPException(422, f"Segregation indices are limited to {MAX_SEGREGATION_UNITS:,} units.")
     if np.any(a < 0) or np.any(b < 0):
         raise HTTPException(400, "Counts must be non-negative.")
 

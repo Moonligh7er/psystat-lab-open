@@ -1,18 +1,24 @@
 """MICE — Multiple Imputation by Chained Equations."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 import pandas as pd
 from scipy import stats as sp_stats
 
 router = APIRouter()
 
+# Size limits (public API, single process): cost ~ imputations x iterations x incomplete columns
+# x rows x columns.
+MAX_ROWS = 50_000
+MAX_COLUMNS = 200
+MAX_MICE_WORK = 5_000_000_000
+
 
 class MICERequest(BaseModel):
     data: list[dict]  # rows as dicts (like JSON records)
     n_imputations: int = 5
-    max_iterations: int = 10
+    max_iterations: int = Field(10, ge=1, le=100)
     seed: int | None = None
 
 
@@ -136,9 +142,17 @@ def mice_impute(req: MICERequest):
     if req.n_imputations > 50:
         raise HTTPException(400, "Maximum 50 imputations.")
 
+    if len(req.data) > MAX_ROWS:
+        raise HTTPException(422, f"Too many rows ({len(req.data)}); the maximum is {MAX_ROWS:,}.")
     df = pd.DataFrame(req.data)
+    if df.shape[1] > MAX_COLUMNS:
+        raise HTTPException(422, f"Too many columns ({df.shape[1]}); the maximum is {MAX_COLUMNS}.")
     numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
     missing_cols = [c for c in numeric_cols if df[c].isna().any()]
+    work = req.n_imputations * req.max_iterations * len(missing_cols) * len(df) * (len(numeric_cols) + 1)
+    if work > MAX_MICE_WORK:
+        raise HTTPException(422, "This imputation is too large to run here (imputations x iterations x incomplete "
+                                 f"columns x rows x columns exceeds {MAX_MICE_WORK:,}). Use fewer imputations or iterations.")
 
     if not missing_cols:
         return {

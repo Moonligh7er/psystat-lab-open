@@ -1,7 +1,7 @@
 """Bayesian Lab — Bayes Factor computation for common tests."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 from scipy.special import gammaln
@@ -21,10 +21,11 @@ class BayesFactorCorrelationRequest(BaseModel):
 
 
 class BayesFactorProportionRequest(BaseModel):
-    successes1: int
-    trials1: int
-    successes2: int
-    trials2: int
+    # Bounded so gammaln gets finite floats (Python ints are unbounded)
+    successes1: int = Field(..., ge=0, le=10**12)
+    trials1: int = Field(..., ge=0, le=10**12)
+    successes2: int = Field(..., ge=0, le=10**12)
+    trials2: int = Field(..., ge=0, le=10**12)
 
 
 # ── Endpoints ──────────────────────────────────────────────────────────

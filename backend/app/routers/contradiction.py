@@ -15,7 +15,12 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 import numpy as np
 
+from app.errors import safe_detail
+
 router = APIRouter()
+
+MAX_ANALYSES = 200            # every pair of analyses is compared
+MAX_VARIABLES_PER_ANALYSIS = 100
 
 
 # ── Pydantic Models ───────────────────────────────────────────────────────
@@ -23,12 +28,12 @@ router = APIRouter()
 class AnalysisEntry(BaseModel):
     module: str  # e.g. "Stats Studio", "Regression"
     test_type: str  # e.g. "pearson", "regression", "ttest"
-    variables: List[str]  # variable names involved
+    variables: List[str] = Field(..., max_length=MAX_VARIABLES_PER_ANALYSIS)  # variable names involved
     results: Dict[str, Any]  # must include: direction (+1/-1), effect_size, p_value, significant
 
 
 class ContradictionRequest(BaseModel):
-    analyses: List[AnalysisEntry]
+    analyses: List[AnalysisEntry] = Field(..., max_length=MAX_ANALYSES)
 
 
 class ContradictionItem(BaseModel):
@@ -249,7 +254,7 @@ def _detect_contradictions(analyses: List[AnalysisEntry]) -> List[ContradictionI
 # ── Endpoint ──────────────────────────────────────────────────────────────
 
 @router.post("/analyze", response_model=ContradictionResponse)
-async def detect_contradictions(req: ContradictionRequest):
+def detect_contradictions(req: ContradictionRequest):
     try:
         if len(req.analyses) < 2:
             raise HTTPException(status_code=400, detail="Need at least 2 analyses to check for contradictions.")
@@ -280,4 +285,4 @@ async def detect_contradictions(req: ContradictionRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=422, detail=safe_detail("The contradiction check", e))

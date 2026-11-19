@@ -13,9 +13,12 @@ from typing import Optional
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from scipy import stats as sp_stats
 from sklearn.decomposition import NMF as SklearnNMF
+
+from app.errors import safe_detail
+from app.routers._limits import too_large
 
 router = APIRouter()
 
@@ -328,13 +331,26 @@ def _stem_match(word: str, patterns: list[str]) -> bool:
 #  REQUEST / RESPONSE MODELS
 # ═══════════════════════════════════════════════════════════════════════
 
+# ── Limits (public API, single process) ────────────────────────────────
+MAX_TOPIC_DOCS = 5_000             # the TF-IDF matrix is dense: documents x vocabulary
+MAX_TFIDF_CELLS = 20_000_000
+MAX_TOPICS = 50
+MAX_TOP_N = 1_000
+MAX_KWIC_TARGETS = 50
+MAX_KWIC_WINDOW = 50
+MAX_CODING_CATEGORIES = 50
+MAX_CODING_KEYWORDS = 200          # keywords across all categories
+MAX_KEYWORD_LENGTH = 200
+MAX_CODING_CHARS = 2_000_000       # total characters of text searched by content coding
+
+
 class SentimentRequest(BaseModel):
     texts: list[str]
 
 
 class TopicModelRequest(BaseModel):
-    texts: list[str]
-    n_topics: int = 5
+    texts: list[str] = Field(..., max_length=MAX_TOPIC_DOCS)
+    n_topics: int = Field(5, le=MAX_TOPICS)
     method: str = "nmf"  # "nmf" or "lsa"
 
 
@@ -345,9 +361,9 @@ class LIWCRequest(BaseModel):
 
 class WordFrequencyRequest(BaseModel):
     texts: list[str]
-    top_n: int = 50
-    target_words: Optional[list[str]] = None  # for KWIC
-    kwic_window: int = 5
+    top_n: int = Field(50, ge=1, le=MAX_TOP_N)
+    target_words: Optional[list[str]] = Field(None, max_length=MAX_KWIC_TARGETS)  # for KWIC
+    kwic_window: int = Field(5, ge=0, le=MAX_KWIC_WINDOW)
 
 
 class ReadabilityRequest(BaseModel):
@@ -356,7 +372,9 @@ class ReadabilityRequest(BaseModel):
 
 class ContentCodingRequest(BaseModel):
     texts: list[str]
-    coding_scheme: dict[str, list[str]]  # category_name → list of keyword/regex patterns
+    # category_name → list of keywords. Keywords are matched literally (case-insensitive substring);
+    # they are not regular expressions, so user input cannot trigger catastrophic backtracking.
+    coding_scheme: dict[str, list[str]] = Field(..., max_length=MAX_CODING_CATEGORIES)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -490,6 +508,9 @@ def _build_tfidf(texts: list[str]) -> tuple[np.ndarray, list[str]]:
     if not vocab:
         return np.zeros((n_docs, 1)), ["<empty>"]
 
+    if n_docs * len(vocab) > MAX_TFIDF_CELLS:  # checked before the dense matrix is allocated
+        raise too_large(f"The texts are too large to model: documents x vocabulary must be at most {MAX_TFIDF_CELLS:,}.")
+
     word2idx = {w: i for i, w in enumerate(vocab)}
 
     # term frequency matrix
@@ -557,7 +578,7 @@ def topic_model(req: TopicModelRequest):
             topic_term = Vt[:n_topics]  # (n_topics, n_terms)
             doc_topic = U[:, :n_topics] * S[:n_topics]  # (n_docs, n_topics)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"SVD failed: {e}")
+            raise HTTPException(status_code=422, detail=safe_detail("The SVD", e))
     else:
         # NMF via sklearn
         try:
@@ -566,7 +587,7 @@ def topic_model(req: TopicModelRequest):
             doc_topic = model.fit_transform(tfidf_nn)  # (n_docs, n_topics)
             topic_term = model.components_  # (n_topics, n_terms)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"NMF failed: {e}")
+            raise HTTPException(status_code=422, detail=safe_detail("The NMF", e))
 
     # Extract top words per topic
     docs_tokenized = [_remove_stopwords(_tokenize(t)) for t in req.texts]
@@ -773,11 +794,11 @@ def word_frequency(req: WordFrequencyRequest):
     # KWIC (Keyword In Context)
     kwic_results: dict[str, list[dict]] = {}
     if req.target_words:
+        tokenized = [_tokenize(text) for text in req.texts]
         for target in req.target_words:
             target_lower = target.lower()
             contexts = []
-            for text in req.texts:
-                toks = _tokenize(text)
+            for toks in tokenized:
                 for i, tok in enumerate(toks):
                     if tok == target_lower:
                         left = " ".join(toks[max(0, i - req.kwic_window):i])
@@ -920,10 +941,18 @@ def content_coding(req: ContentCodingRequest):
     n_texts = len(req.texts)
     n_cats = len(categories)
 
-    # Build compiled patterns
+    n_keywords = sum(len(p) for p in req.coding_scheme.values())
+    if n_keywords > MAX_CODING_KEYWORDS:
+        raise too_large(f"Too many keywords ({n_keywords}); the coding scheme may hold at most {MAX_CODING_KEYWORDS}.")
+    if any(len(p) > MAX_KEYWORD_LENGTH for pats in req.coding_scheme.values() for p in pats):
+        raise HTTPException(status_code=422, detail=f"Keywords can be at most {MAX_KEYWORD_LENGTH} characters.")
+    if sum(len(t) for t in req.texts) > MAX_CODING_CHARS:
+        raise too_large(f"The texts are too long for content coding; the limit is {MAX_CODING_CHARS:,} characters in total.")
+
+    # Keywords are matched literally (escaped), never as user-supplied regular expressions.
     compiled: dict[str, list[re.Pattern]] = {}
     for cat, patterns in req.coding_scheme.items():
-        compiled[cat] = [re.compile(p, re.IGNORECASE) for p in patterns]
+        compiled[cat] = [re.compile(re.escape(p), re.IGNORECASE) for p in patterns]
 
     # Coding matrix: 1 if text matches category, 0 otherwise
     coding_matrix = np.zeros((n_texts, n_cats), dtype=int)

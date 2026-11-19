@@ -14,6 +14,23 @@ from scipy import stats as sp_stats
 
 router = APIRouter()
 
+# Size limits: each request fits mixed models with up to four optimizers (app.mixed), and
+# statsmodels' MixedLM loops over groups in Python for every likelihood evaluation.
+MAX_ROWS = 20_000
+MAX_GROUPS = 2_000
+MAX_PREDICTORS = 20
+MAX_RANDOM_SLOPES = 5
+MAX_ICC_GROUPS = 5_000
+
+
+def _check_size(n: int, n_groups: int, n_pred: int, what: str):
+    if n > MAX_ROWS:
+        raise HTTPException(422, f"{what} is limited to {MAX_ROWS:,} observations.")
+    if n_groups > MAX_GROUPS:
+        raise HTTPException(422, f"{what} is limited to {MAX_GROUPS:,} groups.")
+    if n_pred > MAX_PREDICTORS:
+        raise HTTPException(422, f"{what} is limited to {MAX_PREDICTORS} predictors.")
+
 
 # ── Request schemas ───────────────────────────────────────────────────
 
@@ -70,6 +87,11 @@ def two_level_hlm(req: TwoLevelRequest):
     n_groups = len(unique_groups)
     if n_groups < 2:
         raise HTTPException(400, "Need at least 2 groups for multilevel modeling.")
+    _check_size(n, n_groups, n_pred + len(req.level2_predictors or []), "The two-level model")
+    if req.random_slopes and n_pred > MAX_RANDOM_SLOPES:
+        raise HTTPException(
+            422, f"Random slopes are limited to {MAX_RANDOM_SLOPES} level-1 predictors; set random_slopes=false "
+                 f"or use fewer predictors.")
 
     # Build dataframe
     labels = req.predictor_names or [f"x{i+1}" for i in range(n_pred)]
@@ -238,6 +260,7 @@ def three_level_hlm(req: ThreeLevelRequest):
         raise HTTPException(400, "Need at least 2 level-3 groups.")
     if len(unique_l2) < len(unique_l3) + 1:
         raise HTTPException(400, "Need more level-2 groups than level-3 groups.")
+    _check_size(n, len(unique_l2), n_pred, "The three-level model")
 
     labels = req.predictor_names or [f"x{i+1}" for i in range(n_pred)]
     if len(labels) != n_pred:
@@ -388,6 +411,7 @@ def growth_curve(req: GrowthCurveRequest):
     n_subjects = len(unique_subjects)
     if n_subjects < 2:
         raise HTTPException(400, "Need at least 2 subjects.")
+    _check_size(n, n_subjects, len(req.covariates or []), "The growth curve model")
 
     df = pd.DataFrame({
         "y": req.dependent,
@@ -550,6 +574,8 @@ def compute_icc(req: ICCRequest):
         raise HTTPException(400, "Need at least 2 groups.")
     if k >= n:
         raise HTTPException(400, "Number of groups must be less than number of observations.")
+    if k > MAX_ICC_GROUPS:
+        raise HTTPException(422, f"The ICC is limited to {MAX_ICC_GROUPS:,} groups.")
 
     # Group means and sizes
     group_means = []

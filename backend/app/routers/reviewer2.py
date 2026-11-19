@@ -103,7 +103,7 @@ def _sensitivity(tt: str, es_type: str, n: int, alpha: float, k: int, p: int):
 # ── Endpoint ──────────────────────────────────────────────────────────────
 
 @router.post("/analyze", response_model=ReviewResponse)
-async def adversarial_review(req: ReviewRequest):
+def adversarial_review(req: ReviewRequest):
     tt = req.test_type.lower().replace("-", "_")
     tt = {"t_test": "ttest", "t": "ttest", "paired_t": "paired", "pearson": "correlation",
           "spearman": "correlation", "one_way_anova": "anova", "chi2": "chi_square"}.get(tt, tt)
@@ -112,9 +112,16 @@ async def adversarial_review(req: ReviewRequest):
         raise HTTPException(422, "sample_size must be at least 3.")
     if not 0 < alpha < 1:
         raise HTTPException(422, "alpha must be between 0 and 1.")
+    if n > 10_000_000:
+        raise HTTPException(422, "sample_size must be at most 10,000,000.")
     design = req.design_info or {}
-    k = int(design.get("groups", 2))
-    n_pred = int(design.get("predictors", 1))
+    try:
+        k = int(design.get("groups", 2))
+        n_pred = int(design.get("predictors", 1))
+    except (TypeError, ValueError):
+        raise HTTPException(422, "design_info groups and predictors must be whole numbers.")
+    if k > 1_000 or n_pred > 1_000:
+        raise HTTPException(422, "design_info groups and predictors must be at most 1,000.")
 
     res = req.results
     p = res.get("p_value")

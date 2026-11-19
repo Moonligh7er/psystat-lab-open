@@ -5,12 +5,23 @@ moderation with Johnson-Neyman, and moderated mediation.
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 import statsmodels.api as sm
 from scipy import stats as sp_stats
 
+from app.errors import safe_detail
+from app.routers._limits import MAX_RESAMPLES, check_resampling, check_work
+
 router = APIRouter()
+
+# Size limits (public API, single process)
+MAX_BOOTSTRAP = 50_000          # the vectorised simple-mediation bootstrap
+MAX_LOOP_BOOTSTRAP = MAX_RESAMPLES  # endpoints that refit statsmodels OLS once per resample
+MAX_LOOP_FITS = 60_000          # resamples x regressions per resample, for those endpoints
+MAX_COVARIATES = 20
+MAX_MEDIATORS = 10
+MAX_PROBES = 20
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -20,9 +31,9 @@ class SimpleMediationRequest(BaseModel):
     x: list[float]
     m: list[float]
     y: list[float]
-    covariates: list[list[float]] | None = None
+    covariates: list[list[float]] | None = Field(None, max_length=MAX_COVARIATES)
     covariate_names: list[str] | None = None
-    n_bootstrap: int = 5000
+    n_bootstrap: int = Field(5000, le=MAX_BOOTSTRAP)
     confidence: float = 0.95
     seed: int | None = 20240101  # fixed by default so results are reproducible
 
@@ -30,11 +41,11 @@ class SimpleMediationRequest(BaseModel):
 class ParallelMediationRequest(BaseModel):
     """PROCESS Model 4 (multiple) — parallel mediators: X -> M1,M2,...Mk -> Y."""
     x: list[float]
-    mediators: list[list[float]]
+    mediators: list[list[float]] = Field(..., max_length=MAX_MEDIATORS)
     y: list[float]
     mediator_names: list[str] | None = None
-    covariates: list[list[float]] | None = None
-    n_bootstrap: int = 5000
+    covariates: list[list[float]] | None = Field(None, max_length=MAX_COVARIATES)
+    n_bootstrap: int = Field(5000, le=MAX_BOOTSTRAP)
     confidence: float = 0.95
     seed: int | None = 20240101  # fixed by default so results are reproducible
 
@@ -45,7 +56,7 @@ class SerialMediationRequest(BaseModel):
     m1: list[float]
     m2: list[float]
     y: list[float]
-    n_bootstrap: int = 5000
+    n_bootstrap: int = Field(5000, le=MAX_BOOTSTRAP)
     confidence: float = 0.95
     seed: int | None = 20240101  # fixed by default so results are reproducible
 
@@ -55,10 +66,10 @@ class ModerationRequest(BaseModel):
     x: list[float]
     w: list[float]
     y: list[float]
-    covariates: list[list[float]] | None = None
-    probe_values: list[float] | None = None
+    covariates: list[list[float]] | None = Field(None, max_length=MAX_COVARIATES)
+    probe_values: list[float] | None = Field(None, max_length=MAX_PROBES)
     johnson_neyman: bool = True
-    n_bootstrap: int = 5000
+    n_bootstrap: int = Field(5000, le=MAX_BOOTSTRAP)
     seed: int | None = 20240101  # fixed by default so results are reproducible
 
 
@@ -68,8 +79,8 @@ class ModeratedMediationRequest(BaseModel):
     m: list[float]
     w: list[float]
     y: list[float]
-    probe_values: list[float] | None = None
-    n_bootstrap: int = 5000
+    probe_values: list[float] | None = Field(None, max_length=MAX_PROBES)
+    n_bootstrap: int = Field(5000, le=MAX_BOOTSTRAP)
     confidence: float = 0.95
     seed: int | None = 20240101  # fixed by default so results are reproducible
 
@@ -97,7 +108,7 @@ def _ols_fit(y: np.ndarray, X: np.ndarray):
         model = sm.OLS(y, X).fit()
         return model
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"OLS fitting failed: {str(e)}")
+        raise HTTPException(status_code=422, detail=safe_detail("The regression", e))
 
 
 def _build_design(x: np.ndarray, *extra_cols) -> np.ndarray:
@@ -187,6 +198,7 @@ def simple_mediation(req: SimpleMediationRequest):
     cov = _prepare_covariates(req.covariates, n)
     confidence = np.clip(req.confidence, 0.50, 0.999)
     n_boot = max(1000, min(req.n_bootstrap, 50000))
+    check_resampling(n_boot, n, "bootstrap", max_resamples=MAX_BOOTSTRAP)
 
     # --- OLS regressions ---
     # Path a: M = i + a*X (+ covariates)
@@ -211,13 +223,19 @@ def simple_mediation(req: SimpleMediationRequest):
     # --- Bootstrap ---
     rng = np.random.default_rng(req.seed)
     idx = rng.integers(0, n, size=(n_boot, n))
-    a_boot = _batched_coef(m[idx], Xa[idx], 1)
-    b_boot = _batched_coef(y[idx], Xbc[idx], 2)
+    # Resamples are processed in blocks so the (block, n, k) design copies stay small in memory
+    block = max(1, 2_000_000 // (n * Xbc.shape[1]))
+    a_parts, b_parts = [], []
+    for start in range(0, n_boot, block):
+        rows = idx[start:start + block]
+        a_parts.append(_batched_coef(m[rows], Xa[rows], 1))
+        b_parts.append(_batched_coef(y[rows], Xbc[rows], 2))
+    a_boot, b_boot = np.concatenate(a_parts), np.concatenate(b_parts)
     boot_indirect = a_boot * b_boot
 
     boot_indirect = boot_indirect[~np.isnan(boot_indirect)]
     if len(boot_indirect) < n_boot * 0.5:
-        raise HTTPException(status_code=500, detail="Too many bootstrap samples failed.")
+        raise HTTPException(status_code=422, detail="Too many bootstrap samples failed (singular resamples); check the data for constant or collinear variables.")
 
     boot_se = float(np.std(boot_indirect, ddof=1))
     pct_ci = _percentile_ci(boot_indirect, confidence)
@@ -280,6 +298,9 @@ def parallel_mediation(req: ParallelMediationRequest):
     cov = _prepare_covariates(req.covariates, n)
     confidence = np.clip(req.confidence, 0.50, 0.999)
     n_boot = max(1000, min(req.n_bootstrap, 50000))
+    check_resampling(n_boot, n, "bootstrap", max_resamples=MAX_LOOP_BOOTSTRAP)
+    check_work(n_boot * (k + 1), MAX_LOOP_FITS,
+               f"Too many bootstrap regressions: resamples x (mediators + 1) must not exceed {MAX_LOOP_FITS:,}.")
 
     med_names = req.mediator_names or [f"M{j+1}" for j in range(k)]
     if len(med_names) != k:
@@ -335,7 +356,7 @@ def parallel_mediation(req: ParallelMediationRequest):
     # Drop failed rows
     valid = ~np.isnan(boot_total_indirect)
     if np.sum(valid) < n_boot * 0.5:
-        raise HTTPException(status_code=500, detail="Too many bootstrap samples failed.")
+        raise HTTPException(status_code=422, detail="Too many bootstrap samples failed (singular resamples); check the data for constant or collinear variables.")
     boot_specific = boot_specific[valid]
     boot_total_indirect = boot_total_indirect[valid]
 
@@ -409,6 +430,7 @@ def serial_mediation(req: SerialMediationRequest):
     n = len(x)
     confidence = np.clip(req.confidence, 0.50, 0.999)
     n_boot = max(1000, min(req.n_bootstrap, 50000))
+    check_resampling(n_boot, n, "bootstrap", max_resamples=MAX_LOOP_BOOTSTRAP)
 
     # --- OLS models ---
     # Model M1: M1 = i + a1*X
@@ -460,7 +482,7 @@ def serial_mediation(req: SerialMediationRequest):
 
     valid = ~np.isnan(boot[:, 0])
     if np.sum(valid) < n_boot * 0.5:
-        raise HTTPException(status_code=500, detail="Too many bootstrap samples failed.")
+        raise HTTPException(status_code=422, detail="Too many bootstrap samples failed (singular resamples); check the data for constant or collinear variables.")
     boot = boot[valid]
     boot_total = boot.sum(axis=1)
 
@@ -686,6 +708,7 @@ def moderated_mediation(req: ModeratedMediationRequest):
     n = len(x)
     confidence = np.clip(req.confidence, 0.50, 0.999)
     n_boot = max(1000, min(req.n_bootstrap, 50000))
+    check_resampling(n_boot, n, "bootstrap", max_resamples=MAX_LOOP_BOOTSTRAP)
 
     # Mean-center W
     w_mean = float(np.mean(w))
@@ -758,7 +781,7 @@ def moderated_mediation(req: ModeratedMediationRequest):
 
     valid = ~np.isnan(boot_index)
     if np.sum(valid) < n_boot * 0.5:
-        raise HTTPException(status_code=500, detail="Too many bootstrap samples failed.")
+        raise HTTPException(status_code=422, detail="Too many bootstrap samples failed (singular resamples); check the data for constant or collinear variables.")
     boot_index = boot_index[valid]
     boot_conditional = boot_conditional[valid]
 

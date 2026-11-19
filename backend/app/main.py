@@ -1,13 +1,25 @@
 import json
+import logging
 import os
+import sqlite3
+import threading
 import time
+import uuid
 from collections import defaultdict
 
 import numpy as np
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 from starlette.responses import JSONResponse as StarletteJSONResponse
+
+
+
+async def authenticate(request):  # no accounts in the open core: every caller is anonymous
+    return None
+
 
 from fastapi import encoders as _fastapi_encoders
 
@@ -88,15 +100,27 @@ from app.routers import (
 
 PSYSTAT_VERSION = "0.2.0-beta.1"
 
+# Production = running on Railway (or explicitly flagged). Development conveniences such as the
+# interactive API docs and localhost CORS origins are off in production.
+PRODUCTION = bool(os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("PSYSTAT_PRODUCTION"))
+API_DOCS = os.environ.get("API_DOCS", "0" if PRODUCTION else "1") == "1"
+
 app = FastAPI(
     default_response_class=NumpySafeResponse,
     title="PsyStat Lab API",
     description="AI-powered behavioral science statistics and research backend",
     version=PSYSTAT_VERSION,
+    docs_url="/docs" if API_DOCS else None,
+    redoc_url="/redoc" if API_DOCS else None,
+    openapi_url="/openapi.json" if API_DOCS else None,
 )
 
+logger = logging.getLogger("psystat")
+
 # ── CORS — restricted to known origins ────────────────────────────────
-ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "").split(",") if os.environ.get("ALLOWED_ORIGINS") else [
+_DEV_ORIGINS = ["http://localhost:8081", "http://localhost:19006", "http://localhost:3000"]
+ALLOWED_ORIGINS = [o.strip() for o in os.environ["ALLOWED_ORIGINS"].split(",") if o.strip()] \
+    if os.environ.get("ALLOWED_ORIGINS") else [
     "https://psystat-lab.dev",
     "https://www.psystat-lab.dev",
     # Old vercel.app domain kept as a transition fallback so anything
@@ -104,9 +128,7 @@ ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "").split(",") if os.environ
     # Remove once analytics show zero traffic on the vercel.app origin.
     "https://psystat-nexus.vercel.app",
     "https://www.psystat-nexus.vercel.app",
-    "http://localhost:8081",
-    "http://localhost:19006",
-    "http://localhost:3000",
+    *([] if PRODUCTION else _DEV_ORIGINS),
 ]
 
 
@@ -116,39 +138,44 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
+    max_age=600,
 )
 
 
-# ── Global exception handler — guarantees CORS headers on 500 responses ──
-# Without this, an unhandled exception returns no CORS header and the browser
-# shows a misleading "blocked by CORS policy" message instead of the real error.
-def _origin_for(request: Request) -> str:
+def _cors_headers(request: Request) -> dict:
+    """CORS headers for responses produced outside CORSMiddleware (errors, limits)."""
     origin = request.headers.get("origin", "")
     if origin and origin in ALLOWED_ORIGINS:
-        return origin
-    return ALLOWED_ORIGINS[0] if ALLOWED_ORIGINS else "*"
+        return {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true", "Vary": "Origin"}
+    return {"Vary": "Origin"}
 
 
+def _reject(request: Request, status: int, detail: str, headers: dict | None = None) -> StarletteJSONResponse:
+    return StarletteJSONResponse(status_code=status, content={"detail": detail},
+                                 headers={**_cors_headers(request), **(headers or {})})
+
+
+# ── Error handlers — never return exception text to the client ─────────
+# Unhandled exceptions are logged with a short reference the user can quote; the response
+# carries only that reference (and CORS headers, so the browser shows the real error rather
+# than a misleading "blocked by CORS policy").
 @app.exception_handler(Exception)
 async def _global_exception_handler(request: Request, exc: Exception):
-    origin = _origin_for(request)
-    return StarletteJSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error", "error": str(exc)[:500]},
-        headers={
-            "Access-Control-Allow-Origin": origin,
-            "Access-Control-Allow-Credentials": "true",
-            "Vary": "Origin",
-        },
-    )
+    ref = getattr(request.state, "request_id", None) or uuid.uuid4().hex[:12]
+    logger.error("Unhandled error [%s] on %s %s", ref, request.method, request.url.path,
+                 exc_info=(type(exc), exc, exc.__traceback__))
+    return _reject(request, 500, f"Internal server error (reference {ref}).")
 
+
+@app.exception_handler(RequestValidationError)
+async def _validation_exception_handler(request: Request, exc: RequestValidationError):
+    """422 without echoing the submitted values (FastAPI's default includes them)."""
+    errors = [{"loc": list(e.get("loc", ()))[:6], "msg": str(e.get("msg", ""))[:300], "type": e.get("type")}
+              for e in exc.errors()[:20]]
+    return StarletteJSONResponse(status_code=422, content={"detail": errors}, headers=_cors_headers(request))
 
 
 # ── Rate limiter — SQLite-backed for persistence across deploys ────────
-import sqlite3
-import threading
-import math
-
 _db_lock = threading.Lock()
 _DB_PATH = os.environ.get("RATE_LIMIT_DB", "/tmp/psystat_rate_limits.db")
 
@@ -171,9 +198,29 @@ _init_rate_db()
 RATE_LIMIT_AUTH = int(os.environ.get("RATE_LIMIT_AUTH", "60"))       # Authenticated: 60 req/min
 RATE_LIMIT_UNAUTH = int(os.environ.get("RATE_LIMIT_UNAUTH", "20"))  # Unauthenticated: 20 req/min (protect compute)
 RATE_WINDOW = int(os.environ.get("RATE_WINDOW", "60"))              # seconds
+# Requests one client may have in flight at once. The analyses are CPU-bound, so this (not the
+# per-minute count) is what stops one client from occupying every worker thread.
+MAX_INFLIGHT_AUTH = int(os.environ.get("MAX_INFLIGHT_AUTH", "6"))
+MAX_INFLIGHT_UNAUTH = int(os.environ.get("MAX_INFLIGHT_UNAUTH", "3"))
 MAX_REQUEST_BODY = 10 * 1024 * 1024  # 10 MB
 MAX_ARRAY_ITEMS = 100_000   # Max items in any single array in request body
 MAX_NESTING_DEPTH = 10      # Max JSON nesting depth
+BODY_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+RATE_EXEMPT_PATHS = {"/api/payments/webhook"}
+
+# Behind Railway's proxy every request arrives from the proxy's address; the client's address
+# is the LAST entry of X-Forwarded-For (the one the proxy appended; earlier entries are
+# client-supplied and spoofable).
+TRUST_PROXY = os.environ.get("TRUST_PROXY", "1" if PRODUCTION else "0") == "1"
+
+
+def _client_ip(request: Request) -> str:
+    if TRUST_PROXY:
+        xff = request.headers.get("x-forwarded-for", "")
+        last = xff.rsplit(",", 1)[-1].strip()
+        if last:
+            return last[:64]
+    return request.client.host if request.client else "unknown"
 
 
 def _check_rate_limit(key: str, limit: int) -> bool:
@@ -197,6 +244,9 @@ def _check_rate_limit(key: str, limit: int) -> bool:
     return True
 
 
+_inflight: dict[str, int] = defaultdict(int)
+
+
 def _validate_json_depth_and_arrays(obj, depth=0):
     """Recursively validate JSON: check nesting depth and array sizes."""
     if depth > MAX_NESTING_DEPTH:
@@ -216,78 +266,103 @@ def _validate_json_depth_and_arrays(obj, depth=0):
     return None
 
 
+SECURITY_HEADERS = {
+    "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Cross-Origin-Resource-Policy": "cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+}
+API_CSP = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+DOCS_PATHS = {"/docs", "/redoc", "/docs/oauth2-redirect"}
+
+
+def _secure(response, path: str):
+    for k, v in SECURITY_HEADERS.items():
+        response.headers.setdefault(k, v)
+    if path not in DOCS_PATHS:
+        response.headers.setdefault("Content-Security-Policy", API_CSP)
+    if path.startswith("/api/"):
+        response.headers.setdefault("Cache-Control", "no-store")
+    return response
+
+
 @app.middleware("http")
 async def security_middleware(request: Request, call_next):
     path = request.url.path
+    request.state.request_id = uuid.uuid4().hex[:12]
 
     # Skip health checks
     if path == "/health":
-        return await call_next(request)
+        return _secure(await call_next(request), path)
 
-    # ── Request size limit ──
+    # ── HTTPS only in production (Railway terminates TLS and sets X-Forwarded-Proto) ──
+    if PRODUCTION and request.headers.get("x-forwarded-proto", "https") != "https":
+        return _reject(request, 400, "HTTPS required")
+
+    # ── Declared body size ──
     content_length = request.headers.get("content-length")
-    if content_length and int(content_length) > MAX_REQUEST_BODY:
-        return StarletteJSONResponse(
-            status_code=413,
-            content={"detail": "Request body too large. Maximum 10 MB."},
-        )
+    if content_length is not None:
+        if not content_length.isdigit():
+            return _reject(request, 400, "Invalid Content-Length header")
+        if int(content_length) > MAX_REQUEST_BODY:
+            return _reject(request, 413, "Request body too large. Maximum 10 MB.")
 
-    # ── HTTPS enforcement ──
-    forwarded_proto = request.headers.get("x-forwarded-proto", "")
-    if forwarded_proto == "http" and os.environ.get("ENFORCE_HTTPS", ""):
-        https_url = str(request.url).replace("http://", "https://", 1)
-        return StarletteJSONResponse(
-            status_code=301,
-            content={"detail": "HTTPS required"},
-            headers={"Location": https_url},
-        )
+    # ── Identify the caller (a bad token is only fatal on protected paths; AuthMiddleware decides) ──
+    try:
+        user_id = await authenticate(request)
+    except HTTPException:
+        user_id = None
+    if user_id:
+        rate_key, limit, max_inflight = f"user:{user_id}", RATE_LIMIT_AUTH, MAX_INFLIGHT_AUTH
+    else:
+        rate_key, limit, max_inflight = f"ip:{_client_ip(request)}", RATE_LIMIT_UNAUTH, MAX_INFLIGHT_UNAUTH
 
-    # ── Global input validation (arrays/nesting in request body) ──
-    if request.method == "POST" and content_length and int(content_length) > 0:
-        try:
-            body_bytes = await request.body()
-            if body_bytes:
-                import json as _json
+    # ── Tiered rate limiting (per minute, and concurrent requests) ──
+    # Stripe's webhook deliveries are verified by signature and must not be throttled.
+    if request.method != "OPTIONS" and path not in RATE_EXEMPT_PATHS:
+        if not await run_in_threadpool(_check_rate_limit, rate_key, limit):
+            return _reject(request, 429, f"Rate limit exceeded ({limit} requests/minute). Please try again shortly.",
+                           {"Retry-After": str(RATE_WINDOW)})
+        if _inflight[rate_key] >= max_inflight:
+            return _reject(request, 429, "Too many requests running at once. Wait for one to finish and try again.",
+                           {"Retry-After": "5"})
+
+    _inflight[rate_key] += 1
+    try:
+        # ── Read the body with a hard size cap (also covers chunked bodies with no Content-Length) ──
+        if request.method in BODY_METHODS:
+            chunks, total = [], 0
+            async for chunk in request.stream():
+                total += len(chunk)
+                if total > MAX_REQUEST_BODY:
+                    return _reject(request, 413, "Request body too large. Maximum 10 MB.")
+                chunks.append(chunk)
+            body = b"".join(chunks)
+            request._body = body  # replayed to the endpoint by Starlette
+
+            # ── Global input validation (arrays/nesting in JSON bodies) ──
+            if body and "json" in request.headers.get("content-type", "").lower():
                 try:
-                    parsed = _json.loads(body_bytes)
+                    parsed = json.loads(body)
+                except RecursionError:
+                    return _reject(request, 400, "Request data is too deeply nested")
+                except ValueError:
+                    parsed = None  # malformed JSON: FastAPI returns the 422
+                if parsed is not None:
                     err = _validate_json_depth_and_arrays(parsed)
                     if err:
-                        return StarletteJSONResponse(
-                            status_code=400,
-                            content={"detail": err},
-                        )
-                except _json.JSONDecodeError:
-                    pass  # Let FastAPI handle malformed JSON
+                        return _reject(request, 400, err)
 
-                # Re-inject body so downstream can read it
-                async def receive():
-                    return {"type": "http.request", "body": body_bytes}
-                request._receive = receive
-        except Exception:
-            pass
+        response = await call_next(request)
+    finally:
+        _inflight[rate_key] -= 1
+        if _inflight[rate_key] <= 0:
+            _inflight.pop(rate_key, None)
 
-    # ── Tiered rate limiting ──
-    # Extract user_id directly from JWT (don't rely on request.state which
-    # may not be set yet depending on middleware execution order)
-    user_id = None
-    auth_header = request.headers.get("authorization", "")
-    is_authenticated = bool(user_id)
-
-    if is_authenticated:
-        rate_key = f"user:{user_id}"
-        limit = RATE_LIMIT_AUTH
-    else:
-        client_ip = request.client.host if request.client else "unknown"
-        rate_key = f"ip:{client_ip}"
-        limit = RATE_LIMIT_UNAUTH
-
-    if not _check_rate_limit(rate_key, limit):
-        return StarletteJSONResponse(
-            status_code=429,
-            content={"detail": f"Rate limit exceeded ({limit} requests/minute). Please try again shortly."},
-        )
-
-    return await call_next(request)
+    response.headers["X-Request-ID"] = request.state.request_id
+    return _secure(response, path)
 
 
 app.include_router(stats.router, prefix="/api/stats", tags=["Stats Studio"])

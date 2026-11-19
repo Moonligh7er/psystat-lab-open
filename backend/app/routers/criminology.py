@@ -2,7 +2,7 @@
 recidivism survival analysis, and propensity score matching."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 from scipy.spatial.distance import cdist
@@ -11,6 +11,17 @@ from collections import Counter
 from typing import Optional
 
 router = APIRouter()
+
+# Size limits. The Rossmo surface evaluates every grid cell against every incident in Python;
+# survival loops run once per event time over all cases; matching compares every treated
+# case with every control in Python.
+MAX_INCIDENTS = 10_000
+MAX_PROFILE_WORK = 5_000_000      # grid_resolution^2 x incidents
+MAX_CLUSTERS = 50
+MAX_SURVIVAL_N = 20_000
+MAX_RISK_FACTORS = 50
+MAX_MATCH_N = 5_000
+MAX_COVARIATES = 100
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -34,7 +45,7 @@ class GeographicProfileRequest(BaseModel):
 
 class SpatialClusterRequest(BaseModel):
     points: list[list[float]]
-    n_clusters: int = 3
+    n_clusters: int = Field(3, le=MAX_CLUSTERS)
 
 
 class TemporalIncident(BaseModel):
@@ -71,6 +82,14 @@ def geographic_profile(req: GeographicProfileRequest):
         raise HTTPException(400, "At least 2 incidents required for geographic profiling.")
     if req.grid_resolution < 5 or req.grid_resolution > 200:
         raise HTTPException(400, "grid_resolution must be between 5 and 200.")
+    if len(req.incidents) > MAX_INCIDENTS:
+        raise HTTPException(422, f"Geographic profiling is limited to {MAX_INCIDENTS:,} incidents.")
+    if req.grid_resolution ** 2 * len(req.incidents) > MAX_PROFILE_WORK:
+        raise HTTPException(
+            422,
+            f"The probability surface is too large: grid_resolution^2 x incidents must be at most "
+            f"{MAX_PROFILE_WORK:,}. Lower grid_resolution or use fewer incidents.",
+        )
 
     coords = np.array([[inc.lat, inc.lng] for inc in req.incidents])
     n = len(coords)
@@ -140,6 +159,8 @@ def geographic_profile(req: GeographicProfileRequest):
 @router.post("/spatial-cluster")
 def spatial_cluster(req: SpatialClusterRequest):
     """K-Means spatial clustering using scipy/numpy."""
+    if req.points and any(len(p) != len(req.points[0]) for p in req.points):
+        raise HTTPException(400, "Points must be a list of [lat, lng] pairs.")
     points = np.array(req.points, dtype=float)
     if points.ndim != 2 or points.shape[1] < 2:
         raise HTTPException(400, "Points must be a list of [lat, lng] pairs.")
@@ -250,6 +271,10 @@ def recidivism_survival(req: RecidivismSurvivalRequest):
         raise HTTPException(400, "event_occurred must contain only 0 (censored) or 1 (event).")
     if np.any(times < 0):
         raise HTTPException(400, "time_to_event values must be non-negative.")
+    if n > MAX_SURVIVAL_N:
+        raise HTTPException(422, f"Survival analysis is limited to {MAX_SURVIVAL_N:,} observations.")
+    if req.risk_factors is not None and req.risk_factors and len(req.risk_factors[0]) > MAX_RISK_FACTORS:
+        raise HTTPException(422, f"At most {MAX_RISK_FACTORS} risk factors are supported.")
 
     # ── Kaplan-Meier estimator ──
     unique_times = np.sort(np.unique(times[events == 1]))
@@ -345,6 +370,11 @@ def recidivism_survival(req: RecidivismSurvivalRequest):
 @router.post("/propensity-score")
 def propensity_score(req: PropensityScoreRequest):
     """Propensity score matching for causal inference in observational studies."""
+    if len(req.treatment) > MAX_MATCH_N:
+        raise HTTPException(422, f"Matching is limited to {MAX_MATCH_N:,} cases.")
+    if req.covariates and (len(req.covariates[0]) > MAX_COVARIATES
+                           or any(len(row) != len(req.covariates[0]) for row in req.covariates)):
+        raise HTTPException(422, f"covariates must be rows of equal length with at most {MAX_COVARIATES} values.")
     treatment = np.array(req.treatment, dtype=int)
     covariates = np.array(req.covariates, dtype=float)
     outcome = np.array(req.outcome, dtype=float)

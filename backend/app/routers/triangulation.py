@@ -21,6 +21,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from scipy import stats as sp_stats
 
+from app.errors import safe_detail
+from app.routers._limits import MAX_RESAMPLE_WORK, check_work
 from app.routers.novel_dialectical import _d_ci, jzs_bf10_t
 
 router = APIRouter()
@@ -146,8 +148,9 @@ def _regression(x, y, alpha) -> List[MethodResult]:
         out.append(MethodResult(method="Robust regression (Huber M-estimator)", statistic=_f(z), statistic_label="z",
                                 p_value=p_r, effect_size=b, effect_label="slope", ci=[b - 1.96 * s, b + 1.96 * s],
                                 significant=p_r < alpha, criterion=f"p < {alpha}"))
-    except Exception as e:  # statsmodels missing or fit failure
-        out.append(MethodResult(method=f"Robust regression (unavailable: {e})", criterion="—"))
+    except Exception as exc:  # statsmodels missing or fit failure
+        safe_detail("Robust regression", exc)  # logs the exception; the client gets a fixed label
+        out.append(MethodResult(method="Robust regression (unavailable for these data)", criterion="—"))
 
     def slope(a, b):
         return float(np.polyfit(a, b, 1)[0]) if np.std(a) > 0 else float("nan")
@@ -174,7 +177,7 @@ def _convergence(methods: List[MethodResult]):
 # ── Endpoint ──────────────────────────────────────────────────────────────
 
 @router.post("/analyze", response_model=TriangulationResponse)
-async def triangulate(req: TriangulationRequest):
+def triangulate(req: TriangulationRequest):
     dt = req.data_type.lower().replace("-", "_").replace(" ", "_")
     if not 0 < req.alpha < 1:
         raise HTTPException(422, "alpha must be between 0 and 1.")
@@ -191,6 +194,8 @@ async def triangulate(req: TriangulationRequest):
         x, y = np.asarray(req.x, float), np.asarray(req.y, float)
         if np.std(x) == 0 or np.std(y) == 0:
             raise HTTPException(422, "x and y must both vary.")
+        check_work(N_BOOT * len(x), MAX_RESAMPLE_WORK,
+                   f"The bootstrap ({N_BOOT:,} resamples) supports at most {MAX_RESAMPLE_WORK // N_BOOT:,} pairs.")
         methods = _correlation(x, y, req.alpha) if dt == "correlation" else _regression(x, y, req.alpha)
     else:
         raise HTTPException(422, "data_type must be group_comparison, correlation or regression.")

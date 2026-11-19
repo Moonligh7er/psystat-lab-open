@@ -1,11 +1,51 @@
 """Latent Class & Latent Profile Analysis — EM-based mixture modelling."""
 
+import time
+
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 
+from app.errors import safe_detail
+from app.routers._limits import MAX_CLASSES, MIN_TOL
+
 router = APIRouter()
+
+# Size limits (the API is public and EM cost grows with every one of these)
+MAX_ROWS = 20_000
+MAX_INDICATORS = 100
+MAX_EM_STARTS = 50
+MAX_EM_ITER = 5_000
+MAX_EM_WORK = 20_000_000_000   # starts x iterations x classes x cases x indicators (x indicators for LPA)
+MAX_BLRT_SAMPLES = 500
+BLRT_TIME_BUDGET_S = 60.0      # the bootstrap LR test stops early (and says so) after this long
+MAX_AUX_VARIABLES = 100
+
+
+def _matrix(data) -> np.ndarray:
+    """The request data as an N x J float matrix, within the size limits."""
+    try:
+        X = np.array(data, dtype=np.float64)
+    except (ValueError, TypeError):
+        raise HTTPException(400, "data must be a rectangular table of numbers (rows = cases).")
+    if X.ndim != 2 or X.shape[0] == 0 or X.shape[1] == 0:
+        raise HTTPException(400, "data must be a rectangular table of numbers (rows = cases).")
+    if X.shape[0] > MAX_ROWS:
+        raise HTTPException(422, f"Too many cases ({X.shape[0]}); the maximum is {MAX_ROWS:,}.")
+    if X.shape[1] > MAX_INDICATORS:
+        raise HTTPException(422, f"Too many indicators ({X.shape[1]}); the maximum is {MAX_INDICATORS}.")
+    return X
+
+
+def _check_em_work(n_starts: int, max_iter: int, class_counts, N: int, P: int, quadratic: bool) -> None:
+    work = n_starts * max_iter * sum(class_counts) * N * P * (P if quadratic else 1)
+    if work > MAX_EM_WORK:
+        raise HTTPException(
+            422,
+            f"This model is too large to fit here (starts x iterations x classes x cases x indicators "
+            f"exceeds {MAX_EM_WORK:,}). Use fewer starts, iterations, classes or indicators.",
+        )
 
 
 # ── Request / Config Models ──────────────────────────────────────────
@@ -13,16 +53,16 @@ router = APIRouter()
 class LCARequest(BaseModel):
     data: list[list[int]]  # N x J binary matrix
     n_classes: int = 2
-    n_starts: int = 10
-    max_iter: int = 1000
-    tol: float = 1e-6
+    n_starts: int = Field(10, ge=1, le=MAX_EM_STARTS)
+    max_iter: int = Field(1000, ge=1, le=MAX_EM_ITER)
+    tol: float = Field(1e-6, ge=MIN_TOL)
 
 class LPARequest(BaseModel):
     data: list[list[float]]  # N x P continuous matrix
     n_classes: int = 2
-    n_starts: int = 10
-    max_iter: int = 1000
-    tol: float = 1e-6
+    n_starts: int = Field(10, ge=1, le=MAX_EM_STARTS)
+    max_iter: int = Field(1000, ge=1, le=MAX_EM_ITER)
+    tol: float = Field(1e-6, ge=MIN_TOL)
     covariance_type: str = "diagonal_unequal"  # diagonal_equal, diagonal_unequal, full_equal, full_unequal
 
 class CompareModelsRequest(BaseModel):
@@ -30,23 +70,23 @@ class CompareModelsRequest(BaseModel):
     model_type: str = "lca"  # "lca" or "lpa"
     min_classes: int = 1
     max_classes: int = 8
-    n_starts: int = 10
-    max_iter: int = 1000
-    tol: float = 1e-6
-    blrt_samples: int = 100
+    n_starts: int = Field(10, ge=1, le=MAX_EM_STARTS)
+    max_iter: int = Field(1000, ge=1, le=MAX_EM_ITER)
+    tol: float = Field(1e-6, ge=MIN_TOL)
+    blrt_samples: int = Field(100, ge=0, le=MAX_BLRT_SAMPLES)
     covariance_type: str = "diagonal_unequal"
 
 class GrowthMixtureRequest(BaseModel):
     data: list[list[float]]  # N x T longitudinal matrix (rows=subjects, cols=timepoints)
     n_classes: int = 2
-    n_starts: int = 10
-    max_iter: int = 500
-    tol: float = 1e-6
+    n_starts: int = Field(10, ge=1, le=MAX_EM_STARTS)
+    max_iter: int = Field(500, ge=1, le=MAX_EM_ITER)
+    tol: float = Field(1e-6, ge=MIN_TOL)
     time_points: list[float] | None = None  # custom time coding; defaults to 0,1,2,...
 
 class ClassComparisonRequest(BaseModel):
     assignments: list[int]  # class label per observation
-    auxiliary_variables: dict[str, list[float]]  # name -> values per observation
+    auxiliary_variables: dict[str, list[float]] = Field(..., max_length=MAX_AUX_VARIABLES)  # name -> values per observation
 
 
 # ── Helpers ───────────────────────────────────────────────────────────
@@ -150,7 +190,7 @@ def _run_lca(X: np.ndarray, K: int, n_starts: int, max_iter: int, tol: float):
         except Exception:
             continue
     if best_result is None:
-        raise HTTPException(500, "All EM starts failed for LCA. Check data.")
+        raise HTTPException(422, "All EM starts failed for LCA. Check the data.")
     return best_result
 
 
@@ -261,7 +301,7 @@ def _run_lpa(X: np.ndarray, K: int, n_starts: int, max_iter: int, tol: float,
         except Exception:
             continue
     if best_result is None:
-        raise HTTPException(500, "All EM starts failed for LPA. Check data.")
+        raise HTTPException(422, "All EM starts failed for LPA. Check the data.")
     return best_result
 
 
@@ -320,17 +360,10 @@ def _fit_growth_mixture(X: np.ndarray, K: int, time_pts: np.ndarray,
             pi = Nk / N
             for k in range(K):
                 w = posterior[:, k]
-                # Weighted OLS: beta_k = (G'WG)^{-1} G'Wy
-                W = np.diag(np.repeat(w, T_len))
-                Y_flat = X.flatten()  # N*T
-                G_big = np.tile(G, (N, 1))  # (N*T) x 2
-                # Efficient version without huge diagonal
-                # Sum over observations
-                GtWG = np.zeros((2, 2))
-                GtWy = np.zeros(2)
-                for i in range(N):
-                    GtWG += w[i] * (G.T @ G)
-                    GtWy += w[i] * (G.T @ X[i])
+                # Weighted OLS: beta_k = (G'WG)^{-1} G'Wy, summed over observations:
+                # sum_i w_i G'G = (sum_i w_i) G'G and sum_i w_i G'x_i = G' (sum_i w_i x_i)
+                GtWG = w.sum() * (G.T @ G)
+                GtWy = G.T @ (w @ X)
                 try:
                     betas[k] = np.linalg.solve(GtWG + np.eye(2) * 1e-8, GtWy)
                 except np.linalg.LinAlgError:
@@ -345,7 +378,7 @@ def _fit_growth_mixture(X: np.ndarray, K: int, time_pts: np.ndarray,
             best_result = (pi, betas, sigma2, posterior, ll, iteration + 1, converged)
 
     if best_result is None:
-        raise HTTPException(500, "All EM starts failed for GMM growth model.")
+        raise HTTPException(422, "All EM starts failed for the growth mixture model. Check the data.")
     return best_result
 
 
@@ -354,7 +387,7 @@ def _fit_growth_mixture(X: np.ndarray, K: int, time_pts: np.ndarray,
 @router.post("/lca")
 def latent_class_analysis(req: LCARequest):
     """Latent Class Analysis for binary/categorical indicators via EM."""
-    X = np.array(req.data, dtype=np.float64)
+    X = _matrix(req.data)
     N, J = X.shape
     K = req.n_classes
 
@@ -364,6 +397,7 @@ def latent_class_analysis(req: LCARequest):
         raise HTTPException(400, "Number of observations must be >= n_classes.")
     if not np.all((X == 0) | (X == 1)):
         raise HTTPException(400, "LCA requires binary (0/1) indicators.")
+    _check_em_work(req.n_starts, req.max_iter, [K], N, J, quadratic=False)
 
     pi, rho, posterior, ll, iters = _run_lca(X, K, req.n_starts, req.max_iter, req.tol)
 
@@ -400,7 +434,7 @@ def latent_class_analysis(req: LCARequest):
 @router.post("/lpa")
 def latent_profile_analysis(req: LPARequest):
     """Latent Profile Analysis for continuous indicators via Gaussian mixture EM."""
-    X = np.array(req.data, dtype=np.float64)
+    X = _matrix(req.data)
     N, P = X.shape
     K = req.n_classes
 
@@ -411,6 +445,7 @@ def latent_profile_analysis(req: LPARequest):
     valid_cov = ("diagonal_equal", "diagonal_unequal", "full_equal", "full_unequal")
     if req.covariance_type not in valid_cov:
         raise HTTPException(400, f"covariance_type must be one of {valid_cov}.")
+    _check_em_work(req.n_starts, req.max_iter, [K], N, P, quadratic=True)
 
     pi, means, covs, posterior, ll, iters = _run_lpa(
         X, K, req.n_starts, req.max_iter, req.tol, req.covariance_type
@@ -476,13 +511,15 @@ def latent_profile_analysis(req: LPARequest):
 @router.post("/compare-models")
 def compare_models(req: CompareModelsRequest):
     """Fit LCA or LPA across a range of class counts and compare fit indices."""
-    X = np.array(req.data, dtype=np.float64)
+    X = _matrix(req.data)
     N = X.shape[0]
 
     if req.model_type not in ("lca", "lpa"):
         raise HTTPException(400, "model_type must be 'lca' or 'lpa'.")
     if req.min_classes < 1 or req.max_classes > 10 or req.min_classes > req.max_classes:
         raise HTTPException(400, "Invalid class range. min_classes >= 1, max_classes <= 10.")
+    _check_em_work(req.n_starts, req.max_iter, range(max(req.min_classes, 2), req.max_classes + 1),
+                   N, X.shape[1], quadratic=req.model_type == "lpa")
 
     results = []
 
@@ -568,11 +605,14 @@ def compare_models(req: CompareModelsRequest):
                 "entropy": None,
                 "smallest_class_pct": None,
                 "converged": False,
-                "error": str(exc),
+                "error": safe_detail(f"The {K}-class model", exc),
             })
 
-    # BLRT: parametric bootstrap LR test between K and K-1 classes
+    # BLRT: parametric bootstrap LR test between K and K-1 classes.
+    # Bounded by a time budget: if it runs out, fewer bootstrap samples are used (reported below).
     blrt_results = []
+    blrt_deadline = time.monotonic() + BLRT_TIME_BUDGET_S
+    blrt_truncated = False
     for i in range(1, len(results)):
         prev = results[i - 1]
         curr = results[i]
@@ -584,9 +624,24 @@ def compare_models(req: CompareModelsRequest):
         observed_lr = -2.0 * (prev["log_likelihood"] - curr["log_likelihood"])
         K_prev = prev["n_classes"]
 
-        # Parametric bootstrap under K-1 model
+        # Parametric bootstrap under K-1 model. The K-1 model fitted to the observed data uses
+        # fixed seeds, so it is fitted once here rather than once per bootstrap sample.
+        null_fit = None
+        if K_prev > 1:
+            try:
+                if req.model_type == "lca":
+                    null_fit = _run_lca(X, K_prev, 3, req.max_iter, req.tol)
+                else:
+                    null_fit = _run_lpa(X, K_prev, 3, req.max_iter, req.tol, req.covariance_type)
+            except Exception:
+                null_fit = None
         boot_lrs = []
         for b in range(req.blrt_samples):
+            if time.monotonic() > blrt_deadline:
+                blrt_truncated = True
+                break
+            if K_prev > 1 and null_fit is None:
+                continue
             try:
                 rng = np.random.default_rng(seed=b * 101 + 3)
                 if req.model_type == "lca":
@@ -594,7 +649,7 @@ def compare_models(req: CompareModelsRequest):
                         p = np.mean(X, axis=0)
                         X_boot = rng.binomial(1, np.clip(p, 0.01, 0.99), size=(N, X.shape[1])).astype(float)
                     else:
-                        pi0, rho0, _, ll0, _ = _run_lca(X, K_prev, 3, req.max_iter, req.tol)
+                        pi0, rho0, _, ll0, _ = null_fit
                         classes = rng.choice(K_prev, size=N, p=pi0)
                         X_boot = np.zeros((N, X.shape[1]))
                         for n_i in range(N):
@@ -623,9 +678,7 @@ def compare_models(req: CompareModelsRequest):
                                                           allow_singular=True)
                         ll_null = float(np.sum(rv.logpdf(X_boot)))
                     else:
-                        pi0, mu0, cov0, _, ll0, _ = _run_lpa(
-                            X, K_prev, 3, req.max_iter, req.tol, req.covariance_type
-                        )
+                        pi0, mu0, cov0, _, ll0, _ = null_fit
                         classes = rng.choice(K_prev, size=N, p=pi0)
                         X_boot = np.zeros((N, X.shape[1]))
                         for n_i in range(N):
@@ -669,6 +722,8 @@ def compare_models(req: CompareModelsRequest):
         "model_type": req.model_type,
         "comparison_table": results,
         "blrt": blrt_results,
+        "blrt_note": (f"The bootstrap LR test stopped at its {BLRT_TIME_BUDGET_S:.0f}-second limit; "
+                      "see n_bootstrap_samples for the number of samples used.") if blrt_truncated else None,
         "elbow_plot_data": elbow_data,
         "recommendation": _recommend_classes(results),
     }
@@ -691,7 +746,7 @@ def _recommend_classes(results: list[dict]) -> str:
 @router.post("/growth-mixture")
 def growth_mixture_model(req: GrowthMixtureRequest):
     """Growth Mixture Model — class-specific linear trajectories via EM."""
-    X = np.array(req.data, dtype=np.float64)
+    X = _matrix(req.data)
     N, T_len = X.shape
     K = req.n_classes
 
@@ -705,6 +760,7 @@ def growth_mixture_model(req: GrowthMixtureRequest):
     time_pts = np.array(req.time_points, dtype=np.float64) if req.time_points else np.arange(T_len, dtype=np.float64)
     if len(time_pts) != T_len:
         raise HTTPException(400, "time_points length must match number of columns in data.")
+    _check_em_work(req.n_starts, req.max_iter, [K], N, T_len, quadratic=False)
 
     pi, betas, sigma2, posterior, ll, iters, converged = _fit_growth_mixture(
         X, K, time_pts, req.n_starts, req.max_iter, req.tol
@@ -768,11 +824,13 @@ def class_comparison(req: ClassComparisonRequest):
     K = len(classes)
     if K < 2:
         raise HTTPException(400, "Need at least 2 classes for comparison.")
+    if K > MAX_CLASSES:
+        raise HTTPException(422, f"Too many classes ({K}); the maximum is {MAX_CLASSES}.")
 
     # Validate auxiliary variables
     for name, vals in req.auxiliary_variables.items():
         if len(vals) != N:
-            raise HTTPException(400, f"Variable '{name}' length ({len(vals)}) != assignments length ({N}).")
+            raise HTTPException(400, f"Variable '{name[:60]}' length ({len(vals)}) != assignments length ({N}).")
 
     comparison_results = {}
 

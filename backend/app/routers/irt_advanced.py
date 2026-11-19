@@ -1,51 +1,67 @@
 """Advanced Item Response Theory — Rasch, 2PL, 3PL, GRM, PCM, DIF, CAT, equating."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 from scipy.optimize import minimize, minimize_scalar
 from scipy.special import expit  # logistic function
 
 from app.irt_engine import fit_dichotomous, fit_graded, fit_partial_credit
+from app.routers._limits import MIN_TOL
 
 router = APIRouter()
+
+# Size limits (public API, single process). The MML engine's cost grows with items x response
+# patterns x quadrature points, and its numerical Hessian adds one gradient per parameter.
+MAX_PERSONS = 20_000
+MAX_ITEMS = 100
+MAX_CATEGORIES = 20            # categories per polytomous item
+MAX_ITEM_BANK = 10_000         # CAT item bank
+MAX_CAT_ITEMS = 500
+MAX_ANCHORS = 200              # test equating anchor items
+MAX_THETA_POINTS = 200
+# max_iter / tol / n_quadrature on the model requests are accepted for compatibility; the engine
+# uses its own settings. They are still bounded.
+_ITER = dict(ge=1, le=10_000)
+_TOL = dict(ge=MIN_TOL)
+_QUAD = dict(ge=5, le=200)
 
 
 # ── Request Models ────────────────────────────────────────────────────
 
 class RaschRequest(BaseModel):
     responses: list[list[int]]  # persons x items, 0/1
-    max_iter: int = 100
-    tol: float = 1e-6
+    max_iter: int = Field(100, **_ITER)
+    tol: float = Field(1e-6, **_TOL)
 
 
 class TwoPLRequest(BaseModel):
     responses: list[list[int]]  # persons x items, 0/1
-    n_quadrature: int = 41
-    max_iter: int = 200
-    tol: float = 1e-6
+    n_quadrature: int = Field(41, **_QUAD)
+    max_iter: int = Field(200, **_ITER)
+    tol: float = Field(1e-6, **_TOL)
 
 
 class ThreePLRequest(BaseModel):
     responses: list[list[int]]
     guessing_prior: float = 0.2  # prior mean of the guessing parameters
-    n_quadrature: int = 41
-    max_iter: int = 300
-    tol: float = 1e-6
+    n_quadrature: int = Field(41, **_QUAD)
+    max_iter: int = Field(300, **_ITER)
+    tol: float = Field(1e-6, **_TOL)
 
 
 class GradedResponseRequest(BaseModel):
     responses: list[list[int]]  # persons x items, values 0..K-1
-    n_quadrature: int = 41
-    max_iter: int = 200
-    tol: float = 1e-6
+    n_quadrature: int = Field(41, **_QUAD)
+    max_iter: int = Field(200, **_ITER)
+    tol: float = Field(1e-6, **_TOL)
 
 
 class PartialCreditRequest(BaseModel):
     responses: list[list[int]]  # persons x items, values 0..K-1
-    max_iter: int = 100
-    tol: float = 1e-6
+    max_iter: int = Field(100, **_ITER)
+    tol: float = Field(1e-6, **_TOL)
 
 
 class DIFRequest(BaseModel):
@@ -53,12 +69,12 @@ class DIFRequest(BaseModel):
     group: list[int]  # 0 = reference, 1 = focal
     method: str = "all"  # "mh", "lord", "logistic", "all"
     purification: bool = True
-    max_purification_iter: int = 10
+    max_purification_iter: int = Field(10, ge=1, le=20)
 
 
 class CATSimulationRequest(BaseModel):
-    item_bank: list[dict]  # each: {"a": float, "b": float, "c": float}
-    n_items: int = 20
+    item_bank: list[dict] = Field(..., max_length=MAX_ITEM_BANK)  # each: {"a": float, "b": float, "c": float}
+    n_items: int = Field(20, le=MAX_CAT_ITEMS)
     start_theta: float = 0.0
     se_threshold: float = 0.3
     stopping: str = "fixed"  # "fixed" or "se"
@@ -69,9 +85,9 @@ class CATSimulationRequest(BaseModel):
 class TestEquatingRequest(BaseModel):
     params_form_x: list[dict]  # each: {"a": float, "b": float} or {"a", "b", "c"}
     params_form_y: list[dict]
-    anchor_indices_x: list[int]  # indices of anchor items in form X
-    anchor_indices_y: list[int]  # corresponding indices in form Y
-    theta_points: list[float] | None = None  # optional evaluation points (equal weights)
+    anchor_indices_x: list[int] = Field(..., max_length=MAX_ANCHORS)  # indices of anchor items in form X
+    anchor_indices_y: list[int] = Field(..., max_length=MAX_ANCHORS)  # corresponding indices in form Y
+    theta_points: list[float] | None = Field(None, max_length=MAX_THETA_POINTS)  # optional evaluation points (equal weights)
     n_quadrature: int = 30  # otherwise: Gauss-Hermite N(0, 1) points on the Form Y scale
 
 
@@ -128,6 +144,10 @@ def _validate_binary(responses):
     n, J = X.shape
     if J < 2 or n < 10:
         raise HTTPException(422, "Need at least 2 items and 10 respondents.")
+    if n > MAX_PERSONS:
+        raise HTTPException(422, f"Too many respondents ({n}); the maximum is {MAX_PERSONS:,}.")
+    if J > MAX_ITEMS:
+        raise HTTPException(422, f"Too many items ({J}); the maximum is {MAX_ITEMS}.")
     pc = X.mean(axis=0)
     flat = [j + 1 for j in range(J) if pc[j] in (0.0, 1.0)]
     if flat:
@@ -278,6 +298,12 @@ def _validate_polytomous(responses, min_persons=20):
     n, J = X.shape
     if J < 2 or n < min_persons:
         raise HTTPException(422, f"Need at least 2 items and {min_persons} respondents.")
+    if n > MAX_PERSONS:
+        raise HTTPException(422, f"Too many respondents ({n}); the maximum is {MAX_PERSONS:,}.")
+    if J > MAX_ITEMS:
+        raise HTTPException(422, f"Too many items ({J}); the maximum is {MAX_ITEMS}.")
+    if X.max() >= MAX_CATEGORIES:
+        raise HTTPException(422, f"Items may have at most {MAX_CATEGORIES} categories.")
     for j in range(J):
         used = np.unique(X[:, j])
         if len(used) < 2 or not np.array_equal(used, np.arange(used.max() + 1)):

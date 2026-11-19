@@ -35,7 +35,8 @@ ALLOC = ["random"] * 4 + ["alternate"] * 2 + ["random"] * 3 + ["systematic"] * 4
 REF = "metafor 5.2.1 (R 4.5.2)"
 DATA = "BCG vaccine trials (dat.bcg), log risk ratios"
 
-run = asyncio.run
+def run(result):  # handlers may be sync (threadpool) or async
+    return asyncio.run(result) if asyncio.iscoroutine(result) else result
 
 
 def rec(record, method, endpoint, stat, observed, expected, tol=1e-5):

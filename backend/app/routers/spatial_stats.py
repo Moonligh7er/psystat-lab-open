@@ -15,7 +15,32 @@ from scipy import stats as sp_stats
 from scipy.spatial.distance import cdist
 from scipy.optimize import minimize_scalar
 
+from app.routers._limits import MAX_PAIRWISE_N
+
 router = APIRouter()
+
+# Size limits. Every analysis builds an n x n weight (or distance) matrix; the spatial lag model
+# takes eigenvalues and inverses of it (O(n^3)) and GWR fits one weighted regression per point.
+MAX_N = MAX_PAIRWISE_N                 # 5,000 observations for Moran's I / LISA
+MAX_N_CUBIC = 2_000                    # spatial lag model and GWR
+MAX_GWR_PREDICTORS = 10
+MAX_GLOBAL_PERM_WORK = 2_000_000_000   # permutations x n^2 (global Moran's I)
+MAX_LOCAL_PERM_WORK = 500_000_000      # permutations x n^2 (local Moran's I)
+MAX_REG_PREDICTORS = 50
+
+
+def _check_n(n: int, limit: int, what: str):
+    if n > limit:
+        raise HTTPException(422, f"{what} is limited to {limit:,} observations.")
+
+
+def _check_perm_work(m: int, n: int, limit: int):
+    if m * n * n > limit:
+        raise HTTPException(
+            422,
+            f"Too many permutations for {n:,} observations: use at most {max(1, limit // (n * n)):,} "
+            f"(limit: permutations x n^2 <= {limit:,}).",
+        )
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -71,7 +96,10 @@ class GWRRequest(BaseModel):
 # ── Shared helpers ────────────────────────────────────────────────────
 
 def _coords(coordinates, n):
-    c = np.asarray(coordinates, dtype=float)
+    try:
+        c = np.asarray(coordinates, dtype=float)
+    except (TypeError, ValueError):
+        raise HTTPException(422, f"coordinates must be {n} [x, y] pairs (one per observation).")
     if c.ndim != 2 or c.shape != (n, 2):
         raise HTTPException(422, f"coordinates must be {n} [x, y] pairs (one per observation).")
     if not np.all(np.isfinite(c)):
@@ -80,7 +108,10 @@ def _coords(coordinates, n):
 
 
 def _finite(a, name):
-    a = np.asarray(a, dtype=float)
+    try:
+        a = np.asarray(a, dtype=float)
+    except (TypeError, ValueError):
+        raise HTTPException(422, f"{name} must be numbers (with equal-length rows).")
     if not np.all(np.isfinite(a)):
         raise HTTPException(422, f"{name} must be finite numbers.")
     return a
@@ -118,7 +149,7 @@ def _standardize(W):
 
 def _weights(req, n, coords):
     if req.weight_matrix is not None:
-        W = np.asarray(req.weight_matrix, dtype=float)
+        W = _finite(req.weight_matrix, "weight_matrix")
         if W.shape != (n, n):
             raise HTTPException(422, f"weight_matrix must be {n}x{n}.")
         if not np.all(np.isfinite(W)) or np.any(W < 0) or np.any(np.diag(W) != 0):
@@ -155,8 +186,10 @@ def global_morans_i(req: MoransIRequest):
     n = len(values)
     if n < 4:
         raise HTTPException(422, "Need at least 4 observations.")
+    _check_n(n, MAX_N, "Moran's I")
     coords = _coords(req.coordinates, n)
     _check_perms(req.n_permutations)
+    _check_perm_work(req.n_permutations, n, MAX_GLOBAL_PERM_WORK)
     W = _weights(req, n, coords)
 
     z = values - values.mean()
@@ -205,8 +238,10 @@ def local_morans(req: LocalMoransRequest):
     n = len(values)
     if n < 4:
         raise HTTPException(422, "Need at least 4 observations.")
+    _check_n(n, MAX_N, "Local Moran's I")
     coords = _coords(req.coordinates, n)
     _check_perms(req.n_permutations)
+    _check_perm_work(req.n_permutations, n, MAX_LOCAL_PERM_WORK)
     if not 0 < req.alpha < 1:
         raise HTTPException(422, "alpha must be between 0 and 1.")
     W = _weights(req, n, coords)
@@ -352,6 +387,9 @@ def spatial_regression(req: SpatialRegressionRequest):
     p = X_raw.shape[1]
     if n < p + 5:
         raise HTTPException(422, f"Need at least {p + 5} observations for {p} predictor(s).")
+    _check_n(n, MAX_N_CUBIC, "The spatial lag model")
+    if p > MAX_REG_PREDICTORS:
+        raise HTTPException(422, f"The spatial lag model is limited to {MAX_REG_PREDICTORS} predictors.")
     coords = _coords(req.coordinates, n)
     W = _weights(req, n, coords)
     X = np.column_stack([np.ones(n), X_raw])
@@ -446,6 +484,9 @@ def geographically_weighted_regression(req: GWRRequest):
     p = X_raw.shape[1]
     if n < p + 10:
         raise HTTPException(422, f"Need at least {p + 10} observations for GWR with {p} predictor(s).")
+    _check_n(n, MAX_N_CUBIC, "GWR")
+    if p > MAX_GWR_PREDICTORS:
+        raise HTTPException(422, f"GWR is limited to {MAX_GWR_PREDICTORS} predictors.")
     coords = _coords(req.coordinates, n)
     if req.bandwidth is not None and req.bandwidth <= 0:
         raise HTTPException(422, "bandwidth must be positive.")

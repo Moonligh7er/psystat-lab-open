@@ -20,10 +20,13 @@ from typing import List, Optional
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from scipy import stats as scipy_stats
 
 router = APIRouter()
+
+MAX_FEATURES = 20
+MAX_WORK = 20_000_000_000  # n x (largest model's coefficients)^2 x (folds + 1) least-squares work
 
 warnings.filterwarnings("ignore")
 
@@ -34,8 +37,8 @@ class ComplexityRequest(BaseModel):
     x: List[List[float]]  # n_samples × n_features
     y: List[float]
     variable_names: Optional[List[str]] = None
-    max_poly_degree: int = 5
-    cv_folds: int = 5
+    max_poly_degree: int = Field(5, le=10)
+    cv_folds: int = Field(5, le=20)
 
 
 class ModelStep(BaseModel):
@@ -187,9 +190,12 @@ def _poly_features(X: np.ndarray, degree: int) -> np.ndarray:
 # ── Endpoint ──────────────────────────────────────────────────────────
 
 @router.post("/navigate")
-async def navigate_complexity(req: ComplexityRequest):
-    X = np.array(req.x)
-    y = np.array(req.y)
+def navigate_complexity(req: ComplexityRequest):
+    try:
+        X = np.array(req.x, dtype=float)
+    except ValueError:
+        raise HTTPException(422, "x must be a table of numbers with the same number of values in every row.")
+    y = np.array(req.y, dtype=float)
     n = len(y)
 
     if n < 5:
@@ -200,6 +206,17 @@ async def navigate_complexity(req: ComplexityRequest):
         raise HTTPException(422, "X and y must have the same number of observations.")
 
     n_feat = X.shape[1]
+    if n_feat > MAX_FEATURES:
+        raise HTTPException(422, f"At most {MAX_FEATURES} predictors are supported.")
+    folds_k = max(2, min(req.cv_folds, n))
+    top = min(req.max_poly_degree, max(2, (n - 2) // (n_feat + 1)))
+    k_top = min(n, 1 + n_feat * max(top, 1) + (n_feat * (n_feat - 1) // 2 if top >= 2 else 0))
+    if n * k_top * k_top * (folds_k + 1) > MAX_WORK:
+        raise HTTPException(
+            422,
+            "This model ladder is too large for the data size; lower max_poly_degree or cv_folds, "
+            "or use fewer predictors.",
+        )
     var_names = req.variable_names or [f"x{i+1}" for i in range(n_feat)]
     tss = float(np.sum((y - np.mean(y)) ** 2))
     if tss == 0:

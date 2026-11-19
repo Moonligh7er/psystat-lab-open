@@ -5,12 +5,18 @@ from __future__ import annotations
 
 import math
 import re
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 router = APIRouter()
+
+# Queries are matched with fixed regexes, some with `.*` or `\w+` that backtrack on long input,
+# and every available variable name is searched for in the query, so text sizes are capped.
+MAX_QUERY_CHARS = 2_000
+MAX_VARIABLES = 1_000
+MAX_NAME_CHARS = 200
 
 
 # ---------------------------------------------------------------------------
@@ -18,8 +24,8 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 
 class NLQueryRequest(BaseModel):
-    query: str
-    available_variables: list[str] | None = None
+    query: str = Field(..., max_length=MAX_QUERY_CHARS)
+    available_variables: list[Annotated[str, Field(max_length=MAX_NAME_CHARS)]] | None = Field(None, max_length=MAX_VARIABLES)
     data_summary: dict | None = None  # {col: {type, n, mean, sd, ...}}
 
 
@@ -48,9 +54,9 @@ class ColumnProfile(BaseModel):
 
 
 class DataProfileRequest(BaseModel):
-    columns: list[ColumnProfile]
+    columns: list[ColumnProfile] = Field(..., max_length=MAX_VARIABLES)
     n_rows: int
-    research_goal: str | None = None
+    research_goal: str | None = Field(None, max_length=MAX_QUERY_CHARS)
 
 
 class AnalysisSuggestion(BaseModel):

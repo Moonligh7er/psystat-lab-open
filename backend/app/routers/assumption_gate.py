@@ -1,11 +1,16 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 import numpy as np
 import pandas as pd
 from scipy import stats
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 
+from app.errors import safe_detail
+from app.routers._limits import MAX_PAIRWISE_N, MAX_RESAMPLE_WORK, check_work, too_large
+
 router = APIRouter(tags=["Assumption Gate"])
+
+MAX_VARIABLES = 200  # keys in `data` (groups, levels, predictors or table rows)
 
 N_RESAMPLE = 2000  # permutation / bootstrap / Monte Carlo resamples
 
@@ -179,7 +184,8 @@ def _ck_regression(data, params):
         asmps.append(_asmp("Multicollinearity", "VIF", round(mv, 2), None,
                            mv < 10, "info" if mv < 10 else "violation",
                            f"Max VIF={mv:.2f}. {'OK' if mv < 10 else 'High multicollinearity'}."))
-    H = Xc @ np.linalg.inv(Xc.T @ Xc) @ Xc.T; h = np.diag(H)
+    # Leverages = diag(X (X'X)^-1 X') computed row-wise, without building the n x n hat matrix
+    h = np.einsum("ij,jk,ik->i", Xc, np.linalg.inv(Xc.T @ Xc), Xc)
     mse = np.sum(res**2) / (len(y) - Xc.shape[1])
     cooks = res**2 * h / (Xc.shape[1] * mse * (1-h)**2 + 1e-12); thr = 4/len(y)
     ni = int(np.sum(cooks > thr))
@@ -247,12 +253,31 @@ CHECKERS = {"t-test": _ck_ttest, "anova": _ck_anova, "correlation": _ck_corr,
             "regression": _ck_regression, "chi-square": _ck_chisq, "paired-t": _ck_paired,
             "repeated-anova": _ck_rep_anova, "manova": _ck_manova}
 
+def _validate_size(req, alternatives: bool = False):
+    """Refuse requests whose cost (pairwise matrices, resampling) would be unbounded."""
+    if len(req.data) > MAX_VARIABLES:
+        raise too_large(f"Too many variables ({len(req.data)}); the maximum is {MAX_VARIABLES}.")
+    n_max = max((len(v) for v in req.data.values()), default=0)
+    if req.test_type == "manova" and n_max > MAX_PAIRWISE_N:
+        raise too_large(f"Mardia's test needs an n x n matrix; at most {MAX_PAIRWISE_N:,} cases are supported.")
+    if alternatives and req.test_type in ALT_RUNNERS:
+        cells = sum(len(v) for v in req.data.values())
+        check_work(N_RESAMPLE * cells, MAX_RESAMPLE_WORK,
+                   f"The resampling alternatives ({N_RESAMPLE:,} resamples) support at most "
+                   f"{MAX_RESAMPLE_WORK // N_RESAMPLE:,} values in total; run /check alone for larger data.")
+
+
 def _run_check(req):
     ck = CHECKERS.get(req.test_type)
     if not ck:
-        return {"test_type": req.test_type, "overall_pass": False, "assumptions": [],
-                "recommendation": f"Unknown test type: {req.test_type}", "alternatives": [], "robustness_note": ""}
-    asmps, rob, alts = ck(req.data, req.params)
+        return {"test_type": req.test_type[:60], "overall_pass": False, "assumptions": [],
+                "recommendation": f"Unknown test type: {req.test_type[:60]}", "alternatives": [], "robustness_note": ""}
+    try:
+        asmps, rob, alts = ck(req.data, req.params)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(422, safe_detail("The assumption check", exc))
     ok = all(a["passed"] for a in asmps)
     return {"test_type": req.test_type, "overall_pass": ok, "assumptions": asmps,
             "recommendation": f"Proceed with {req.test_type}" if ok else "Consider alternatives",
@@ -383,15 +408,22 @@ ALT_RUNNERS = {"t-test": _run_ttest_alts, "anova": _run_anova_alts, "correlation
 # ── endpoints ────────────────────────────────────────────────────────────────
 
 @router.post("/check")
-async def check_assumptions(req: AssumptionGateRequest):
+def check_assumptions(req: AssumptionGateRequest):
+    _validate_size(req)
     return _run_check(req)
 
 @router.post("/run-with-alternatives")
-async def run_with_alternatives(req: RunWithAlternativesRequest):
+def run_with_alternatives(req: RunWithAlternativesRequest):
+    _validate_size(req, alternatives=req.run_alternatives)
     result = _run_check(req)
     runner = ALT_RUNNERS.get(req.test_type)
     if runner and req.run_alternatives:
-        primary, alt_results = runner(req.data, req.params)
+        try:
+            primary, alt_results = runner(req.data, req.params)
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(422, safe_detail("The alternative analyses", exc))
         result["primary_result"] = primary
         result["alternative_results"] = alt_results
         conc = [a.get("conclusion_matches") for a in alt_results if a.get("conclusion_matches") is not None]

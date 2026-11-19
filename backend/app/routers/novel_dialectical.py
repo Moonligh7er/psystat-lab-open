@@ -29,7 +29,7 @@ from typing import List, Optional
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from scipy import integrate, optimize, special
 from scipy import stats as scipy_stats
 
@@ -48,7 +48,7 @@ class DialecticalRequest(BaseModel):
     alpha: float = 0.05
     # Cauchy scales r for t-tests, or stretched-beta widths kappa for a
     # correlation. Defaults depend on the test type when omitted.
-    prior_scales: Optional[List[float]] = None
+    prior_scales: Optional[List[float]] = Field(None, max_length=50)
     mu0: float = 0  # null value for one-sample
 
 
@@ -310,7 +310,7 @@ def _design(req: DialecticalRequest):
 # ── Endpoint ──────────────────────────────────────────────────────────
 
 @router.post("/analyze")
-async def dialectical_inference(req: DialecticalRequest):
+def dialectical_inference(req: DialecticalRequest):
     if req.test_type not in ("two_sample", "paired", "one_sample", "correlation"):
         raise HTTPException(422, "test_type must be two_sample, paired, one_sample or correlation.")
     if len(req.group1) < 3:

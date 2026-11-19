@@ -8,10 +8,21 @@ and standard library.
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 
+from app.routers._limits import MAX_PAIRWISE_N, too_large
+
 router = APIRouter()
+
+MAX_TABLE_DIM = 1_000      # rows or columns of a contingency table (CA builds r x r and c x c matrices)
+MAX_MCA_VARIABLES = 100
+MAX_MCA_CATEGORIES = 1_000  # total categories across all variables
+
+
+def _check_table(N: np.ndarray, name: str = "Table") -> None:
+    if N.ndim == 2 and (N.shape[0] > MAX_TABLE_DIM or N.shape[1] > MAX_TABLE_DIM):
+        raise too_large(f"{name} is too large; at most {MAX_TABLE_DIM:,} rows and {MAX_TABLE_DIM:,} columns are supported.")
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -21,14 +32,14 @@ class SimpleCARequest(BaseModel):
     table: list[list[float]]  # r x c contingency table (counts)
     row_labels: list[str] | None = None
     col_labels: list[str] | None = None
-    n_dimensions: int = 2
+    n_dimensions: int = Field(2, ge=1, le=50)
 
 
 class MCARequest(BaseModel):
     """Multiple Correspondence Analysis."""
     data: list[list[str | int]]  # n x p matrix of categorical responses
     variable_names: list[str] | None = None
-    n_dimensions: int = 2
+    n_dimensions: int = Field(2, ge=1, le=50)
     use_burt: bool = False  # if True, compute from Burt matrix
 
 
@@ -41,7 +52,7 @@ class SupplementaryRequest(BaseModel):
     col_labels: list[str] | None = None
     sup_row_labels: list[str] | None = None
     sup_col_labels: list[str] | None = None
-    n_dimensions: int = 2
+    n_dimensions: int = Field(2, ge=1, le=50)
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────
@@ -57,6 +68,7 @@ def simple_ca(req: SimpleCARequest):
     N = np.array(req.table, dtype=float)
     if N.ndim != 2:
         raise HTTPException(422, "Table must be 2-dimensional.")
+    _check_table(N)
     r, c = N.shape
     if r < 2 or c < 2:
         raise HTTPException(422, "Table must have at least 2 rows and 2 columns.")
@@ -228,6 +240,10 @@ def multiple_ca(req: MCARequest):
 
     if any(len(row) != p for row in data):
         raise HTTPException(422, "Every observation must have a value for each variable.")
+    if n > MAX_PAIRWISE_N:
+        raise too_large(f"MCA builds an n x n matrix; at most {MAX_PAIRWISE_N:,} observations are supported.")
+    if p > MAX_MCA_VARIABLES:
+        raise too_large(f"At most {MAX_MCA_VARIABLES} variables are supported.")
 
     # Build indicator matrix
     categories_per_var = []
@@ -239,6 +255,8 @@ def multiple_ca(req: MCARequest):
             cat_labels.append(f"{var_names[j]}:{cat}")
 
     total_cats = len(cat_labels)
+    if total_cats > MAX_MCA_CATEGORIES:
+        raise too_large(f"Too many categories ({total_cats:,}); at most {MAX_MCA_CATEGORIES:,} in total are supported.")
     Z = np.zeros((n, total_cats))
     col_idx = 0
     for j in range(p):
@@ -351,6 +369,10 @@ def supplementary_projection(req: SupplementaryRequest):
     N = np.array(req.original_table, dtype=float)
     if N.ndim != 2:
         raise HTTPException(422, "original_table must be 2-dimensional.")
+    _check_table(N, "original_table")
+    for extra in (req.supplementary_rows, req.supplementary_cols):
+        if extra is not None and len(extra) > MAX_TABLE_DIM:
+            raise too_large(f"At most {MAX_TABLE_DIM:,} supplementary rows or columns are supported.")
     r, c = N.shape
     if r < 2 or c < 2:
         raise HTTPException(422, "Table must have at least 2 rows and 2 columns.")

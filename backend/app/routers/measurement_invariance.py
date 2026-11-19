@@ -15,6 +15,11 @@ from app.sem_engine import SEM, Model, Param, cfa_params
 
 router = APIRouter()
 
+MAX_GROUPS = 20               # groups fitted jointly in one multi-group model
+MAX_ALIGNMENT_GROUPS = 50     # alignment optimises 2(G - 1) parameters over G x G group pairs
+MAX_ALIGNMENT_ITEMS = 200
+MAX_PARTIAL_ITEMS = 25        # partial invariance refits the model once per candidate item per step (~items^2 fits)
+
 
 class InvarianceRequest(BaseModel):
     """Measurement invariance testing request."""
@@ -51,6 +56,8 @@ LEVEL_EQUAL = {
 def _groups(data_groups, factor_model):
     if len(data_groups) < 2:
         raise HTTPException(422, "At least 2 groups are required.")
+    if len(data_groups) > MAX_GROUPS:
+        raise HTTPException(422, f"Too many groups ({len(data_groups)}); at most {MAX_GROUPS} are supported.")
     arrays = []
     for i, g in enumerate(data_groups):
         if not g or len({len(r) for r in g}) != 1:
@@ -144,6 +151,9 @@ def partial_invariance(req: PartialInvarianceRequest):
     if not 0 < req.alpha < 1:
         raise HTTPException(422, "alpha must be between 0 and 1.")
     data, factors, observed = _groups(req.data_groups, req.factor_model)
+    if len(observed) > MAX_PARTIAL_ITEMS:
+        raise HTTPException(422, f"Partial invariance search supports at most {MAX_PARTIAL_ITEMS} items "
+                                 f"(it refits the model for every candidate item at every step).")
     baseline_level = "configural" if req.invariance_level == "metric" else "metric"
     kind = "loadings" if req.invariance_level == "metric" else "intercepts"
     _, _, base = _fit_level(data, factors, observed, baseline_level)
@@ -316,6 +326,10 @@ def alignment_method(req: AlignmentRequest):
         Nu = [np.array(g, dtype=float) for g in req.group_intercepts]
         if len(L) < 2 or len(L) != len(Nu):
             raise HTTPException(422, "Need at least 2 groups, with one loading matrix and one intercept vector each.")
+        if len(L) > MAX_ALIGNMENT_GROUPS:
+            raise HTTPException(422, f"Too many groups ({len(L)}); at most {MAX_ALIGNMENT_GROUPS} are supported.")
+        if L[0].ndim == 2 and (L[0].shape[0] > MAX_ALIGNMENT_ITEMS or L[0].shape[1] > MAX_ALIGNMENT_ITEMS):
+            raise HTTPException(422, f"At most {MAX_ALIGNMENT_ITEMS} items and factors are supported.")
         if any(x.ndim != 2 or x.shape != L[0].shape for x in L) or any(len(n) != L[0].shape[0] for n in Nu):
             raise HTTPException(422, "Every group needs a p x n_factors loading matrix and p intercepts.")
         sizes = np.array(req.group_sizes, dtype=float) if req.group_sizes else np.ones(len(L))

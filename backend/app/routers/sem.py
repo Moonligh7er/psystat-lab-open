@@ -11,6 +11,9 @@ from app.sem_engine import SEM, Model, cfa_params, growth_params, structural_par
 
 router = APIRouter()
 
+MAX_SEM_VARIABLES = 60   # observed variables in one model (the ML fit grows steeply with this)
+MAX_MEDIATORS = 10       # indirect effects are computed for every (x, m, y) triple
+
 
 # ── Request Models ────────────────────────────────────────────────────
 
@@ -51,6 +54,12 @@ class LatentGrowthRequest(BaseModel):
 
 # ── Shared helpers ────────────────────────────────────────────────────
 
+def _names(names) -> str:
+    """User-supplied variable names for an error message, each truncated."""
+    names = [str(n)[:60] for n in names]
+    return ", ".join(names[:10]) + (", ..." if len(names) > 10 else "")
+
+
 ESTIMATION_NOTE = ("Maximum likelihood (lavaan defaults: N in the denominator, expected-information standard "
                    "errors, marker-variable identification). Rows with missing values are dropped (listwise).")
 
@@ -58,23 +67,27 @@ ESTIMATION_NOTE = ("Maximum likelihood (lavaan defaults: N in the denominator, e
 def _frame(rows: list[dict], columns: list[str]) -> tuple[np.ndarray, int]:
     if not rows:
         raise HTTPException(422, "No data supplied.")
+    if len(columns) > MAX_SEM_VARIABLES:
+        raise HTTPException(422, f"Too many observed variables ({len(columns)}); at most {MAX_SEM_VARIABLES} are supported.")
     df = pd.DataFrame(rows)
     missing = [c for c in columns if c not in df.columns]
     if missing:
-        raise HTTPException(422, f"Variable(s) not found in the data: {', '.join(missing)}")
+        raise HTTPException(422, f"Variable(s) not found in the data: {_names(missing)}")
     sub = df[columns].apply(pd.to_numeric, errors="coerce")
     bad = [c for c in columns if sub[c].notna().sum() < df[c].notna().sum()]
     if bad:
-        raise HTTPException(422, f"Variable(s) must be numeric: {', '.join(bad)}")
+        raise HTTPException(422, f"Variable(s) must be numeric: {_names(bad)}")
     clean = sub.dropna()
     return clean.values.astype(float), len(df) - len(clean)
 
 
 def _check_cov(X: np.ndarray, names: list[str]):
+    if X.ndim == 2 and X.shape[1] > MAX_SEM_VARIABLES:
+        raise HTTPException(422, f"Too many observed variables ({X.shape[1]}); at most {MAX_SEM_VARIABLES} are supported.")
     sd = X.std(axis=0)
     flat = [names[i] for i in np.where(sd == 0)[0]]
     if flat:
-        raise HTTPException(422, f"Variable(s) with no variance: {', '.join(flat)}")
+        raise HTTPException(422, f"Variable(s) with no variance: {_names(flat)}")
     if np.linalg.eigvalsh(np.cov(X, rowvar=False)).min() < 1e-10:
         raise HTTPException(422, "The covariance matrix is singular (a variable is a linear combination of others).")
 
@@ -147,10 +160,10 @@ def _validate_factors(factors: dict[str, list[str]]):
     seen = set()
     for f, inds in factors.items():
         if len(inds) < 2:
-            raise HTTPException(422, f"Factor '{f}' needs at least 2 indicators.")
+            raise HTTPException(422, f"Factor '{str(f)[:60]}' needs at least 2 indicators.")
         dup = seen.intersection(inds)
         if dup:
-            raise HTTPException(422, f"Indicator(s) {', '.join(sorted(dup))} load on more than one factor; "
+            raise HTTPException(422, f"Indicator(s) {_names(sorted(map(str, dup)))} load on more than one factor; "
                                      "cross-loadings are not supported in this form.")
         seen.update(inds)
     if len(factors) == 1 and len(next(iter(factors.values()))) < 3:
@@ -262,6 +275,8 @@ def path_analysis(req: PathAnalysisRequest):
     """Path analysis among observed variables by maximum likelihood (all equations estimated jointly)."""
     if not req.paths:
         raise HTTPException(422, "Specify at least one path.")
+    if len(req.mediators or []) > MAX_MEDIATORS:
+        raise HTTPException(422, f"At most {MAX_MEDIATORS} mediators are supported.")
     edges = []
     for pth in req.paths:
         if "from" not in pth or "to" not in pth or pth["from"] == pth["to"]:
@@ -273,7 +288,7 @@ def path_analysis(req: PathAnalysisRequest):
     obs = list(dict.fromkeys([x for _, x in edges] + [y for y, _ in edges]))
     for m in req.mediators or []:
         if m not in obs:
-            raise HTTPException(422, f"Mediator '{m}' is not part of any path.")
+            raise HTTPException(422, f"Mediator '{str(m)[:60]}' is not part of any path.")
     X, dropped = _frame(req.data, obs)
     if len(X) < len(obs) + 2:
         raise HTTPException(422, "Too few complete observations for this many variables.")
@@ -458,9 +473,9 @@ def _validate_index_model(factor_model: dict[str, list[int]], p: int):
     seen = set()
     for f, idx in factor_model.items():
         if len(idx) < 2:
-            raise HTTPException(422, f"Factor '{f}' needs at least 2 items.")
+            raise HTTPException(422, f"Factor '{str(f)[:60]}' needs at least 2 items.")
         if any(i < 0 or i >= p for i in idx):
-            raise HTTPException(422, f"Factor '{f}' refers to an item outside 0..{p - 1}.")
+            raise HTTPException(422, f"Factor '{str(f)[:60]}' refers to an item outside 0..{p - 1}.")
         if seen.intersection(idx):
             raise HTTPException(422, "An item is assigned to more than one factor.")
         seen.update(idx)

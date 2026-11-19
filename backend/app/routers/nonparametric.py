@@ -8,7 +8,12 @@ import math
 import numpy as np
 from scipy import stats as sp_stats
 
+from app.routers._limits import MAX_RESAMPLES, check_resampling
+
 router = APIRouter()
+
+MAX_JACKKNIFE_N = 20_000  # the BCa jackknife is n leave-one-out statistics of n - 1 values
+JACKKNIFE_CHUNK_CELLS = 2_000_000
 
 
 class BootstrapCIRequest(BaseModel):
@@ -48,9 +53,21 @@ _STATS = {
 }
 
 
-def _check_resamples(n, name):
-    if not 1000 <= n <= 50000:
-        raise HTTPException(400, f"{name} must be between 1000 and 50,000.")
+def _check_resamples(n, name, n_cases=1):
+    if not 1000 <= n <= MAX_RESAMPLES:
+        raise HTTPException(422, f"{name} must be between 1,000 and {MAX_RESAMPLES:,}.")
+    check_resampling(n, n_cases, name)
+
+
+def _jackknife(stat, data, t):
+    """Leave-one-out statistics, computed in row chunks so memory stays bounded. Each row is
+    reduced on its own, so the values equal those of the full n x (n - 1) array."""
+    n = len(data)
+    rows = max(1, JACKKNIFE_CHUNK_CELLS // max(n - 1, 1))
+    return np.concatenate([
+        stat(np.array([np.delete(data, j) for j in range(s, min(s + rows, n))]), t)
+        for s in range(0, n, rows)
+    ])
 
 
 @router.post("/bootstrap-ci")
@@ -71,7 +88,9 @@ def bootstrap_confidence_interval(req: BootstrapCIRequest):
         raise HTTPException(400, "confidence must be between 0.5 and 1.")
     if not 0 <= req.trim_fraction < 0.5:
         raise HTTPException(400, "trim_fraction must be in [0, 0.5).")
-    _check_resamples(req.n_bootstrap, "n_bootstrap")
+    if len(data) > MAX_JACKKNIFE_N:
+        raise HTTPException(422, f"The bootstrap CI is limited to {MAX_JACKKNIFE_N:,} observations.")
+    _check_resamples(req.n_bootstrap, "n_bootstrap", len(data))
     stat = _STATS[req.statistic]
     t = req.trim_fraction
     n = len(data)
@@ -86,7 +105,7 @@ def bootstrap_confidence_interval(req: BootstrapCIRequest):
     # BCa: bias correction z0 and jackknife acceleration a
     prop = np.clip(np.mean(boot_stats < observed), 1 / (2 * req.n_bootstrap), 1 - 1 / (2 * req.n_bootstrap))
     z0 = sp_stats.norm.ppf(prop)
-    jack = stat(np.array([np.delete(data, j) for j in range(n)]), t)
+    jack = _jackknife(stat, data, t)
     d = jack.mean() - jack
     denom = 6 * np.sum(d ** 2) ** 1.5
     a_hat = float(np.sum(d ** 3) / denom) if denom > 0 else 0.0
@@ -144,7 +163,7 @@ def permutation_test(req: PermutationTestRequest):
         raise HTTPException(400, "alternative must be two-sided, greater or less.")
     if req.statistic == "ks" and req.alternative != "two-sided":
         raise HTTPException(400, "The KS statistic is non-directional; use alternative='two-sided'.")
-    _check_resamples(req.n_permutations, "n_permutations")
+    _check_resamples(req.n_permutations, "n_permutations", len(g1) + len(g2))
 
     combined = np.concatenate([g1, g2])
     n1, N = len(g1), len(g1) + len(g2)
@@ -274,6 +293,9 @@ def two_sample_bootstrap(req: TwoSampleBootstrapRequest):
     g2 = np.array(req.group2)
     if len(g1) < 2 or len(g2) < 2:
         raise HTTPException(400, "Each group must have at least 2 observations.")
+    if not 1 <= req.n_bootstrap <= MAX_RESAMPLES:
+        raise HTTPException(422, f"n_bootstrap must be between 1 and {MAX_RESAMPLES:,}.")
+    check_resampling(req.n_bootstrap, len(g1) + len(g2), "bootstrap")
 
     rng = np.random.default_rng(42)
     boot_stats = np.empty(req.n_bootstrap)

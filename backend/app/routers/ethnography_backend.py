@@ -10,7 +10,24 @@ from sklearn.manifold import MDS
 from itertools import combinations
 from collections import Counter
 
+from app.errors import safe_detail
+
 router = APIRouter()
+
+# Size limits: several analyses below loop over pairs in Python, so cost grows quadratically.
+MAX_INFORMANTS = 1_000         # cultural consensus: informant x informant agreement loop
+MAX_QUESTIONS = 1_000
+MAX_RESPONSE_CATEGORIES = 100  # distinct answers in the formal (categorical) model
+MAX_CODERS = 100
+MAX_DISTINCT_CODES = 1_000
+MAX_PAIR_WORK = 10_000_000     # pairwise comparisons per request
+MAX_GROUPS = 100
+MAX_PILE_ITEMS = 300           # pile sort: MDS on an items x items matrix
+MAX_SORTS = 200
+
+
+def _too_large(msg: str):
+    raise HTTPException(422, msg)
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -49,8 +66,19 @@ class PileSortRequest(BaseModel):
 @router.post("/cultural-consensus")
 def cultural_consensus(req: CulturalConsensusRequest):
     """Cultural Consensus Model (Romney, Weller & Batchelder, 1986)."""
-    R = np.array(req.responses, dtype=float)
+    try:
+        R = np.array(req.responses, dtype=float)
+    except (ValueError, TypeError):
+        raise HTTPException(400, "responses must be a rectangular table of numbers (rows = informants).")
+    if R.ndim != 2:
+        raise HTTPException(400, "responses must be a rectangular table of numbers (rows = informants).")
     n_informants, n_questions = R.shape
+    if n_informants > MAX_INFORMANTS:
+        _too_large(f"Too many informants ({n_informants}); the maximum is {MAX_INFORMANTS:,}.")
+    if n_questions > MAX_QUESTIONS:
+        _too_large(f"Too many questions ({n_questions}); the maximum is {MAX_QUESTIONS:,}.")
+    if req.model == "formal" and len(np.unique(R)) > MAX_RESPONSE_CATEGORIES:
+        _too_large(f"Too many distinct answers for the formal model; the maximum is {MAX_RESPONSE_CATEGORIES}.")
 
     if n_informants < 3:
         raise HTTPException(400, "Need at least 3 informants.")
@@ -188,10 +216,16 @@ def intercoder_reliability(req: IntercoderRequest):
         raise HTTPException(400, "Need at least 2 coders.")
     if n_items < 2:
         raise HTTPException(400, "Need at least 2 items.")
+    if n_coders > MAX_CODERS:
+        _too_large(f"Too many coders ({n_coders}); the maximum is {MAX_CODERS}.")
+    if n_items * n_coders * n_coders > MAX_PAIR_WORK:
+        _too_large(f"Too many items for this many coders: items x coders^2 must not exceed {MAX_PAIR_WORK:,}.")
 
     # Convert everything to strings for uniformity
     mat = [[str(cell) for cell in row] for row in data]
     all_codes = sorted(set(c for row in mat for c in row))
+    if len(all_codes) > MAX_DISTINCT_CODES // 5:
+        _too_large(f"Too many distinct codes ({len(all_codes)}); the maximum is {MAX_DISTINCT_CODES // 5}.")
     code_labels = req.code_labels or all_codes
 
     # ── Percent agreement ──
@@ -255,6 +289,10 @@ def thematic_frequency(req: ThematicFrequencyRequest):
 
     unique_codes = sorted(set(all_codes_flat))
     total_count = len(all_codes_flat)
+    if len(unique_codes) > MAX_DISTINCT_CODES:
+        _too_large(f"Too many distinct codes ({len(unique_codes)}); the maximum is {MAX_DISTINCT_CODES:,}.")
+    if sum(len(set(doc)) ** 2 for doc in req.codes) // 2 > MAX_PAIR_WORK:
+        _too_large(f"Too many code pairs within documents; the maximum is {MAX_PAIR_WORK:,}.")
 
     # ── Frequency table ──
     code_counts = Counter(all_codes_flat)
@@ -317,6 +355,8 @@ def thematic_frequency(req: ThematicFrequencyRequest):
             raise HTTPException(400, "group_variable length must match number of documents.")
 
         groups = sorted(set(req.group_variable))
+        if len(groups) > MAX_GROUPS:
+            _too_large(f"Too many groups ({len(groups)}); the maximum is {MAX_GROUPS}.")
         group_freq: dict[str, dict[str, int]] = {g: Counter() for g in groups}
         for i, doc in enumerate(req.codes):
             g = req.group_variable[i]
@@ -470,11 +510,15 @@ def pile_sort(req: PileSortRequest):
         raise HTTPException(400, "Need at least 3 items.")
     if not req.sorts:
         raise HTTPException(400, "Need at least 1 sort.")
+    if n_items > MAX_PILE_ITEMS:
+        _too_large(f"Too many items ({n_items}); the maximum is {MAX_PILE_ITEMS}.")
+    if len(req.sorts) > MAX_SORTS:
+        _too_large(f"Too many sorts ({len(req.sorts)}); the maximum is {MAX_SORTS:,}.")
 
     # Validate item indices
     for s_idx, sort in enumerate(req.sorts):
         all_indices = [idx for pile in sort for idx in pile]
-        if sorted(set(all_indices)) != list(range(n_items)):
+        if len(all_indices) != n_items or sorted(set(all_indices)) != list(range(n_items)):
             raise HTTPException(
                 400,
                 f"Sort {s_idx} must include each item index (0 to {n_items-1}) exactly once."
@@ -511,7 +555,7 @@ def pile_sort(req: PileSortRequest):
             for i in range(n_items)
         ]
     except Exception as e:
-        raise HTTPException(500, f"MDS computation failed: {str(e)}")
+        raise HTTPException(422, safe_detail("The MDS computation", e))
 
     # ── Hierarchical clustering ──
     condensed = squareform(distance)

@@ -2,7 +2,7 @@
 analysis, and multi-signal session summaries."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import signal as sp_signal
 from scipy import stats as sp_stats
@@ -19,14 +19,14 @@ class HRVRequest(BaseModel):
 
 class EDARequest(BaseModel):
     eda_signal: list[float]
-    sampling_rate: float = 4.0
+    sampling_rate: float = Field(4.0, le=100_000)  # Hz
 
 
 class AccelerometerRequest(BaseModel):
     x: list[float]
     y: list[float]
     z: list[float]
-    sampling_rate: float = 50.0
+    sampling_rate: float = Field(50.0, le=100_000)  # Hz
 
 
 class SessionSummaryRequest(BaseModel):

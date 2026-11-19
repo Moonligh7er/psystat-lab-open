@@ -6,41 +6,96 @@ variables, E-value sensitivity, g-computation counterfactuals, and AIPW
 doubly-robust estimation with full bootstrap inference.
 """
 
+from contextvars import ContextVar
+
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 from itertools import combinations
 from collections import deque
 
+from app.errors import safe_detail
+from app.routers._limits import check_resampling, too_large
+
 router = APIRouter()
+
+# ── Limits ────────────────────────────────────────────────────────────
+# Path enumeration and adjustment-set search are exponential in the size of the DAG, so the
+# graph is capped and every request gets a work budget (path-search steps + path checks).
+MAX_DAG_NODES = 20
+MAX_DAG_EDGES = 60
+MAX_NODE_NAME = 100
+MAX_DAG_WORK = 10_000_000  # roughly 3 s of work in the worst case
+_dag_work: ContextVar = ContextVar("_dag_work", default=None)
+
+
+def _start_dag_budget() -> None:
+    _dag_work.set([MAX_DAG_WORK])
+
+
+def _spend(units: int = 1) -> None:
+    left = _dag_work.get()
+    if left is None:
+        return
+    left[0] -= units
+    if left[0] < 0:
+        raise too_large(
+            "This DAG is too complex to analyse (too many paths or candidate adjustment sets). "
+            f"Simplify it; graphs of up to {MAX_DAG_NODES} nodes and {MAX_DAG_EDGES} edges are supported, "
+            "but densely connected ones can still exceed the limit."
+        )
+
+
+def _short(name, limit: int = 60) -> str:
+    name = str(name)
+    return name if len(name) <= limit else name[:limit] + "..."
+
+
+_NodeName = Field(..., max_length=MAX_NODE_NAME)
+
+MAX_COVARIATES = 50
+MAX_INSTRUMENTS = 20
+MAX_BOOT_LINEAR_WORK = 200_000_000   # replications x cases x parameters, least-squares refits
+MAX_BOOT_LOGISTIC_WORK = 50_000_000  # the same for iterative (BFGS) logistic refits
+
+
+def _check_bootstrap(n_boot: int, n: int, k: int, logistic: bool) -> None:
+    """Bootstrap cost grows with replications x cases x parameters; refuse requests that are too large."""
+    check_resampling(n_boot, n, "bootstrap")
+    cap = MAX_BOOT_LOGISTIC_WORK if logistic else MAX_BOOT_LINEAR_WORK
+    if n_boot * n * (k + 2) > cap:
+        raise too_large(
+            f"This bootstrap is too large: replications x cases x parameters must be at most {cap:,}. "
+            "Use fewer bootstrap replications or covariates."
+        )
 
 
 # ── Request Models ────────────────────────────────────────────────────
 
 class DAGAnalysisRequest(BaseModel):
     """DAG specification for causal path analysis."""
-    nodes: list[str]
-    edges: list[list[str]]  # each is [from, to]
-    exposure: str
-    outcome: str
+    nodes: list[str] = Field(..., max_length=MAX_DAG_NODES)
+    edges: list[list[str]] = Field(..., max_length=MAX_DAG_EDGES)  # each is [from, to]
+    exposure: str = _NodeName
+    outcome: str = _NodeName
 
 
 class AdjustmentSetRequest(BaseModel):
     """Find valid adjustment sets for a DAG."""
-    nodes: list[str]
-    edges: list[list[str]]
-    exposure: str
-    outcome: str
+    nodes: list[str] = Field(..., max_length=MAX_DAG_NODES)
+    edges: list[list[str]] = Field(..., max_length=MAX_DAG_EDGES)
+    exposure: str = _NodeName
+    outcome: str = _NodeName
 
 
 class IVEstimationRequest(BaseModel):
     """Instrumental variable (2SLS) estimation."""
     outcome: list[float]
     treatment: list[float]
-    instrument: list[list[float]]  # one or more instruments, each as value array
+    instrument: list[list[float]] = Field(..., max_length=MAX_INSTRUMENTS)  # one or more instruments, each as value array
     instrument_names: list[str] | None = None
-    covariates: list[list[float]] | None = None
+    covariates: list[list[float]] | None = Field(None, max_length=MAX_COVARIATES)
     covariate_names: list[str] | None = None
     confidence: float = 0.95
 
@@ -51,14 +106,14 @@ class SensitivityAnalysisRequest(BaseModel):
     se: float
     treatment_outcome_r_squared: float
     confidence: float = 0.95
-    gamma_range: list[float] | None = None  # Rosenbaum bounds range
+    gamma_range: list[float] | None = Field(None, max_length=200)  # Rosenbaum bounds range
 
 
 class GComputationRequest(BaseModel):
     """G-computation for causal effects."""
     outcome: list[float]
     treatment: list[int]  # binary 0/1
-    covariates: list[list[float]]
+    covariates: list[list[float]] = Field(..., max_length=MAX_COVARIATES)
     covariate_names: list[str] | None = None
     outcome_type: str = "continuous"  # "continuous" or "binary"
     n_bootstrap: int = 1000
@@ -69,7 +124,7 @@ class DoublyRobustRequest(BaseModel):
     """Doubly robust (AIPW) estimation."""
     outcome: list[float]
     treatment: list[int]  # binary 0/1
-    covariates: list[list[float]]
+    covariates: list[list[float]] = Field(..., max_length=MAX_COVARIATES)
     covariate_names: list[str] | None = None
     n_bootstrap: int = 1000
     confidence: float = 0.95
@@ -79,17 +134,16 @@ class DoublyRobustRequest(BaseModel):
 
 def _build_adjacency(nodes: list[str], edges: list[list[str]]):
     """Build adjacency structures from edge list."""
+    if any(len(n) > MAX_NODE_NAME for n in nodes):
+        raise HTTPException(status_code=422, detail=f"Node names can be at most {MAX_NODE_NAME} characters.")
     children = {n: set() for n in nodes}
     parents = {n: set() for n in nodes}
     for e in edges:
         if len(e) != 2:
-            raise HTTPException(status_code=422, detail=f"Each edge must be [from, to]. Got: {e}")
+            raise HTTPException(status_code=422, detail="Each edge must be a [from, to] pair.")
         src, dst = e[0], e[1]
         if src not in children or dst not in children:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Edge references unknown node. Nodes: {nodes}, edge: {e}",
-            )
+            raise HTTPException(status_code=422, detail="Every edge must connect two of the listed nodes.")
         children[src].add(dst)
         parents[dst].add(src)
     return children, parents
@@ -113,6 +167,7 @@ def _all_paths(children: dict, parents: dict, start: str, end: str,
 
     stack = [(start, [start])]
     while stack:
+        _spend()
         node, path = stack.pop()
         if node == end and len(path) > 1:
             paths.append(path)
@@ -201,6 +256,7 @@ def _is_path_blocked(path: list[str], children: dict, conditioning_set: set[str]
     - It is a non-collider AND is in the conditioning set, OR
     - It is a collider AND neither it nor any descendant is in the conditioning set.
     """
+    _spend(len(path))
     for i in range(1, len(path) - 1):
         node = path[i]
         role = _classify_node_on_path(node, path, children, i)
@@ -249,6 +305,7 @@ def _find_minimal_adjustment_sets(nodes: list[str], children: dict, parents: dic
     valid_sets = []
     for size in range(len(candidates) + 1):
         for subset in combinations(candidates, size):
+            _spend()
             z = set(subset)
             # Check if Z blocks all backdoor paths
             all_blocked = True
@@ -293,8 +350,11 @@ def _check_front_door(children: dict, parents: dict,
 
     # Check if mediators intercept ALL directed paths
     directed = _directed_paths(children, exposure, outcome)
+    _exp_med: dict = {}
+    _med_out: dict = {}
     for m_set_size in range(1, len(potential_mediators) + 1):
         for m_set in combinations(potential_mediators, m_set_size):
+            _spend()
             m_set_s = set(m_set)
             # Condition 1: every directed path goes through at least one mediator
             all_intercepted = all(
@@ -308,10 +368,12 @@ def _check_front_door(children: dict, parents: dict,
             # Condition 2: no unblocked backdoor from exposure to any mediator
             cond2 = True
             for med in m_set:
-                bp_exp_med = [
-                    p for p in _undirected_paths(children, parents, exposure, med)
-                    if _is_backdoor_path(p, children, exposure)
-                ]
+                if med not in _exp_med:
+                    _exp_med[med] = [
+                        p for p in _undirected_paths(children, parents, exposure, med)
+                        if _is_backdoor_path(p, children, exposure)
+                    ]
+                bp_exp_med = _exp_med[med]
                 for bp in bp_exp_med:
                     if not _is_path_blocked(bp, children, set()):
                         cond2 = False
@@ -322,10 +384,12 @@ def _check_front_door(children: dict, parents: dict,
             # Condition 3: all backdoor paths from M to Y blocked by {exposure}
             cond3 = True
             for med in m_set:
-                bp_med_out = [
-                    p for p in _undirected_paths(children, parents, med, outcome)
-                    if _is_backdoor_path(p, children, med)
-                ]
+                if med not in _med_out:
+                    _med_out[med] = [
+                        p for p in _undirected_paths(children, parents, med, outcome)
+                        if _is_backdoor_path(p, children, med)
+                    ]
+                bp_med_out = _med_out[med]
                 for bp in bp_med_out:
                     if not _is_path_blocked(bp, children, {exposure}):
                         cond3 = False
@@ -423,10 +487,11 @@ def dag_analysis(req: DAGAnalysisRequest):
     """Analyze a DAG: find causal/backdoor paths, colliders, mediators,
     confounders, adjustment sets, and check front-door criterion."""
 
+    _start_dag_budget()
     if req.exposure not in req.nodes:
-        raise HTTPException(status_code=422, detail=f"Exposure '{req.exposure}' not in nodes.")
+        raise HTTPException(status_code=422, detail=f"Exposure '{_short(req.exposure)}' not in nodes.")
     if req.outcome not in req.nodes:
-        raise HTTPException(status_code=422, detail=f"Outcome '{req.outcome}' not in nodes.")
+        raise HTTPException(status_code=422, detail=f"Outcome '{_short(req.outcome)}' not in nodes.")
     if req.exposure == req.outcome:
         raise HTTPException(status_code=422, detail="Exposure and outcome must be different.")
 
@@ -532,10 +597,11 @@ def dag_analysis(req: DAGAnalysisRequest):
 def adjustment_sets(req: AdjustmentSetRequest):
     """Find all valid adjustment sets for causal effect identification."""
 
+    _start_dag_budget()
     if req.exposure not in req.nodes:
-        raise HTTPException(status_code=422, detail=f"Exposure '{req.exposure}' not in nodes.")
+        raise HTTPException(status_code=422, detail=f"Exposure '{_short(req.exposure)}' not in nodes.")
     if req.outcome not in req.nodes:
-        raise HTTPException(status_code=422, detail=f"Outcome '{req.outcome}' not in nodes.")
+        raise HTTPException(status_code=422, detail=f"Outcome '{_short(req.outcome)}' not in nodes.")
 
     children, parents = _build_adjacency(req.nodes, req.edges)
 
@@ -687,7 +753,7 @@ def iv_estimation(req: IVEstimationRequest):
         t_ols = ols_estimate / se_ols
         p_ols = float(2 * sp_stats.t.sf(abs(t_ols), n - X_ols.shape[1]))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"OLS estimation failed: {str(e)}")
+        raise HTTPException(status_code=422, detail=safe_detail("OLS estimation", e))
 
     # ── First stage: regress treatment on instruments + covariates ──
     if cov is not None:
@@ -727,7 +793,7 @@ def iv_estimation(req: IVEstimationRequest):
         r2_first = float(1 - ssr_full / np.sum((d - np.mean(d)) ** 2))
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"First stage failed: {str(e)}")
+        raise HTTPException(status_code=422, detail=safe_detail("The first stage", e))
 
     # ── Second stage: regress outcome on predicted treatment + covariates ──
     if cov is not None:
@@ -758,7 +824,7 @@ def iv_estimation(req: IVEstimationRequest):
         ci_iv = [iv_estimate - t_crit * se_iv, iv_estimate + t_crit * se_iv]
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Second stage failed: {str(e)}")
+        raise HTTPException(status_code=422, detail=safe_detail("The second stage", e))
 
     # ── Hausman test: compare IV to OLS ──
     diff = iv_estimate - ols_estimate
@@ -1087,7 +1153,8 @@ def g_computation(req: GComputationRequest):
     k = X_cov.shape[1]
     cov_names = req.covariate_names or [f"X{j+1}" for j in range(k)]
     confidence = np.clip(req.confidence, 0.50, 0.999)
-    n_boot = max(500, min(req.n_bootstrap, 20000))
+    n_boot = max(500, req.n_bootstrap)
+    _check_bootstrap(n_boot, n, k, logistic=req.outcome_type == "binary")
     alpha = 1 - confidence
 
     # ── Fit outcome model ──
@@ -1110,7 +1177,7 @@ def g_computation(req: GComputationRequest):
         beta_init = np.zeros(X_model.shape[1])
         result = minimize(_logistic_nll, beta_init, args=(X_model, y), method="BFGS")
         if not result.success:
-            raise HTTPException(status_code=500, detail="Logistic outcome model failed to converge.")
+            raise HTTPException(status_code=422, detail="Logistic outcome model failed to converge.")
         beta_outcome = result.x
 
         def _predict(X, beta):
@@ -1283,7 +1350,8 @@ def doubly_robust(req: DoublyRobustRequest):
     k = X_cov.shape[1]
     cov_names = req.covariate_names or [f"X{j+1}" for j in range(k)]
     confidence = np.clip(req.confidence, 0.50, 0.999)
-    n_boot = max(500, min(req.n_bootstrap, 20000))
+    n_boot = max(500, req.n_bootstrap)
+    _check_bootstrap(n_boot, n, k, logistic=True)
     alpha = 1 - confidence
 
     def _fit_propensity(a_arr, X_arr):

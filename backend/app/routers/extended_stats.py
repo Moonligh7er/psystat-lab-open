@@ -9,7 +9,14 @@ from scipy.special import gammaln
 from scipy.integrate import quad
 from typing import Optional
 
+from app.errors import safe_detail
+
 router = APIRouter()
+
+MAX_PREDICTORS = 200
+MAX_ROC_N = 20_000                 # the exact ROC loops over every distinct score
+MAX_ROC_PAIRS = 16_000_000         # positives x negatives (the AUC builds that matrix)
+MAX_SENSITIVITY_N = 10_000         # sensitivity analysis runs 10,000 permutations and 10,000 bootstraps
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -66,6 +73,8 @@ def logistic_regression(req: LogisticRegressionRequest):
         X = X.reshape(-1, 1)
     if X.shape[0] != len(y):
         raise HTTPException(400, "Number of rows in predictors must match length of dependent.")
+    if X.ndim != 2 or X.shape[1] > MAX_PREDICTORS:
+        raise HTTPException(422, f"predictors must be a table with at most {MAX_PREDICTORS} columns.")
     if not set(np.unique(y)) <= {0.0, 1.0} or len(np.unique(y)) < 2:
         raise HTTPException(400, "Dependent variable must be coded 0/1 and contain both values.")
     if not np.all(np.isfinite(X)):
@@ -85,7 +94,7 @@ def logistic_regression(req: LogisticRegressionRequest):
     except np.linalg.LinAlgError:
         raise HTTPException(422, "Singular matrix — predictors may be perfectly collinear.")
     except Exception as e:
-        raise HTTPException(422, f"Model fitting failed: {str(e)}")
+        raise HTTPException(422, safe_detail("The logistic regression", e))
 
     coefficients = result.params.tolist()
     std_errors = result.bse.tolist()
@@ -165,6 +174,10 @@ def roc_auc(req: RocAucRequest):
     n = len(y_true)
     n_pos = int(np.sum(y_true == 1))
     n_neg = int(np.sum(y_true == 0))
+    if n > MAX_ROC_N:
+        raise HTTPException(422, f"Too many observations ({n}); the maximum for the ROC analysis is {MAX_ROC_N:,}.")
+    if n_pos * n_neg > MAX_ROC_PAIRS:
+        raise HTTPException(422, f"Too many positive x negative pairs; the maximum is {MAX_ROC_PAIRS:,}.")
     pos, neg = scores[y_true == 1], scores[y_true == 0]
 
     # Exact empirical ROC: one point per distinct score (higher score = predicted positive)
@@ -337,9 +350,9 @@ def effect_size_benchmarks(req: EffectSizeBenchmarkRequest):
     domain = req.domain.lower()
 
     if et not in _BENCHMARKS:
-        raise HTTPException(400, f"Unknown effect_type '{et}'. Use: {list(_BENCHMARKS.keys())}")
+        raise HTTPException(400, f"Unknown effect_type. Use one of: {', '.join(_BENCHMARKS)}.")
     if domain not in _BENCHMARKS[et]:
-        raise HTTPException(400, f"Unknown domain '{domain}'. Use: {list(_BENCHMARKS[et].keys())}")
+        raise HTTPException(400, f"Unknown domain. Use one of: {', '.join(_BENCHMARKS[et])}.")
 
     bench = _BENCHMARKS[et][domain]
     d = req.effect_size
@@ -595,6 +608,9 @@ def sensitivity_analysis(req: SensitivityAnalysisRequest):
 
     if len(d1) < 2 or len(d2) < 2:
         raise HTTPException(400, "Each group must have at least 2 observations.")
+    if len(d1) + len(d2) > MAX_SENSITIVITY_N:
+        raise HTTPException(422, f"Too many observations ({len(d1) + len(d2)}); the sensitivity analysis "
+                                 f"allows at most {MAX_SENSITIVITY_N:,} in total.")
 
     alpha = 0.05
     results = {}

@@ -1,7 +1,7 @@
 """Time Series Analysis — ARIMA, VAR, ITS, decomposition, stationarity, change-point detection."""
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 from statsmodels.tsa.arima.model import ARIMA
@@ -17,41 +17,50 @@ import statsmodels.api as sm
 import pandas as pd
 import warnings
 
+from app.errors import safe_detail
+
 router = APIRouter()
+
+# ── Limits (public API, single process) ───────────────────────────────
+MAX_MODEL_N = 10_000      # ARIMA / VAR series length (each fit is iterative)
+MAX_ARIMA_ORDER = 10      # p and q
+MAX_VAR_SERIES = 10
+MAX_PERIOD = 5_000
+MAX_COVARIATES = 50
 
 
 # ── Request Models ────────────────────────────────────────────────────
 
 class ARIMARequest(BaseModel):
-    values: list[float]
+    values: list[float] = Field(..., max_length=MAX_MODEL_N)
     order: list[int] | None = None  # [p, d, q] — auto-select if None
     n_forecast: int = 10
     confidence_level: float = 0.95
 
 
 class VARRequest(BaseModel):
-    series: dict[str, list[float]]  # named series: {"gdp": [...], "cpi": [...]}
-    max_lag: int = 8
-    n_forecast: int = 10
-    irf_periods: int = 10
+    series: dict[str, list[float]] = Field(..., max_length=MAX_VAR_SERIES)  # named series: {"gdp": [...], "cpi": [...]}
+    max_lag: int = Field(8, ge=1, le=50)
+    n_forecast: int = Field(10, ge=1, le=200)
+    irf_periods: int = Field(10, ge=1, le=200)
 
 
 class ITSRequest(BaseModel):
     outcome: list[float]
     intervention_point: int  # index where intervention begins
-    covariates: list[list[float]] | None = None  # optional exogenous covariates
+    covariates: list[list[float]] | None = Field(None, max_length=MAX_COVARIATES)  # optional exogenous covariates
     confidence_level: float = 0.95
 
 
 class DecompositionRequest(BaseModel):
     values: list[float]
-    period: int
+    period: int = Field(..., le=MAX_PERIOD)
     method: str = "stl"  # "stl", "additive", "multiplicative"
 
 
 class StationarityRequest(BaseModel):
     values: list[float]
-    max_diff: int = 3  # max differencing order to recommend
+    max_diff: int = Field(3, ge=0, le=5)  # max differencing order to recommend
 
 
 class ChangePointRequest(BaseModel):
@@ -95,6 +104,8 @@ def arima_model(req: ARIMARequest):
     if req.order is not None:
         if len(req.order) != 3 or any(o < 0 for o in req.order) or req.order[1] > 2:
             raise HTTPException(400, "order must be [p, d, q] with non-negative values and d ≤ 2.")
+        if req.order[0] > MAX_ARIMA_ORDER or req.order[2] > MAX_ARIMA_ORDER:
+            raise HTTPException(422, f"p and q can be at most {MAX_ARIMA_ORDER}.")
         order = tuple(req.order)
         selection = "user-specified"
     else:
@@ -132,7 +143,7 @@ def arima_model(req: ARIMARequest):
             warnings.simplefilter("ignore")
             fit = ARIMA(y, order=order).fit()
     except Exception as e:
-        raise HTTPException(400, f"ARIMA fitting failed: {str(e)}")
+        raise HTTPException(422, safe_detail("ARIMA fitting", e))
 
     # Residual diagnostics (the first d residuals are start-up values, not innovations)
     resid = np.asarray(fit.resid)[order[1]:]
@@ -214,11 +225,13 @@ def var_model(req: VARRequest):
     names = list(req.series.keys())
     lengths = {k: len(v) for k, v in req.series.items()}
     if len(set(lengths.values())) != 1:
-        raise HTTPException(400, f"All series must have equal length. Got: {lengths}")
+        raise HTTPException(400, "All series must have equal length.")
 
     n = list(lengths.values())[0]
     if n < 15:
         raise HTTPException(400, "Need at least 15 observations for VAR.")
+    if n > MAX_MODEL_N:
+        raise HTTPException(422, f"VAR accepts at most {MAX_MODEL_N:,} observations per series.")
 
     df = pd.DataFrame(req.series)
 
@@ -240,7 +253,7 @@ def var_model(req: VARRequest):
 
         fit = model.fit(maxlags=selected_lag)
     except Exception as e:
-        raise HTTPException(400, f"VAR fitting failed: {str(e)}")
+        raise HTTPException(422, safe_detail("VAR fitting", e))
 
     # Coefficient matrices per lag
     coef_matrices = {}
@@ -468,9 +481,11 @@ def decomposition(req: DecompositionRequest):
             seasonal = result.seasonal.values
             residual = result.resid.values
         else:
-            raise HTTPException(400, f"Unknown method '{req.method}'. Use 'stl', 'additive', or 'multiplicative'.")
+            raise HTTPException(400, "Unknown method. Use 'stl', 'additive', or 'multiplicative'.")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(400, f"Decomposition failed: {str(e)}")
+        raise HTTPException(422, safe_detail("The decomposition", e))
 
     # Strength of trend / seasonality (Wang, Smith & Hyndman, 2006):
     #   F_T = max(0, 1 - Var(R) / Var(T + R)),  F_S = max(0, 1 - Var(R) / Var(S + R))
@@ -535,7 +550,7 @@ def stationarity_tests(req: StationarityRequest):
             "null_hypothesis": "Unit root (non-stationary)",
         }
     except Exception as e:
-        results["adf"] = {"error": str(e)}
+        results["adf"] = {"error": safe_detail("The ADF test", e)}
 
     # 2. KPSS
     try:
@@ -551,7 +566,7 @@ def stationarity_tests(req: StationarityRequest):
             "null_hypothesis": "Stationary",
         }
     except Exception as e:
-        results["kpss"] = {"error": str(e)}
+        results["kpss"] = {"error": safe_detail("The KPSS test", e)}
 
     # 3. Phillips–Perron Z_t (constant, no trend)
     try:
@@ -568,7 +583,7 @@ def stationarity_tests(req: StationarityRequest):
             "note": "Z_t statistic with Newey–West (Bartlett) long-run variance; MacKinnon (1994, 2010) p-values",
         }
     except Exception as e:
-        results["phillips_perron"] = {"error": str(e)}
+        results["phillips_perron"] = {"error": safe_detail("The Phillips-Perron test", e)}
 
     # Overall conclusion and recommended differencing
     adf_stationary = results.get("adf", {}).get("stationary", None)
@@ -657,7 +672,7 @@ def changepoint_detection(req: ChangePointRequest):
     elif req.method == "binseg":
         changepoints = _binary_segmentation(y, penalty, req.min_segment_length)
     else:
-        raise HTTPException(400, f"Unknown method '{req.method}'. Use 'pelt' or 'binseg'.")
+        raise HTTPException(400, "Unknown method. Use 'pelt' or 'binseg'.")
 
     # Compute segment statistics
     boundaries = [0] + sorted(changepoints) + [n]
@@ -760,17 +775,28 @@ def _pelt(y, penalty, min_seg):
 
 
 def _binary_segmentation(y, penalty, min_seg):
-    """Recursive binary segmentation for change point detection."""
+    """Binary segmentation for change point detection.
+
+    Depth-first with an explicit stack (left part before right, as the recursive form), so a long
+    series with many change points cannot exhaust Python's recursion limit.
+    """
     changepoints = []
-    _binseg_recurse(y, 0, len(y), penalty, min_seg, changepoints)
+    stack = [(0, len(y))]
+    while stack:
+        start, end = stack.pop()
+        split = _binseg_split(y, start, end, penalty, min_seg)
+        if split is not None:
+            changepoints.append(split)
+            stack.append((split, end))
+            stack.append((start, split))
     return changepoints
 
 
-def _binseg_recurse(y, start, end, penalty, min_seg, changepoints):
-    """Recursive helper for binary segmentation."""
+def _binseg_split(y, start, end, penalty, min_seg):
+    """The best change point in y[start:end] if it beats the penalty, else None."""
     n = end - start
     if n < 2 * min_seg:
-        return
+        return None
 
     segment = np.asarray(y[start:end], dtype=float)
     base_cost = _segment_cost(segment)
@@ -787,10 +813,8 @@ def _binseg_recurse(y, start, end, penalty, min_seg, changepoints):
     best_gain, best_cp = float(gains[i]), int(k[i])
 
     if best_cp is not None and best_gain > penalty:
-        abs_cp = start + best_cp
-        changepoints.append(abs_cp)
-        _binseg_recurse(y, start, abs_cp, penalty, min_seg, changepoints)
-        _binseg_recurse(y, abs_cp, end, penalty, min_seg, changepoints)
+        return start + best_cp
+    return None
 
 
 def _gaussian_bic(y, changepoints):

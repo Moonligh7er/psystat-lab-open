@@ -6,11 +6,15 @@ and distinguishing/consensus statement identification.
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import numpy as np
 from scipy import stats as sp_stats
 
 router = APIRouter()
+
+MAX_Q_SORTS = 500         # participants: the analysis builds N x N matrices and N^2 / 2 pairs
+MAX_STATEMENTS = 1_000
+MAX_FACTOR_ARRAYS = 20    # /interpret compares every pair of factors over every statement
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -20,7 +24,7 @@ class QAnalyzeRequest(BaseModel):
     q_sorts: list[list[float]]  # (participants × statements) — forced-distribution rankings
     participant_labels: list[str] | None = None
     statement_labels: list[str] | None = None
-    n_factors: int = 3
+    n_factors: int = Field(3, le=50)
     extraction: str = "pca"  # "pca" or "centroid"
     rotation: str = "varimax"  # "varimax" or "none"
     flagging_threshold: float | None = None  # auto-computed if None
@@ -34,7 +38,7 @@ class QCorrelateRequest(BaseModel):
 
 class QInterpretRequest(BaseModel):
     """Interpret factor arrays — rank statements, find distinguishing/consensus."""
-    factor_arrays: dict[str, list[float]]  # factor_name -> z-scores per statement
+    factor_arrays: dict[str, list[float]] = Field(..., max_length=MAX_FACTOR_ARRAYS)  # factor_name -> z-scores per statement
     statement_labels: list[str]
     significance_level: float = 0.05
     n_sorts: int  # Q-sorts loading on each factor (used when n_loading is not given)
@@ -160,6 +164,8 @@ def _reliability(n_loading: int) -> tuple[float, float]:
 def _validate_sorts(q_sorts):
     if not q_sorts or len({len(r) for r in q_sorts}) != 1:
         raise HTTPException(status_code=422, detail="Every Q-sort must rank the same statements (equal-length rows).")
+    if len(q_sorts) > MAX_Q_SORTS or len(q_sorts[0]) > MAX_STATEMENTS:
+        raise HTTPException(status_code=422, detail=f"At most {MAX_Q_SORTS} Q-sorts of {MAX_STATEMENTS:,} statements are supported.")
     Q = np.array(q_sorts, dtype=float)
     if not np.all(np.isfinite(Q)):
         raise HTTPException(status_code=422, detail="Q-sort values must be numbers.")
@@ -378,7 +384,7 @@ def q_interpret(req: QInterpretRequest):
         if len(z_scores) != S:
             raise HTTPException(
                 status_code=422,
-                detail=f"Factor '{fname}' has {len(z_scores)} z-scores but {S} statement labels",
+                detail=f"Factor '{str(fname)[:60]}' has {len(z_scores)} z-scores but {S} statement labels",
             )
 
     z_matrix = np.array([req.factor_arrays[f] for f in factor_names], dtype=float)  # (n_factors, S)
