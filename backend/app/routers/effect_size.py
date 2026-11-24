@@ -140,8 +140,10 @@ def _hedges_correction(df: float) -> float:
 
 
 def _se_d(d: float, n1: int, n2: int) -> float:
-    """Standard error of Cohen's d (Hedges & Olkin, 1985)."""
-    return math.sqrt(n1 + n2) / math.sqrt(n1 * n2) * math.sqrt(1 + d**2 * n1 * n2 / (2 * (n1 + n2)))
+    """Standard error of Cohen's d (Hedges & Olkin, 1985; Borenstein et al., 2009, eq. 4.20):
+    Var(d) = (n1 + n2) / (n1 n2) + d^2 / (2 (n1 + n2)).
+    Same variance as meta_analysis.convert_effect_sizes."""
+    return math.sqrt((n1 + n2) / (n1 * n2) + d**2 / (2 * (n1 + n2)))
 
 
 def _se_r(r: float, n: int) -> float:
