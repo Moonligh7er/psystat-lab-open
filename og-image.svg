@@ -37,8 +37,7 @@
   <text x="116" y="234" font-family="Georgia, serif" font-size="40" fill="#818CF8" text-anchor="middle">&#936;</text>
 
   <!-- App name -->
-  <text x="170" y="218" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif" font-size="36" font-weight="700" fill="#F1F5F9">PsyStat</text>
-  <text x="345" y="218" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif" font-size="36" font-weight="700" fill="url(#accent)">Lab</text>
+  <text x="170" y="218" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif" font-size="36" font-weight="700" fill="#F1F5F9">PsyStat <tspan fill="url(#accent)">Lab</tspan></text>
 
   <!-- Tagline -->
   <text x="80" y="300" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif" font-size="52" font-weight="800" fill="#F1F5F9">AI-Powered Statistics</text>

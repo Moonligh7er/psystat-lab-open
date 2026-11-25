@@ -137,7 +137,7 @@
 
 <main class="page">
   <h1 class="page-title">Privacy Policy</h1>
-  <p class="page-subtitle">Effective Date: March 1, 2026 &middot; Last Updated: November 18, 2026</p>
+  <p class="page-subtitle">Effective Date: March 1, 2026 &middot; Last Updated: November 25, 2026</p>
 
   <div class="toc">
     <h2>Table of Contents</h2>
@@ -174,7 +174,7 @@
     <blockquote style="border-left:3px solid var(--primary);padding:16px 20px;background:rgba(11,15,26,.4);border-radius:0 8px 8px 0;color:var(--text);font-size:.95rem;line-height:1.7;">
       <p style="color:var(--text);margin-bottom:12px;">Statistical analyses in this study were conducted using PsyStat Lab (version <em>[insert app version from the citation your analysis produced]</em>). Raw participant data files were parsed on the researcher&rsquo;s device and were not transmitted to the vendor. For each analysis, only the numeric columns being tested were transmitted over TLS 1.2+ to the vendor&rsquo;s compute backend (Railway), which returned computed results and retained no dataset content after the request completed. Analyses the researcher explicitly saved were stored in the researcher&rsquo;s vendor account (Supabase, row-level security, encrypted at rest by the provider) as numeric inputs, computed results, and any user-authored notes &mdash; never as raw participant rows.</p>
       <p style="color:var(--text);margin-bottom:12px;">Where the researcher used the in-app AI assistant, the vendor transmitted a bounded context bundle to Anthropic (Claude API) consisting of test type, variable names, and result summaries from prior saved analyses, capped at approximately 8&nbsp;KB per prompt; raw participant rows were never included in this channel. Text-to-speech features, when used, transmitted only the plain-text string requested to be spoken to Modal (Kokoro TTS).</p>
-      <p style="color:var(--text);margin-bottom:0;">Subprocessors involved in delivering the Service: Supabase (authentication and encrypted storage of saved analyses), Railway (transient statistical computation), Anthropic (AI assistant), Modal (optional text-to-speech), Vercel (web hosting), Stripe and RevenueCat (billing), and Google Analytics (aggregate page-view metrics for the marketing site and web app only). The vendor does not sell participant data, does not use participant data to train machine-learning models, and does not display advertising on any tier.</p>
+      <p style="color:var(--text);margin-bottom:0;">Subprocessors involved in delivering the Service: Supabase (authentication and encrypted storage of saved analyses), Railway (transient statistical computation), Anthropic (AI assistant), Modal (optional text-to-speech), Vercel (web hosting), Stripe and RevenueCat (billing), Google Analytics (aggregate page-view metrics for the marketing site and web app only), and Sentry (crash reports without analysis data). The vendor does not sell participant data, does not use participant data to train machine-learning models, and does not display advertising on any tier.</p>
     </blockquote>
     <p style="color:var(--text3);font-size:.85rem;margin-top:16px;margin-bottom:0;">If your institution requires a Business Associate Agreement (BAA) for HIPAA-covered data, please note that PsyStat is <strong style="color:var(--text2);">not currently HIPAA-BAA covered</strong>; do not upload identifiable protected health information.</p>
   </div>
@@ -379,6 +379,12 @@
           <td>Aggregate web analytics (marketing site and web app only)</td>
           <td>Page views, referrer, general geography. No analysis inputs, no results, no participant rows.</td>
           <td><a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a></td>
+        </tr>
+        <tr>
+          <td><strong>Sentry</strong></td>
+          <td>Crash and error reporting for the app and backend</td>
+          <td>The error message, stack trace, screen or API route, app version, and device, browser and operating-system type. No analysis inputs, no results, no participant rows, no AI conversations, no account identity.</td>
+          <td><a href="https://sentry.io/privacy/" target="_blank" rel="noopener">sentry.io/privacy</a></td>
         </tr>
       </tbody>
     </table>

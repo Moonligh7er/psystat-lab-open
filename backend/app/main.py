@@ -21,6 +21,7 @@ async def authenticate(request):  # no accounts in the open core: every caller i
     return None
 
 
+from app.monitoring import capture as capture_exception, init_sentry
 from fastapi import encoders as _fastapi_encoders
 
 # Routers without a response_model are serialised by FastAPI's jsonable_encoder
@@ -105,6 +106,8 @@ PSYSTAT_VERSION = "0.2.0-beta.1"
 PRODUCTION = bool(os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("PSYSTAT_PRODUCTION"))
 API_DOCS = os.environ.get("API_DOCS", "0" if PRODUCTION else "1") == "1"
 
+init_sentry()  # crash reporting; a no-op unless SENTRY_DSN is set (see app/monitoring.py)
+
 app = FastAPI(
     default_response_class=NumpySafeResponse,
     title="PsyStat Lab API",
@@ -164,6 +167,7 @@ async def _global_exception_handler(request: Request, exc: Exception):
     ref = getattr(request.state, "request_id", None) or uuid.uuid4().hex[:12]
     logger.error("Unhandled error [%s] on %s %s", ref, request.method, request.url.path,
                  exc_info=(type(exc), exc, exc.__traceback__))
+    capture_exception(exc, ref)
     return _reject(request, 500, f"Internal server error (reference {ref}).")
 
 
